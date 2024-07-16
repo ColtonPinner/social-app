@@ -10,6 +10,15 @@ body {
   align-items: center;
 }
 
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
 nav {
   border-bottom: 1px solid #e6ecf0;
   align-items: center;
