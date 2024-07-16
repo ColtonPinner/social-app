@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import './Auth.css'; // Import the Auth.css file
 
 const SignUp = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -43,7 +44,7 @@ const SignUp = ({ setUser }) => {
   };
 
   return (
-    <div className="signup-container">
+    <div className="auth-container">
       <h2>Sign Up</h2>
       <input
         type="email"
@@ -69,8 +70,8 @@ const SignUp = ({ setUser }) => {
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
-      <button onClick={handleSignUp}>Sign Up</button>
-      <button onClick={handleGitHubSignIn}>Sign Up with GitHub</button>
+      <button className="primary" onClick={handleSignUp}>Sign Up</button>
+      <button className="secondary" onClick={handleGitHubSignIn}>Sign Up with GitHub</button>
       {error && <p>{error}</p>}
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import './Auth.css'; // Import the Auth.css file
 
 const Login = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -19,19 +20,18 @@ const Login = ({ setUser }) => {
   };
 
   const handleGitHubSignIn = async () => {
-    const { error, data } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
     });
     if (error) {
       setError(error.message);
     } else {
-      setUser(data.user);
-      navigate('/dashboard'); // Redirect to dashboard
+      // Redirect will be handled by Supabase on successful login
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="auth-container">
       <h2>Login</h2>
       <input
         type="email"
@@ -45,8 +45,8 @@ const Login = ({ setUser }) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <button onClick={handleLogin}>Login</button>
-      <button onClick={handleGitHubSignIn}>Login with GitHub</button>
+      <button className="primary" onClick={handleLogin}>Login</button>
+      <button className="secondary" onClick={handleGitHubSignIn}>Login with GitHub</button>
       {error && <p>{error}</p>}
     </div>
   );
