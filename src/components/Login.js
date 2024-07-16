@@ -45,7 +45,9 @@ const Login = ({ setUser }) => {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      <p>Don't have an account? <a href="/signup">Sign up</a></p>
       <button className="primary" onClick={handleLogin}>Login</button>
+      <p>Or</p>
       <button className="secondary" onClick={handleGitHubSignIn}>Login with GitHub</button>
       {error && <p>{error}</p>}
     </div>
