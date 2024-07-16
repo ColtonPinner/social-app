@@ -3,43 +3,51 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const Login = ({ setUser }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    try {
-      const { user, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-      });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
+    } else {
+      setUser(data.user);
+      navigate('/dashboard'); // Redirect to dashboard
+    }
+  };
 
-      if (error) {
-        console.error('Error logging in:', error);
-      } else {
-        setUser(user.email);
-        navigate('/tweets');
-      }
-    } catch (error) {
-      console.error('Error logging in:', error);
+  const handleGitHubSignIn = async () => {
+    const { error, data } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+    });
+    if (error) {
+      setError(error.message);
+    } else {
+      setUser(data.user);
+      navigate('/dashboard'); // Redirect to dashboard
     }
   };
 
   return (
-    <div>
+    <div className="login-container">
+      <h2>Login</h2>
       <input
-        type="text"
-        placeholder="Enter your email"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <input
         type="password"
-        placeholder="Enter your password"
+        placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
       <button onClick={handleLogin}>Login</button>
+      <button onClick={handleGitHubSignIn}>Login with GitHub</button>
+      {error && <p>{error}</p>}
     </div>
   );
 };

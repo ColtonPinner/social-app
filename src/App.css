@@ -1,56 +1,97 @@
 /* App.css */
 
 body {
-  font-family: 'system-ui', sans-serif;
-  background-color: #e6ecf0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
   margin: 0;
   padding: 0;
-}
-
-nav {
-  background-color: #1DA1F2;
-    align-items: center;
-    width: auto;
-    max-width: 960px;
-    height: fit-content;
-    margin: 4% auto 0;
-    padding: 10px 20px;
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    align-self: flex-start;
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .container {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* Centers items horizontally in the container */
-  justify-content: center; /* Centers items vertically in the container */
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+nav {
+  border-bottom: 1px solid  #e6ecf0; /* Corrected to include 'solid' and thickness */
+  align-items: center;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  height: 40px;
+  justify-content: space-between;
+  margin: 0; /* Removed the top margin */
+  padding: 10px 20px;
+  width: 100vw; /* Set width to 100% of the viewport */
+  position: fixed; /* Make nav bar fixed */
+  top: 0; /* Position at the top */
+  left: 0; /* Position at the left */
+  z-index: 1000; /* Ensure it is on top of other elements */
+}
+
+.sidebar, .right-sidebar {
+  border-color: #e6ecf0;
+  border-style: solid;
+  border-width: 1px;
   height: fit-content;
-  width: fit-content;
-  margin: 20px auto;
   padding: 20px;
-  background-color: white;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin: 0 10px;
+  margin-top: 5%;
+}
+
+
+.main {
+  width: fit-content;
+  height: fit-content;
+  border-color: #e6ecf0;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 10px;
+  padding: 20px;
+  flex: 3;
+  margin: 0 10px;
+  margin-top: 5%;
+  max-width: 600px;
+}
+
+.feed-container {
+  height: fit-content;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  margin: auto; /* Helps with horizontal centering if flex properties don't apply as expected */
 }
 
 input, textarea {
-  width: 80%;
+  width: 100%;
+  height: fit-content;
   margin: 10px 0;
-  padding: 10px;
+  padding: 10px 10px 10px 20px; /* Adjust padding to include padding-right */
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 1em;
+  box-sizing: border-box; /* Ensures padding is included in the element's total width and height */
 }
 
 button {
-  background-color: #131313;
+  background-color: #000000;
   color: white;
+  font-weight: bolder;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 50px;
   cursor: pointer;
   font-size: 1em;
 }
@@ -63,15 +104,10 @@ textarea {
   resize: none;
 }
 
-.tweet {
+.tweet-block {
+  width: 100%;
   padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.tweet:last-child {
-  border-bottom: none;
-}
-
-h2 {
-  margin: 0;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
@@ -14,13 +14,13 @@ const App = () => {
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session ? session.user.email : null);
+      setUser(session ? session.user : null);
     };
 
     getUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session ? session.user.email : null);
+      setUser(session ? session.user : null);
     });
 
     return () => {
@@ -30,20 +30,31 @@ const App = () => {
 
   return (
     <Router>
-      <Navbar />
+      <AppContent user={user} setUser={setUser} />
+    </Router>
+  );
+};
+
+const AppContent = ({ user, setUser }) => {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
+
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
       <div className="container">
         <Routes>
           <Route path="/" element={!user ? <Navigate to="/login" /> : <Navigate to="/tweets" />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/signup" element={<SignUp setUser={setUser} />} />
-          <Route path="/tweets" element={user ? <Tweets user={user} /> : <Navigate to="/login" />} />
+          <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
-    </Router>
+    </>
   );
 };
 
-const Tweets = ({ user }) => {
+const HomePage = ({ user }) => {
   const [tweets, setTweets] = useState([]);
 
   const addTweet = (tweet) => {
@@ -51,9 +62,21 @@ const Tweets = ({ user }) => {
   };
 
   return (
-    <div>
-      <Post addTweet={addTweet} />
-      <Feed tweets={tweets} />
+    <div className="container">
+      <div className="sidebar">
+        <h3>Sidebar</h3>
+        <p>Links or other content</p>
+      </div>
+      <div className="main">
+        <Post user={user} addTweet={addTweet} />
+        <div className="feed-container">
+          <Feed />
+        </div>
+      </div>
+      <div className="right-sidebar">
+        <h3>Right Sidebar</h3>
+        <p>Links or other content</p>
+      </div>
     </div>
   );
 };
