@@ -63,19 +63,11 @@ const HomePage = ({ user }) => {
 
   return (
     <div className="container">
-      <div className="sidebar">
-        <h3>Sidebar</h3>
-        <p>Links or other content</p>
-      </div>
       <div className="main">
         <Post user={user} addTweet={addTweet} />
         <div className="feed-container">
           <Feed />
         </div>
-      </div>
-      <div className="right-sidebar">
-        <h3>Right Sidebar</h3>
-        <p>Links or other content</p>
       </div>
     </div>
   );

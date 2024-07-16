@@ -15,7 +15,7 @@ const Login = ({ setUser }) => {
       setError(error.message);
     } else {
       setUser(data.user);
-      navigate('/dashboard'); // Redirect to dashboard
+      navigate('/tweets'); // Redirect to dashboard
     }
   };
 

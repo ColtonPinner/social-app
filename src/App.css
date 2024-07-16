@@ -10,30 +10,21 @@ body {
   align-items: center;
 }
 
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 1200px;
-}
-
 nav {
-  border-bottom: 1px solid  #e6ecf0; /* Corrected to include 'solid' and thickness */
+  border-bottom: 1px solid #e6ecf0;
   align-items: center;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   display: flex;
   height: 40px;
   justify-content: space-between;
-  margin: 0; /* Removed the top margin */
+  margin: 0;
   padding: 10px 20px;
-  width: 100vw; /* Set width to 100% of the viewport */
-  position: fixed; /* Make nav bar fixed */
-  top: 0; /* Position at the top */
-  left: 0; /* Position at the left */
-  z-index: 1000; /* Ensure it is on top of other elements */
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
 }
 
 .sidebar, .right-sidebar {
@@ -50,7 +41,6 @@ nav {
   margin: 0 10px;
   margin-top: 5%;
 }
-
 
 .main {
   width: fit-content;
@@ -71,18 +61,18 @@ nav {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  margin: auto; /* Helps with horizontal centering if flex properties don't apply as expected */
+  margin: auto;
 }
 
 input, textarea {
   width: 100%;
   height: fit-content;
   margin: 10px 0;
-  padding: 10px 10px 10px 20px; /* Adjust padding to include padding-right */
+  padding: 10px 10px 10px 20px;
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 1em;
-  box-sizing: border-box; /* Ensures padding is included in the element's total width and height */
+  box-sizing: border-box;
 }
 
 button {
@@ -110,4 +100,5 @@ textarea {
   margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
+  background-color: #ffffff; /* Ensure background is white */
 }
