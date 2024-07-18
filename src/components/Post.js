@@ -36,7 +36,7 @@ const Post = ({ user, addTweet }) => {
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
-      <button onClick={handlePost}>Tweet</button>
+      <button className='post-button' onClick={handlePost}>Tweet</button>
       {error && <p className="error-message">{error}</p>}
     </div>
   );
