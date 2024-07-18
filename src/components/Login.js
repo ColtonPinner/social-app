@@ -15,7 +15,7 @@ const Login = ({ setUser }) => {
       setError(error.message);
     } else {
       setUser(data.user);
-      navigate('/tweets'); // Redirect to dashboard
+      navigate('/tweet'); // Redirect to dashboard
     }
   };
 
@@ -48,6 +48,7 @@ const Login = ({ setUser }) => {
       <p>Don't have an account? <a href="/signup">Sign up</a></p>
       <button className="primary" onClick={handleLogin}>Login</button>
       <p>Or</p>
+      
       <button className="secondary" onClick={handleGitHubSignIn}>Login with GitHub</button>
       {error && <p>{error}</p>}
     </div>
