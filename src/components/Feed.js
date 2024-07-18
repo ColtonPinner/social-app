@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import './Feed.css'; // Import the Feed.css file
+import './Feed.css';
 
 const Feed = () => {
   const [tweets, setTweets] = useState([]);
@@ -13,8 +13,9 @@ const Feed = () => {
           id,
           content,
           created_at,
-          profiles!inner(username)
-        `) // Join with profiles table to get the username
+          user_id,
+          profiles ( username )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -28,9 +29,9 @@ const Feed = () => {
   }, []);
 
   return (
-    <div className="feed-container">
+    <div>
       {tweets.map((tweet) => (
-        <div key={tweet.id} className="tweet-block">
+        <div key={tweet.id} className="feed-container">
           <p className="tweet-user">{tweet.profiles.username}</p>
           <p className="tweet-content">{tweet.content}</p>
           <p className="tweet-date">{new Date(tweet.created_at).toLocaleString()}</p>
