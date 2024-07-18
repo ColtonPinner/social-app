@@ -1,36 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import Tweet from './Tweet';
 
 const Feed = () => {
   const [tweets, setTweets] = useState([]);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchTweets = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('tweets')
-          .select(`
-            content,
-            created_at,
-            user_id,
-            media_url,
-            user:auth.users (
-              email
-            )
-          `)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('tweets')
+        .select('content, created_at, user_id');
 
-        if (error) {
-          console.error('Error fetching tweets:', error.message);
-          setError('Error fetching tweets');
-        } else {
-          setTweets(data);
-        }
-      } catch (error) {
+      if (error) {
         console.error('Error fetching tweets:', error);
-        setError('An unexpected error occurred. Please try again later.');
+      } else {
+        setTweets(data);
       }
     };
 
@@ -38,11 +21,14 @@ const Feed = () => {
   }, []);
 
   return (
-    <div>
-      {tweets.map((tweet, index) => (
-        <Tweet key={index} tweet={tweet.content} userEmail={tweet.user.email} mediaUrl={tweet.media_url} />
+    <div className="feed-container">
+      {tweets.map((tweet) => (
+        <div key={tweet.id} className="tweet-block">
+          <p>{tweet.content}</p>
+          <p className="tweet-user">{tweet.user_id}</p>
+          <p>{new Date(tweet.created_at).toLocaleString()}</p>
+        </div>
       ))}
-      {error && <p>{error}</p>}
     </div>
   );
 };

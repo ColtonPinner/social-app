@@ -14,7 +14,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  margin-top: 20px;
+  margin-top: 60px; /* Adjusted for fixed navbar */
   width: 100%;
   max-width: 1200px;
 }
@@ -109,5 +109,5 @@ textarea {
   margin-bottom: 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
-  background-color: #ffffff; /* Ensure background is white */
+  background-color: #ffffff;
 }
