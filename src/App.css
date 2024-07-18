@@ -1,6 +1,6 @@
-/* App.css */
+/* App.module.css */
 
-body {
+:global(body) {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background-color: #ffffff;
   margin: 0;
@@ -8,15 +8,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 60px; /* Adjusted for fixed navbar */
-  width: 100%;
-  max-width: 1200px;
 }
 
 nav {
@@ -52,62 +43,18 @@ nav {
 }
 
 .main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 600px;
+  height: 100vh;
   width: fit-content;
-  height: fit-content;
   border-color: #e6ecf0;
   border-style: solid;
   border-width: 1px;
-  border-radius: 10px;
   padding: 20px;
-  flex: 3;
   margin: 0 10px;
-  margin-top: 5%;
-  max-width: 600px;
+  margin-top: 8%;
 }
 
-.feed-container {
-  height: fit-content;
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  margin: auto;
-}
 
-input, textarea {
-  width: 100%;
-  height: fit-content;
-  margin: 10px 0;
-  padding: 10px 10px 10px 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1em;
-  box-sizing: border-box;
-}
-
-button {
-  background-color: #000000;
-  color: white;
-  font-weight: bolder;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 1em;
-}
-
-button:hover {
-  background-color: #0d95e8;
-}
-
-textarea {
-  resize: none;
-}
-
-.tweet-block {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  background-color: #ffffff;
-}
