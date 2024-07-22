@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import './Post.css'; // Import the Post.css file
+import './Post.css';
 
 const Post = ({ user, addTweet }) => {
   const [content, setContent] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  const handlePost = async () => {
-    if (content.trim().length === 0) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (content.trim() === '') {
       setError('Tweet content cannot be empty');
       return;
     }
@@ -17,27 +19,28 @@ const Post = ({ user, addTweet }) => {
       .insert([{ content, user_id: user.id }]);
 
     if (error) {
+      console.error('Error posting tweet:', error);
       setError(error.message);
+    } else if (data && data.length > 0) {
+      addTweet(data[0]);
+      setContent('');
+      setError(null);
     } else {
-      if (data && data.length > 0) {
-        addTweet(data[0]);
-        setContent('');
-        setError('');
-      } else {
-        setError('An error occurred while posting the tweet.');
-      }
+      setError('Unexpected error occurred');
     }
   };
 
   return (
     <div className="post-container">
-      <textarea
-        placeholder="What's happening?"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
-      <button className='post-button' onClick={handlePost}>Tweet</button>
-      {error && <p className="error-message">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="What's happening?"
+        />
+        {error && <p className="error-message">{error}</p>}
+        <button type="submit" className="post-button">Tweet</button>
+      </form>
     </div>
   );
 };
