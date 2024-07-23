@@ -1,0 +1,29 @@
+nav {
+  display: flex; /* Use flexbox for layout */
+  justify-content: flex-end; /* Align items to the right */ 
+  align-items: center;
+  padding: 10px 20px;
+  color: white;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  width: 100vw;
+  height: 50px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  -webkit-backdrop-filter: blur(10px); /* For Safari */
+  backdrop-filter: blur(10px); /* Standard syntax */
+}
+
+nav a {
+  width: fit-content;
+  height: fit-content;
+  padding: 10px; /* Adjusted padding for better spacing */
+  margin: 20px 20px 20px; /* Adjusted margin to increase distance between items */
+  color: rgb(0, 0, 0); /* Adjusted text color for better visibility */
+  font-size: 16px; /* Ensures consistent font size */
+  text-decoration: none; /* Removes underline from links */
+  background-color: transparent; /* Keeps background transparent */
+}

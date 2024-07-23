@@ -16,7 +16,7 @@ body {
   max-width: 800px;
   padding: 20px;
   border-radius: 10px;
-  border-color: #ddd;
+  border-color:  #ddd;
   border-width: 1px;
   border-style: solid;
   text-align: center;
@@ -32,8 +32,26 @@ h2 {
   color: #333;
 }
 
+form {
+  width: 100%;
+}
+
+fieldset {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+}
+
+legend {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  padding: 0 10px;
+}
+
 input {
-  width: 300px;
+  width: 100%;
   margin: 10px 0;
   padding: 10px;
   border: 1px solid #ddd;
@@ -43,7 +61,7 @@ input {
 }
 
 button {
-  width: 80%;
+  width: 100%;
   padding: 12px;
   margin: 20px 0 10px;
   border: none;
@@ -75,44 +93,4 @@ button.secondary:hover {
 p {
   color: #666;
   font-size: 14px;
-}
-
-/* Media Queries for Responsiveness */
-
-@media (max-width: 768px) {
-  .auth-container {
-    padding: 15px;
-  }
-
-  input {
-    width: 80%;
-  }
-
-  button {
-    width: 90%;
-    padding: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .auth-container {
-    padding: 10px;
-  }
-
-  input {
-    width: 90%;
-  }
-
-  button {
-    width: 100%;
-    padding: 8px;
-  }
-
-  h2 {
-    font-size: 20px;
-  }
-
-  p {
-    font-size: 12px;
-  }
 }

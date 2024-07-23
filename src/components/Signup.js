@@ -8,19 +8,20 @@ const SignUp = ({ setUser }) => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSignUp = async () => {
     // Sign up the user with email and password
-    const { error, data } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       setError(error.message);
     } else {
-      // After signing up, save the username and phone to the user's profile
+      // After signing up, save the username, phone, and dob to the user's profile
       const { error: updateError } = await supabase.from('profiles').insert([
-        { id: data.user.id, username, phone }
+        { id: data.user.id, username, phone, dob }
       ]);
 
       if (updateError) {
@@ -70,8 +71,13 @@ const SignUp = ({ setUser }) => {
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
+      <input
+        type="date"
+        placeholder="Date of Birth"
+        value={dob}
+        onChange={(e) => setDob(e.target.value)}
+      />
       <button className="primary" onClick={handleSignUp}>Sign Up</button>
-      <button className="secondary" onClick={handleGitHubSignIn}>Sign Up with GitHub</button>
       {error && <p>{error}</p>}
     </div>
   );

@@ -10,23 +10,6 @@ body {
   align-items: center;
 }
 
-nav {
-  border-bottom: 1px solid #e6ecf0;
-  align-items: center;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  display: flex;
-  height: 40px;
-  justify-content: space-between;
-  margin: 0;
-  padding: 10px 20px;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-}
-
 .sidebar, .right-sidebar {
   border-color: #e6ecf0;
   border-style: solid;

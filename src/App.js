@@ -6,6 +6,7 @@ import Login from './components/Login';
 import SignUp from './components/Signup';
 import Post from './components/Post';
 import Feed from './components/Feed';
+import Profile from './components/Profile';
 import { supabase } from './supabaseClient';
 
 const App = () => {
@@ -48,6 +49,7 @@ const AppContent = ({ user, setUser }) => {
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/signup" element={<SignUp setUser={setUser} />} />
           <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </>
