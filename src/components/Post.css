@@ -3,14 +3,14 @@
 .post-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Corrected from left to flex-start */
+  align-items: flex-start;
   width: 100%;
   max-width: 500px;
   padding: 20px;
   border-radius: 10px;
   border: 1px solid #ddd;
   background-color: #ffffff;
-  margin-top: 15%;
+  margin-top: 10%;
 }
 
 textarea {
@@ -50,15 +50,47 @@ textarea {
 
 /* Media Queries for Responsiveness */
 
+@media (max-width: 1024px) {
+  .post-container {
+    padding: 15px;
+    margin-top: 5%;
+  }
+
+  .post-button {
+    width: 40%;
+    padding: 10px;
+  }
+
+  textarea {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .post-container {
+    padding: 15px;
+    margin-top: 15%;
+  }
+
+  .post-button {
+    width: 50%;
+    padding: 10px;
+  }
+
+  textarea {
+    padding: 10px;
+  }
+}
+
 @media (max-width: 480px) {
   .post-container {
-    padding: 20px;
-    margin-top: 30%; /* Adjust this value to move the post box further down */
+    padding: 15px;
+    margin-top: 15%;
     max-width: 100%;
   }
 
   .post-button {
-    width: 30%;
+    width: 60%;
     padding: 10px;
   }
 
