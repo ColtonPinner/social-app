@@ -1,80 +1,61 @@
 /* Feed.css */
 
 .feed-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Corrected from left to flex-start */
-    width: 100%;
-    max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Corrected from left to flex-start */
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background-color: #ffffff;
+  margin-top: 4%;
+}
+
+.tweet-block {
+  display: flex;
+  flex-direction: column; /* Display items in a column */
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.tweet-user {
+  font-size: 0.8em;
+  color: #555;
+  margin-top: 5px;
+}
+
+.tweet-content {
+  margin: 10px 0;
+}
+
+.tweet-date {
+  font-size: 0.8em;
+  color: #999;
+}
+
+/* Media Queries for Responsiveness */
+
+
+@media (max-width: 480px) {
+  .feed-container {
     padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background-color: #ffffff;
-    margin-top: 5%;
+    margin-top: 30%; /* Match the post box margin-top on mobile */
+    max-width: 90%;
   }
-  
+
   .tweet-block {
-    display: flex;
-    flex-direction: column; /* Display items in a column */
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
+    padding: 5px;
   }
-  
-  .tweet-user {
-    font-size: 0.8em;
-    color: #555;
-    margin-top: 5px;
+
+  .tweet-user, .tweet-date {
+    font-size: 0.7em;
   }
-  
+
   .tweet-content {
-    margin: 10px 0;
+    margin: 6px 0;
   }
-  
-  .tweet-date {
-    font-size: 0.8em;
-    color: #999;
-  }
-  
-  /* Media Queries for Responsiveness */
-  
-  @media (max-width: 768px) {
-    .feed-container {
-      padding: 20px;
-      margin-top: 10px;
-      max-width: 100%;
-    }
-  
-    .tweet-block {
-      padding: 8px;
-    }
-  
-    .tweet-user, .tweet-date {
-      font-size: 0.75em;
-    }
-  
-    .tweet-content {
-      margin: 8px 0;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .feed-container {
-      padding: 20px;
-      margin-top: 10px;
-      max-width: 100%;
-    }
-  
-    .tweet-block {
-      padding: 5px;
-    }
-  
-    .tweet-user, .tweet-date {
-      font-size: 0.7em;
-    }
-  
-    .tweet-content {
-      margin: 6px 0;
-    }
-  }
+}
