@@ -14,16 +14,17 @@ body {
 .auth-container {
   width: 100%;
   min-width: 300px;
-  max-width: 800px;
+  max-width: 500px; /* Adjusted max-width for better mobile experience */
   padding: 20px;
   border-radius: 10px;
-  border-color:  #ddd;
+  border-color: #ddd;
   border-width: 1px;
   border-style: solid;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #ffffff; /* Ensure background is white */
 }
 
 h2 {
@@ -96,7 +97,6 @@ p {
   font-size: 14px;
 }
 
-
 /* Date input styling */
 input[type="date"] {
   background-color: #f0f0f0;
@@ -119,3 +119,35 @@ input[type="date"] {
   display: inline-block; /* Makes the element inline but with padding and margin */
 }
 
+/* Media Queries for Responsive Design */
+
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 15px;
+    max-width: 400px;
+  }
+
+  input, button {
+    font-size: 14px;
+  }
+
+  legend {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 10px;
+    max-width: 300px;
+  }
+
+  input, button {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  legend {
+    font-size: 14px;
+  }
+}
