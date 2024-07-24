@@ -24,7 +24,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add some shadow for better visual appearance */
+  /* Optional: Add some shadow for better visual appearance */
   background-color: #ffffff; /* Ensure background is white */
 }
 

@@ -4,13 +4,11 @@ import './Post.css';
 
 const Post = ({ user, addTweet }) => {
   const [content, setContent] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (content.trim() === '') {
-      setError('Tweet content cannot be empty');
+  const handlePost = async () => {
+    if (!content) {
+      setError('Tweet content is required');
       return;
     }
 
@@ -19,28 +17,25 @@ const Post = ({ user, addTweet }) => {
       .insert([{ content, user_id: user.id }]);
 
     if (error) {
-      console.error('Error posting tweet:', error);
       setError(error.message);
     } else if (data && data.length > 0) {
       addTweet(data[0]);
       setContent('');
-      setError(null);
+      setError('');
     } else {
-      setError('Unexpected error occurred');
+      setError('Failed to post tweet');
     }
   };
 
   return (
     <div className="post-container">
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="What's happening?"
-        />
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="post-button">Tweet</button>
-      </form>
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="What's happening?"
+      />
+      <button className="post-button" onClick={handlePost}>Tweet</button>
+      {error && <div className="error-message">{error}</div>}
     </div>
   );
 };
