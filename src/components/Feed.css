@@ -39,6 +39,7 @@
 
 /* Media Queries for Responsiveness */
 
+/* iPad */
 @media (max-width: 1024px) {
   .feed-container {
     padding: 15px;
@@ -58,6 +59,7 @@
   }
 }
 
+/* Tablets */
 @media (max-width: 768px) {
   .feed-container {
     padding: 15px;
@@ -77,10 +79,11 @@
   }
 }
 
+/* Mobile devices */
 @media (max-width: 480px) {
   .feed-container {
     padding: 15px;
-    margin-top: 10%;
+    margin-top: 30%;
     max-width: 100%;
   }
 
@@ -94,5 +97,71 @@
 
   .tweet-content {
     margin: 6px 0;
+  }
+}
+
+/* iPhone 6/7/8, SE */
+@media (device-width: 375px) and (device-height: 667px),
+       (device-width: 320px) and (device-height: 568px) {
+  .feed-container {
+    padding: 15px;
+    max-width: 340px;
+    margin-top: 20px;
+  }
+
+  .tweet-block {
+    padding: 8px;
+  }
+
+  .tweet-user, .tweet-date {
+    font-size: 14px;
+  }
+
+  .tweet-content {
+    margin: 8px 0;
+  }
+}
+
+/* iPhone X, 11 Pro, 12 Mini */
+@media (device-width: 375px) and (device-height: 812px),
+       (device-width: 414px) and (device-height: 896px) {
+  .feed-container {
+    padding: 15px;
+    max-width: 380px;
+    margin-top: 20px;
+  }
+
+  .tweet-block {
+    padding: 8px;
+  }
+
+  .tweet-user, .tweet-date {
+    font-size: 14px;
+  }
+
+  .tweet-content {
+    margin: 8px 0;
+  }
+}
+
+/* iPhone XR, 11, 12, 12 Pro, 12 Pro Max */
+@media (device-width: 390px) and (device-height: 844px),
+       (device-width: 428px) and (device-height: 926px) {
+  .feed-container {
+    padding: 15px;
+    max-width: 400px;
+    margin-top: 20px;
+  }
+
+  .tweet-block {
+    padding: 8px;
+  }
+
+  .tweet-user, .tweet-date {
+    font-size: 14px;
+  }
+
+  .tweet-content {
+    margin: 8px 0;
   }
 }

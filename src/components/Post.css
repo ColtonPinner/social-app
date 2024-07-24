@@ -3,7 +3,7 @@
 .post-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-start; /* Corrected from left to flex-start */
   width: 100%;
   max-width: 500px;
   padding: 20px;
@@ -85,7 +85,7 @@ textarea {
 @media (max-width: 480px) {
   .post-container {
     padding: 15px;
-    margin-top: 15%;
+    margin-top: 30%;
     max-width: 100%;
   }
 
@@ -100,5 +100,26 @@ textarea {
 
   .error-message {
     font-size: 0.8em;
+  }
+}
+
+/* Specific adjustments for iPhone X and later */
+@media (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
+       (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
+       (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+       (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+  .post-container {
+    padding: 15px;
+    max-width: 350px;
+    margin-top: 15%;
+  }
+
+  textarea, .post-button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .error-message {
+    font-size: 0.75em;
   }
 }
