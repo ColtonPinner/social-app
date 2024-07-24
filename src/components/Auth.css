@@ -162,3 +162,26 @@ p {
     font-size: 10px;
   }
 }
+
+/* Date input styling */
+input[type="date"] {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Date display styling */
+.date-display {
+  background-color: #e7e7e7;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 14px;
+  color: #333;
+  margin-top: 10px;
+  display: inline-block; /* Makes the element inline but with padding and margin */
+}
+
