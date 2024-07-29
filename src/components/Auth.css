@@ -1,18 +1,7 @@
 /* Auth.css */
 
-body {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
 .auth-container {
-  width: 100%;
+  margin-top: 50%;
   min-width: 300px;
   max-width: 500px;
   padding: 20px;
