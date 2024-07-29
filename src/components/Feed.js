@@ -1,48 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import './Feed.css';
 
 const Feed = () => {
   const [tweets, setTweets] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const TWEETS_PER_PAGE = 10;
+
+  useEffect(() => {
+	fetchTweets();
+  }, [page]);
 
   const fetchTweets = async () => {
+	setLoading(true);
 	const { data, error } = await supabase
-	  .from('tweets_with_users')
-	  .select(`
-		id,
-		content,
-		created_at,
-		user_id,
-		email
-	  `)
-	  .order('created_at', { ascending: false });
+	  .from('tweets')
+	  .select('*')
+	  .order('created_at', { ascending: false })
+	  .range((page - 1) * TWEETS_PER_PAGE, page * TWEETS_PER_PAGE - 1);
 
 	if (error) {
 	  console.error('Error fetching tweets:', error);
-	} else if (data) {
-	  setTweets(data);
 	} else {
-	  console.error('No data returned from fetchTweets');
+	  setTweets((prevTweets) => [...prevTweets, ...data]);
 	}
+	setLoading(false);
   };
-
-  useEffect(() => {
-	fetchTweets(); // Initial fetch
-
-	const intervalId = setInterval(fetchTweets, 30000); // Fetch tweets every 30 seconds
-
-	return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  }, []);
 
   return (
 	<div className="feed-container">
-	  {tweets.map(tweet => (
-		<div key={tweet.id} className="tweet-box">
-      <small className="tweet-date">{tweet.created_at}</small>
-      <small className="tweet-user">{tweet.email}</small>
-		  <p className="tweet-content">{tweet.content}</p>
-		</div>
-	  ))}
+	  <div className="tweets">
+		{tweets.map((tweet, index) => (
+		  <React.Fragment key={tweet.id}>
+			<div className="tweet">
+        <h3>{tweet.user_id}</h3>
+        <p>{new Date(tweet.created_at).toLocaleString()}</p>
+			  <p>{tweet.content}</p>
+			  {tweet.image_url && <img src={tweet.image_url} alt="Tweet" />}
+			</div>
+			{index < tweets.length - 1 && <hr />}
+		  </React.Fragment>
+		))}
+	  </div>
+	  {loading && <div>Loading...</div>}
+	  <button onClick={() => setPage(page + 1)} disabled={loading}>
+		Load More
+	  </button>
 	</div>
   );
 };
