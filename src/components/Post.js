@@ -72,9 +72,6 @@ const Post = ({ user, addTweet }) => {
 		onChange={(e) => setContent(e.target.value)}
 		placeholder="What's happening?"
 	  />
-	  <button onClick={() => document.getElementById('imageInput').click()}>
-		Upload Image
-	  </button>
 	  <input
 		type="file"
 		id="imageInput"
