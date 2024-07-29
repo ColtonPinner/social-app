@@ -3,7 +3,7 @@
 .post-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   width: 90%; /* Adjust width to be responsive */
   max-width: 500px;
   padding: 20px;
@@ -13,11 +13,12 @@
   margin: 100px auto;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 460px) {
   .post-container {
     width: 95%; /* Adjust width for smaller devices */
     margin: 50px auto; /* Adjust margin for smaller devices */
     border-radius: 0%;
+    padding: 10px;
   }
 }
 
