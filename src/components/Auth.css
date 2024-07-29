@@ -59,7 +59,7 @@ input {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 16px; /* Prevent zoom on mobile */
   box-sizing: border-box;
 }
 
@@ -124,60 +124,60 @@ input[type="date"] {
 
 @media (max-width: 768px) {
   .auth-container {
-    padding: 15px;
-    max-width: 400px;
+	padding: 15px;
+	max-width: 400px;
   }
 
   input, button {
-    font-size: 14px;
+	font-size: 14px;
   }
 
   legend {
-    font-size: 16px;
+	font-size: 16px;
   }
 }
 
 @media (max-width: 480px) {
   .auth-container {
-    padding: 10px;
-    max-width: 300px;
+	padding: 10px;
+	max-width: 300px;
   }
 
   input, button {
-    font-size: 12px;
-    padding: 8px;
+	font-size: 12px;
+	padding: 8px;
   }
 
   legend {
-    font-size: 14px;
+	font-size: 14px;
   }
 
   h2 {
-    font-size: 20px;
+	font-size: 20px;
   }
 }
 
 /* Specific adjustments for iPhone X and later */
 @media (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
-       (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
-       (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
-       (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+	   (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
+	   (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+	   (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
   .auth-container {
-    padding: 15px;
-    max-width: 350px;
-    margin-top: 20px;
+	padding: 15px;
+	max-width: 350px;
+	margin-top: 20px;
   }
 
   input, button {
-    font-size: 14px;
-    padding: 10px;
+	font-size: 14px;
+	padding: 10px;
   }
 
   legend {
-    font-size: 16px;
+	font-size: 16px;
   }
 
   h2 {
-    font-size: 22px;
+	font-size: 22px;
   }
 }
