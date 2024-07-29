@@ -79,12 +79,11 @@ const Post = ({ user, addTweet }) => {
 		style={{ display: 'none' }}
 		onChange={handleImageChange}
 	  />
-	  <button className="post-button" onClick={handlePost}>Tweet</button>
+	  <button className="post-button" onClick={handlePost}>Post</button>
 	  {error && <div className="error-message">{error}</div>}
 	  {postedTweet && (
 		<div className="tweet">
 		  <p>{postedTweet.content}</p>
-		  {postedTweet.image_url && <img src={postedTweet.image_url} alt="Tweet" />}
 		</div>
 	  )}
 	</div>
