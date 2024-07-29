@@ -1,25 +1,26 @@
-/* Feed.css */
 
 .feed-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  max-width: 500px;
+  max-width: 800px;
   padding: 20px;
   border-radius: 10px;
-  border: 1px solid #ddd;
-  background-color: #ffffff;
-  margin-top: 10%;
+  margin-top: 5%;
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
-.tweet-block {
+.tweet-box {
   display: flex;
   flex-direction: column;
   width: 100%;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  margin-bottom: 10px; /* Adds space between each tweet box */
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
 .tweet-user {
@@ -30,6 +31,7 @@
 
 .tweet-content {
   margin: 10px 0;
+  font-size: 1em;
 }
 
 .tweet-date {
@@ -46,11 +48,12 @@
     margin-top: 5%;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 8px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 0.75em;
   }
 
@@ -66,11 +69,12 @@
     margin-top: 5%;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 8px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 0.75em;
   }
 
@@ -87,11 +91,12 @@
     max-width: 100%;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 5px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 0.7em;
   }
 
@@ -102,18 +107,19 @@
 
 /* iPhone 6/7/8, SE */
 @media (device-width: 375px) and (device-height: 667px),
-       (device-width: 320px) and (device-height: 568px) {
+(device-width: 320px) and (device-height: 568px) {
   .feed-container {
     padding: 15px;
     max-width: 340px;
     margin-top: 20px;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 8px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 14px;
   }
 
@@ -124,18 +130,19 @@
 
 /* iPhone X, 11 Pro, 12 Mini */
 @media (device-width: 375px) and (device-height: 812px),
-       (device-width: 414px) and (device-height: 896px) {
+(device-width: 414px) and (device-height: 896px) {
   .feed-container {
     padding: 15px;
     max-width: 380px;
     margin-top: 5%;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 8px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 14px;
   }
 
@@ -146,18 +153,19 @@
 
 /* iPhone XR, 11, 12, 12 Pro, 12 Pro Max */
 @media (device-width: 390px) and (device-height: 844px),
-       (device-width: 428px) and (device-height: 926px) {
+(device-width: 428px) and (device-height: 926px) {
   .feed-container {
     padding: 15px;
     max-width: 400px;
     margin-top: 5%;
   }
 
-  .tweet-block {
+  .tweet-box {
     padding: 8px;
   }
 
-  .tweet-user, .tweet-date {
+  .tweet-user,
+  .tweet-date {
     font-size: 14px;
   }
 

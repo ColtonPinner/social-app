@@ -34,7 +34,7 @@ body {
   border-width: 1px;
   padding: 20px;
   margin: 50px 8px 10px;
-  height: 100vh; /* Full height of the viewport */
+  height: 100lvh; /* Full height of the viewport */
 }
 
 /* Media Queries for Responsive Design */
