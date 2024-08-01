@@ -1,5 +1,15 @@
+.feed-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  box-sizing: border-box;
+}
 
 .feed-container {
+  margin: -50px auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,10 +20,19 @@
   box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
+.post-box {
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
 .tweet-box {
   align-items: flex-start;
   display: flex;
-  align-items: left;
   flex-direction: column;
   border-radius: 10px;
   border: 1px solid #ddd;
@@ -44,8 +63,13 @@
 @media (max-width: 480px) {
   .feed-container {
     padding: 15px;
-    margin-top: 30%;
+    margin: -40px auto;
     max-width: 100%;
+  }
+
+  .post-box {
+    padding: 15px;
+    margin-bottom: 15px;
   }
 
   .tweet-box {
@@ -61,4 +85,3 @@
     margin: 6px 0;
   }
 }
-

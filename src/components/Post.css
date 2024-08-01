@@ -16,7 +16,7 @@
 @media (max-width: 460px) {
   .post-container {
     width: 95%; /* Adjust width for smaller devices */
-    margin: 50px auto; /* Adjust margin for smaller devices */
+    margin: 60px auto; /* Adjust margin for smaller devices */
     border-radius: 0%;
     padding: 10px;
   }
