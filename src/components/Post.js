@@ -40,10 +40,10 @@ const Post = ({ user, addTweet }) => {
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="What's happening?"
+        placeholder="👋 What's happening?"
       />
       <button className="post-button" onClick={handlePost}>
-        Tweet
+        Post 🚀
       </button>
       {error && <div className="error-message">{error}</div>}
     </div>
