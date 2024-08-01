@@ -47,3 +47,13 @@ nav a {
     text-decoration: none; /* Removes underline from links */
     background-color: transparent; /* Keeps background transparent */
 }
+
+@media (max-width: 460px) {
+    nav a {
+        border-radius: 0; /* Remove border radius */
+        width: 100%; /* Full width */
+        height: 68px; /* Make it square */
+        margin: 0; /* Remove margin */
+        padding: 0; /* Remove padding */
+    }
+}
