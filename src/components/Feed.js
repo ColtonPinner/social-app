@@ -44,6 +44,7 @@ const Feed = () => {
         {tweets.map((tweet, index) => (
           <React.Fragment key={tweet.id}>
             <div className="tweet">
+            <img src={tweet.profile_picture_url} alt="Profile" className="profile-picture" />
               <h3>{tweet.user_id}</h3>
               <p>{new Date(tweet.created_at).toLocaleString()}</p>
               <p>{tweet.content}</p>

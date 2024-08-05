@@ -43,7 +43,7 @@ const Post = ({ user, addTweet }) => {
         placeholder="👋 What's happening?"
       />
       <button className="post-button" onClick={handlePost}>
-        Post 🚀
+        Post
       </button>
       {error && <div className="error-message">{error}</div>}
     </div>

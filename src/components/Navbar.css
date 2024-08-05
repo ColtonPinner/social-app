@@ -26,13 +26,21 @@ nav {
 
 @media (max-width: 460px) {
     nav {
-        border-radius: 0; /* Remove border radius */
-        width: 100%; /* Full width */
-        height: 68px; /* Make it square */
-        margin: 0; /* Remove margin */
-        padding: 0; /* Remove padding */
+        width: 90%; /* Slightly smaller width */
+        height: auto; /* Adjust height */
+        margin: 0 auto 30px; /* Center horizontally and add bottom margin */
+        padding: 0px; /* Add padding */
+        position: fixed; /* Fixed position */
+        bottom: 0; /* Align to the bottom of the page */
+        top: auto; /* Override top alignment */
+        left: 50%; /* Center horizontally */
+        transform: translateX(-50%); /* Center horizontally */
+        border-radius: 20px; /* Rounded corners */
+        background-color: rgba(255, 255, 255, 0.8); /* Fixed syntax error */
+        backdrop-filter: blur(10px);
     }
 }
+
 
 nav a {
     display: inline-flex; /* Ensures items are aligned inline and flexibly */

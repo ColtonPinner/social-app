@@ -41,6 +41,25 @@
   box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
+.profile-picture {
+  width: 40px;
+  height: 40px;
+  background-color: #999;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.tweet-box {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  margin-bottom: 10px; /* Adds space between each tweet box */
+  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+}
+
 .tweet-user {
   font-size: 0.8em;
   color: #555;
@@ -57,13 +76,31 @@
   color: #999;
 }
 
+.tweet-user {
+  font-size: 0.8em;
+  color: #555;
+  margin-top: 5px;
+}
+
+.tweet-content {
+  margin: 10px 0;
+  font-size: 1em;
+}
+
+.tweet-date {
+  font-size: 0.8em;
+  color: #999;
+}
+
+
+
 /* Media Queries for Responsiveness */
 
 /* Mobile devices */
 @media (max-width: 480px) {
   .feed-container {
     padding: 15px;
-    margin: -40px auto;
+    margin: 0px auto;
     max-width: 100%;
   }
 
