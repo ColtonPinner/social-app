@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
@@ -8,6 +7,7 @@ import SignUp from './components/Signup';
 import Post from './components/Post';
 import Feed from './components/Feed';
 import Settings from './components/Settings';
+import Messages from './components/Messages'; // Import the Messages component
 import { supabase } from './supabaseClient';
 
 const App = () => {
@@ -45,11 +45,12 @@ const AppContent = ({ user, setUser }) => {
     <>
       {!hideNavbar && <Navbar />}
       <div className="container">
-        <Routes>
+      <Routes>
           <Route path="/" element={!user ? <Navigate to="/login" /> : <Navigate to="/tweets" />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
           <Route path="/signup" element={<SignUp setUser={setUser} />} />
           <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
+          <Route path="/messages" element={user ? <Messages user={user} /> : <Navigate to="/login" />} />
           <Route path="/settings" element={user ? <Settings user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>

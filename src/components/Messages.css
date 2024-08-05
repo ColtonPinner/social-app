@@ -1,0 +1,49 @@
+.messages-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 30%auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+  }
+  
+  .message-input {
+    margin-bottom: 20px;
+  }
+  
+  .message-input input,
+  .message-input textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+  }
+  
+  .message-input button {
+    padding: 10px 20px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .message-item {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  .message-item p {
+    margin: 5px 0;
+  }
+  
+  .message-date {
+    font-size: 0.8em;
+    color: #999;
+  }
