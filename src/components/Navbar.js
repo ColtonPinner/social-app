@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Navbar.css'; // Import the Navbar.css file
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faHome, faUser } from '@fortawesome/free-solid-svg-icons'; // Import the necessary icons
+import { faSignOutAlt, faHome, faUser, faGear } from '@fortawesome/free-solid-svg-icons'; // Import the necessary icons
 
 const Navbar = () => {
   const handleSignOut = async () => {
@@ -20,8 +20,8 @@ const Navbar = () => {
 		<FontAwesomeIcon icon={faUser} />
 	  </Link>
 	   {/* Replace button with Link for sign out */}
-     <Link to="/" onClick={handleSignOut}>
-        <FontAwesomeIcon icon={faSignOutAlt} />
+     <Link to="/settings">
+        <FontAwesomeIcon icon={faGear} />
       </Link>
 	</nav>
   );

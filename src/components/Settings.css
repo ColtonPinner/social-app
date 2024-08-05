@@ -1,0 +1,40 @@
+/* src/components/Settings.css */
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 50% auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+  }
+  
+  .settings-container input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .settings-container button {
+    padding: 10px 20px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .settings-container .signout-button {
+    background-color: #d9534f; /* Different color for sign-out button */
+  }
+  
+  .settings-container .error-message {
+    color: red;
+  }
+  
+  .settings-container .success-message {
+    color: green;
+  }

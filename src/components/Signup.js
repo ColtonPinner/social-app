@@ -14,7 +14,7 @@ const SignUp = ({ setUser }) => {
 
   const handleSignUp = async () => {
     // Sign up the user with email and password
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password, options:{data:{username,phone,dob}} });
 
     if (error) {
       setError(error.message);
