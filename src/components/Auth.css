@@ -1,10 +1,16 @@
 /* Auth.css */
+.logo {
+  display: block;
+  margin: 20% auto; /* Center the logo and add some margin below it */
+  width: 150px; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+}
 
 .auth-container {
   min-width: 300px;
   max-width: 500px;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 20px;
   border-color: #ddd;
   border-width: 1px;
   border-style: solid;
@@ -12,7 +18,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 50% auto;
+  margin: 30% auto;
   /* Optional: Add some shadow for better visual appearance */
   background-color: #ffffff; /* Ensure background is white */
 }
@@ -82,6 +88,13 @@ button.secondary:hover {
   background-color: #bdbdbd;
 }
 
+
+button.tertiary {
+  border-color: #000000;
+  border-width: 1px;
+  border-radius: 8px;
+
+}
 p {
   color: #666;
   font-size: 14px;
