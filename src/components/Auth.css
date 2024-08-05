@@ -1,7 +1,7 @@
 /* Auth.css */
 .logo {
   display: block;
-  margin: 20% auto; /* Center the logo and add some margin below it */
+  margin: 15% auto; /* Center the logo and add some margin below it */
   width: 150px; /* Adjust the width as needed */
   height: auto; /* Maintain aspect ratio */
 }
