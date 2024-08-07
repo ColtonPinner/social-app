@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import './Auth.css'; // Import the Auth.css file
-import { ReactComponent as Logo } from '../assets/basic-logo.svg'; // Correct the import path
+import './Auth.css';
+import { ReactComponent as Logo } from '../assets/basic-logo.svg';
 
 const SignUp = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -18,13 +18,23 @@ const SignUp = ({ setUser }) => {
     try {
       // Sign up the user with email and password
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email, 
+        email,
         password,
         options: { data: { username, phone, dob } }
       });
 
       if (signUpError) {
         throw signUpError;
+      }
+
+      // Insert profile information
+      const { user } = data;
+      const { error: profileError } = await supabase.from('profiles').insert([
+        { id: user.id, email: user.email, username, phone, dob }
+      ]);
+
+      if (profileError) {
+        throw profileError;
       }
 
       // Automatically log in the user after successful signup
@@ -34,8 +44,8 @@ const SignUp = ({ setUser }) => {
         throw signInError;
       }
 
-      setUser(data.user);
-      navigate('/tweets'); // Redirect to tweets
+      setUser(user);
+      navigate('/login'); // Redirect to dashboard
     } catch (error) {
       setError(error.message);
     }
@@ -53,10 +63,9 @@ const SignUp = ({ setUser }) => {
   };
 
   return (
-	<>
-	<Logo className="logo" />
+    <>
+    <Logo className="logo" />
     <div className="auth-container">
-      
       <h2>Sign Up</h2>
       <input
         type="email"
@@ -89,10 +98,9 @@ const SignUp = ({ setUser }) => {
         onChange={(e) => setDob(e.target.value)}
       />
       <button className="primary" onClick={handleSignUp}>Sign Up</button>
-      <button className="secondary" onClick={handleGitHubSignIn}>Sign Up with GitHub</button>
       {error && <p>{error}</p>}
     </div>
-	</>
+    </>
   );
 };
 
