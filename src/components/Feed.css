@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px; /* Increased width */
   padding: 20px;
   box-sizing: border-box;
 }
@@ -14,7 +14,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px; /* Increased width */
   padding: 20px;
   border-radius: 10px;
   box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
@@ -22,7 +22,7 @@
 
 .post-box {
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px; /* Increased width */
   padding: 20px;
   border-radius: 10px;
   border: 1px solid #ddd;
@@ -41,29 +41,24 @@
   box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
 }
 
+.tweet-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
 .profile-picture {
-  width: 40px;
-  height: 40px;
+  width: 50px; /* Increased size */
+  height: 50px; /* Increased size */
   background-color: #999;
   border-radius: 50%;
-  margin-right: 10px;
-}
-
-.tweet-box {
-  align-items: flex-start;
-  display: flex;
-  flex-direction: column;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  background-color: #f9f9f9;
-  margin-bottom: 10px; /* Adds space between each tweet box */
-  box-sizing: border-box; /* Ensure padding and border are included in the element's total width and height */
+  margin-right: 15px; /* Increased spacing */
 }
 
 .tweet-user {
-  font-size: 0.8em;
-  color: #555;
-  margin-top: 5px;
+  font-size: 1.2em; /* Increased font size */
+  color: #333; /* Darker color */
+  font-weight: bold; /* Bold text */
 }
 
 .tweet-content {
@@ -76,23 +71,19 @@
   color: #999;
 }
 
-.tweet-user {
-  font-size: 0.8em;
-  color: #555;
-  margin-top: 5px;
+.like-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 1.5em;
+  color: #000000;
+  text-align: left;
 }
 
-.tweet-content {
-  margin: 10px 0;
-  font-size: 1em;
+.like-button:hover {
+  color: #303030;
 }
-
-.tweet-date {
-  font-size: 0.8em;
-  color: #999;
-}
-
-
 
 /* Media Queries for Responsiveness */
 
