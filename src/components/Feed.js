@@ -7,14 +7,14 @@ const Feed = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const TWEETS_PER_PAGE = 10;
+  const TWEETS_PER_PAGE = 8;
 
   useEffect(() => {
     fetchTweets(page);
   }, [page]);
 
   useEffect(() => {
-    // Set up real-time subscription
+    // Set up real-time subscription for INSERT events
     const tweetsSubscription = supabase
       .channel('public:tweets')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tweets' }, payload => {
@@ -32,7 +32,13 @@ const Feed = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('tweets')
-      .select('*')
+      .select(`
+        id,
+        content,
+        created_at,
+        user_id,
+        profiles(username)
+      `)
       .order('created_at', { ascending: false })
       .range((page - 1) * TWEETS_PER_PAGE, page * TWEETS_PER_PAGE - 1);
 
@@ -48,7 +54,6 @@ const Feed = () => {
   };
 
   const handleLike = (tweetId) => {
-    // Handle the like functionality here
     console.log(`Liked tweet with ID: ${tweetId}`);
   };
 
@@ -62,13 +67,9 @@ const Feed = () => {
         {tweets.map((tweet, index) => (
           <React.Fragment key={tweet.id}>
             <div className="tweet">
-              <div className="tweet-header">
-                <img src={tweet.profile_picture_url} alt="Profile" className="profile-picture" />
-                <h3 className="tweet-user">{tweet.user_id}</h3>
-              </div>
-              <p className="tweet-date">{new Date(tweet.created_at).toLocaleString()}</p>
-              <p className="tweet-content">{tweet.content}</p>
-              {tweet.image_url && <img src={tweet.image_url} alt="Tweet" />}
+              <h4>{tweet.profiles?.username || 'Unknown User'}</h4>
+              <h5>{new Date(tweet.created_at).toLocaleString()}</h5>
+              <h3>{tweet.content}</h3>
               <button className="like-button" onClick={() => handleLike(tweet.id)}>
                 <i className="fas fa-heart"></i>
               </button>
