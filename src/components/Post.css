@@ -3,7 +3,7 @@
 .post-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   width: 90%; /* Adjust width to be responsive */
   max-width: 500px;
   padding: 20px;

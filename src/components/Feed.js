@@ -4,6 +4,7 @@ import './Feed.css';
 
 const Feed = () => {
   const [tweets, setTweets] = useState([]);
+  const [newTweet, setNewTweet] = useState('');
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -45,7 +46,7 @@ const Feed = () => {
     if (error) {
       console.error('Error fetching tweets:', error);
     } else {
-      setTweets(prevTweets => [...prevTweets, ...data]);
+      setTweets(prevTweets => (page === 1 ? data : [...prevTweets, ...data]));
       if (data.length < TWEETS_PER_PAGE) {
         setHasMore(false);
       }
@@ -53,39 +54,55 @@ const Feed = () => {
     setLoading(false);
   };
 
-  const handleLike = (tweetId) => {
-    console.log(`Liked tweet with ID: ${tweetId}`);
+  const handlePostTweet = async () => {
+    if (newTweet.trim() === '') return;
+
+    const { data, error } = await supabase
+      .from('tweets')
+      .insert([
+        {
+          content: newTweet,
+          user_id: supabase.auth.user().id // Assuming you have user authentication set up
+        }
+      ])
+      .single();
+
+    if (error) {
+      console.error('Error posting tweet:', error);
+    } else {
+      setNewTweet(''); // Clear the input after posting
+    }
   };
 
-  const loadMoreTweets = () => {
-    setPage(prevPage => prevPage + 1);
-  };
+const handleLike = (tweetId) => {
+  console.log(`Liked tweet with ID: ${tweetId}`);
+};
 
-  return (
-    <div className="feed-container">
-      <div className="tweets">
-        {tweets.map((tweet, index) => (
-          <React.Fragment key={tweet.id}>
-            <div className="tweet">
-              <h4>{tweet.profiles?.username || 'Unknown User'}</h4>
-              <h5>{new Date(tweet.created_at).toLocaleString()}</h5>
-              <h3>{tweet.content}</h3>
-              <button className="like-button" onClick={() => handleLike(tweet.id)}>
-                <i className="fas fa-heart"></i>
-              </button>
-            </div>
-            {index < tweets.length - 1 && <hr />}
-          </React.Fragment>
-        ))}
-      </div>
-      {loading && <div>Loading...</div>}
-      {hasMore && !loading && (
-        <button className="load-more-button" onClick={loadMoreTweets}>
-          Load More
-        </button>
-      )}
+const loadMoreTweets = () => {
+  setPage(prevPage => prevPage + 1);
+};
+
+return (
+  <div className="feed-container">
+    <div className="tweets">
+      {tweets.map((tweet) => (
+        <React.Fragment key={tweet.id}>
+          <div className="tweet">
+            <h1>{tweet.profiles?.username || 'Unknown User'}</h1>
+            <p>{new Date(tweet.created_at).toLocaleString()}</p>
+            <h3>{tweet.content}</h3>
+          </div>
+        </React.Fragment>
+      ))}
     </div>
-  );
+    {loading && <div>Loading...</div>}
+    {hasMore && !loading && (
+      <button className="load-more-button" onClick={loadMoreTweets}>
+        Load More
+      </button>
+    )}
+  </div>
+);
 };
 
 export default Feed;
