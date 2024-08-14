@@ -1,5 +1,5 @@
 .feed-container {
-  margin-top: -15%; /* Adjusted margin for better spacing */
+  margin-top: auto; /* Adjusted margin for better spacing */
   display: flex;
   flex-direction: column;
   align-items: center; /* Center the tweets */
