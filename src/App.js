@@ -8,6 +8,7 @@ import Post from './components/Post';
 import Feed from './components/Feed';
 import Settings from './components/Settings';
 import Messages from './components/Messages'; // Import the Messages component
+import Profile from './components/Profile'; // Import the Profile component
 import { supabase } from './supabaseClient';
 
 const App = () => {
@@ -51,6 +52,7 @@ const AppContent = ({ user, setUser }) => {
           <Route path="/signup" element={<SignUp setUser={setUser} />} />
           <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages" element={user ? <Messages user={user} /> : <Navigate to="/login" />} />
+          <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
           <Route path="/settings" element={user ? <Settings user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>

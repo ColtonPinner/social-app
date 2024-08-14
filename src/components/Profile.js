@@ -33,7 +33,7 @@ const Profile = ({ user }) => {
 
   return (
     <div className="profile-container">
-      <h2>Profile</h2>
+      <h2>{profile.username}</h2>
       <div className="profile-field">
         <label>Email:</label>
         <p>{user.email}</p>
