@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import './Auth.css';
 import { ReactComponent as Logo } from '../assets/basic-logo.svg';
+import Login from './Login';
 
 const SignUp = ({ setUser }) => {
   const [email, setEmail] = useState('');
