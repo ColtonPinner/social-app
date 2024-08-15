@@ -16,22 +16,20 @@ const App = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      try {
+      // Check if there is a session stored in local storage
+      const storedSession = localStorage.getItem('supabase-session');
+      if (storedSession) {
+        const session = JSON.parse(storedSession);
+        setUser(session.user);
+        // Set the Supabase session manually
+        await supabase.auth.setSession(session);
+      } else {
+        // Otherwise, get the session from Supabase
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setUser(session.user);
-          // Store session data in local storage to keep the user signed in
           localStorage.setItem('supabase-session', JSON.stringify(session));
-        } else {
-          // If no session is found, check local storage for existing session
-          const storedSession = localStorage.getItem('supabase-session');
-          if (storedSession) {
-            const parsedSession = JSON.parse(storedSession);
-            setUser(parsedSession.user);
-          }
         }
-      } catch (error) {
-        console.error("Error getting user session: ", error);
       }
     };
 

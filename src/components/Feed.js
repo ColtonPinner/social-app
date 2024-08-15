@@ -95,7 +95,7 @@ return (
         </React.Fragment>
       ))}
     </div>
-    {loading && <div>Loading...</div>}
+    {loading && <div><h2>Loading...</h2></div>}
     {hasMore && !loading && (
       <button className="load-more-button" onClick={loadMoreTweets}>
         Load More

@@ -49,7 +49,6 @@ const Login = ({ setUser }) => {
         />
         <button className="primary" onClick={handleLogin}>Login</button>
         <button className="secondary" onClick={() => navigate('/signup')}>Create an account</button>
-        <button onClick={handleForgotPassword} className="forgot-password-link">Forgot Password?</button>
         {error && <p>{error}</p>}
       </div>
     </>

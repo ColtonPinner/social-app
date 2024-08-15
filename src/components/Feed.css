@@ -15,7 +15,7 @@
   width: 100%;
   margin-bottom: 20px; /* Add some space between tweets */
   padding: 10px; /* Add padding for better spacing */
-  border-bottom: 2px solid #000000; /* Add a border for better separation */
+  border-bottom: 2px solid #ddd; /* Add a border for better separation */
 }
 
 .tweet h1 {
@@ -31,6 +31,8 @@
 }
 
 .tweet h3 {
+  color: #000;
+  font-weight: 500;
   font-size: 1.2em; /* Increased font size for tweet content */
   line-height: 1.4; /* Adjusted line height for better readability */
   margin-bottom: 15px; /* Adjusted space below tweet content */

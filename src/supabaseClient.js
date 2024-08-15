@@ -4,11 +4,10 @@ const supabaseUrl = 'https://ebahbzhyyhjvtevcxsns.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYWhiemh5eWhqdnRldmN4c25zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjAwMjEyNDYsImV4cCI6MjAzNTU5NzI0Nn0.pY-bUSz4d2iLBSjS44YhkwjrZz8Cp1YltpvYGVtVOLc';
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
-  localStorage: localStorage, // Ensure sessions are stored here
-  detectSessionInUrl: true, // This handles OAuth session restoration
-  realtime: {
-    params: {
-      eventsPerSecond: 1,
-    },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: localStorage, // Explicitly use localStorage for session persistence
   },
 });
