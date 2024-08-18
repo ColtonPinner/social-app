@@ -13,6 +13,8 @@ import { supabase } from './supabaseClient';
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
     const getUser = async () => {
@@ -31,6 +33,7 @@ const App = () => {
           localStorage.setItem('supabase-session', JSON.stringify(session));
         }
       }
+      setLoading(false);
     };
 
     getUser();
@@ -50,25 +53,39 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  // Render a loading state until the user is determined
+  if (loading) {
+    return <div>Loading...</div>; // Add a loading spinner or similar
+  }
+
   return (
     <Router>
-      <AppContent user={user} setUser={setUser} />
+      <AppContent user={user} setUser={setUser} toggleTheme={toggleTheme} />
     </Router>
   );
 };
 
-const AppContent = ({ user, setUser }) => {
+const AppContent = ({ user, setUser, toggleTheme }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {!hideNavbar && <Navbar toggleTheme={toggleTheme} />}
       <div className="container">
         <Routes>
-          <Route path="/" element={!user ? <Navigate to="/login" /> : <Navigate to="/tweets" />} />
-          <Route path="/login" element={<Login setUser={setUser} />} />
-          <Route path="/signup" element={<SignUp setUser={setUser} />} />
+          <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
+          <Route path="/login" element={user ? <Navigate to="/tweets" /> : <Login setUser={setUser} />} />
+          <Route path="/signup" element={user ? <Navigate to="/tweets" /> : <SignUp setUser={setUser} />} />
           <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages" element={user ? <Messages user={user} /> : <Navigate to="/login" />} />
           <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
