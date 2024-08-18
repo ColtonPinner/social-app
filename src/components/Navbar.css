@@ -26,18 +26,19 @@ nav {
 
 @media (max-width: 460px) {
     nav {
-        width: 90%; /* Slightly smaller width */
+        width: 100%; /* Full width */
         height: auto; /* Adjust height */
-        margin: 0 auto 30px; /* Center horizontally and add bottom margin */
-        padding: 0px; /* Add padding */
+        margin: 0; /* Remove margin */
+        padding: 10px; /* Add padding */
         position: fixed; /* Fixed position */
         bottom: 0; /* Align to the bottom of the page */
         top: auto; /* Override top alignment */
-        left: 50%; /* Center horizontally */
-        transform: translateX(-50%); /* Center horizontally */
-        border-radius: 20px; /* Rounded corners */
-        background-color: rgba(255, 255, 255, 0.8); /* Fixed syntax error */
-        backdrop-filter: blur(10px);
+        left: 0; /* Align to the left of the page */
+        right: 0; /* Align to the right of the page */
+        border-radius: 0px; /* No rounded corners */
+        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+        backdrop-filter: blur(10px); /* Blur effect */
+        z-index: 1000; /* Ensure it stays on top */
     }
 }
 
