@@ -7,6 +7,18 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './Settings.css'; // Import the Settings.css file
 
+const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
+  <input
+    type="text"
+    value={value}
+    onClick={onClick}
+    ref={ref}
+    inputMode="numeric"
+    placeholder="Date of Birth"
+    className="custom-date-input"
+  />
+));
+
 const Settings = ({ user }) => {
   const [username, setUsername] = useState(user?.username || '');
   const [phone, setPhone] = useState(user?.phone ? parsePhoneNumberFromString(user.phone, 'US').formatInternational() : '');
@@ -78,8 +90,8 @@ const Settings = ({ user }) => {
       <DatePicker
         selected={dob}
         onChange={(date) => setDob(date)}
-        dateFormat="yyyy-MM-dd"
-        placeholderText="Date of Birth"
+        dateFormat="MM-dd-yyyy"
+        customInput={<CustomDateInput />}
       />
       <button onClick={handleUpdate}>Update Profile</button>
       <button className="signout-button" onClick={handleSignOut}>Sign Out</button>
