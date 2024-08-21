@@ -28,6 +28,20 @@ const Profile = ({ user }) => {
     fetchProfile();
   }, [user]);
 
+  const formatPhoneNumber = (phoneNumber) => {
+    const cleaned = ('' + phoneNumber).replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    return phoneNumber;
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
@@ -44,11 +58,11 @@ const Profile = ({ user }) => {
       </div>
       <div className="profile-field">
         <label>Phone:</label>
-        <p>{profile.phone}</p>
+        <p>{formatPhoneNumber(profile.phone)}</p>
       </div>
       <div className="profile-field">
         <label>Date of Birth:</label>
-        <p>{profile.dob}</p>
+        <p>{formatDate(profile.dob)}</p>
       </div>
     </div>
   );

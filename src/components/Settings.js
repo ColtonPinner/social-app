@@ -1,25 +1,44 @@
-// src/components/Settings.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import './Settings.css';
+import { format } from 'date-fns';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import './Settings.css'; // Import the Settings.css file
 
 const Settings = ({ user }) => {
   const [username, setUsername] = useState(user?.username || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [dob, setDob] = useState(user?.dob || '');
+  const [phone, setPhone] = useState(user?.phone ? parsePhoneNumberFromString(user.phone, 'US').formatInternational() : '');
+  const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  const validatePhoneNumber = (phoneNumber) => {
+    const phoneNumberObj = parsePhoneNumberFromString(phoneNumber, 'US');
+    return phoneNumberObj && phoneNumberObj.isValid();
+  };
+
+  const formatPhoneNumber = (phoneNumber) => {
+    const phoneNumberObj = parsePhoneNumberFromString(phoneNumber, 'US');
+    return phoneNumberObj ? phoneNumberObj.formatInternational() : phoneNumber;
+  };
+
   const handleUpdate = async () => {
     setError('');
     setSuccess('');
+
+    if (!validatePhoneNumber(phone)) {
+      setError('Invalid phone number');
+      return;
+    }
+
     try {
       const { error } = await supabase.from('profiles').update({
         username,
         phone,
-        dob
+        dob: dob ? format(dob, 'yyyy-MM-dd') : null
       }).eq('id', user.id);
 
       if (error) {
@@ -54,13 +73,13 @@ const Settings = ({ user }) => {
         type="text"
         placeholder="Phone Number"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
       />
-      <input
-        type="date"
-        placeholder="Date of Birth"
-        value={dob}
-        onChange={(e) => setDob(e.target.value)}
+      <DatePicker
+        selected={dob}
+        onChange={(date) => setDob(date)}
+        dateFormat="yyyy-MM-dd"
+        placeholderText="Date of Birth"
       />
       <button onClick={handleUpdate}>Update Profile</button>
       <button className="signout-button" onClick={handleSignOut}>Sign Out</button>

@@ -39,3 +39,27 @@
   .settings-container .success-message {
     color: green;
   }
+
+    .settings-container input[type="date"] {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      color: #333;
+      font-size: 16px;
+      cursor: pointer;
+  }
+  
+  .settings-container input[type="date"]::-webkit-inner-spin-button,
+  .settings-container input[type="date"]::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+  }
+  
+  .settings-container input[type="date"]:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  }
