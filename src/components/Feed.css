@@ -38,6 +38,15 @@
   margin-bottom: 15px; /* Adjusted space below tweet content */
 }
 
+.link {
+  text-decoration: none; /* Remove underline from links */
+  color: #000000;
+}
+
+.link:hover {
+  text-decoration: lavender /* Underline on hover */
+}
+
 .like-button {
   background: none;
   border: none;

@@ -1,34 +1,87 @@
-/* Profile.css */
-
 .profile-container {
-    width: 100%;
-    max-width: 600px;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background-color: #ffffff;
-    margin: 100px auto;
-    text-align: center;
-  }
-  
-  h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .profile-field {
-    margin-bottom: 20px;
-  }
-  
-  .profile-field label {
-    display: block;
-    font-weight: bold;
-    color: #555;
-  }
-  
-  .profile-field p {
-    margin: 5px 0;
-    color: #333;
-  }
+  width: fit-content;
+  max-width: 600px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  margin: 100px auto;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+}
+
+p {
+  margin: auto;
+  font-size: 16px;
+  color: #000000;
+}
+
+.profile-picture {
+  width: 150px;
+  height: 150px;
+  background-color: #555;
+  border-color: #000000;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-fields {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  text-align: left;
+}
+
+.profile-field {
+  display: flex;
+  align-items: center;
+}
+
+.profile-field label {
+  font-weight: bold;
+  color: #555;
+}
+
+.profile-field p {
+  margin: 0;
+}
+
+.follow-button {
+  margin: 8px auto;
+  display: inline-block;
+  width: fit-content;
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.follow-info {
+  display: flex;
+  gap: 5px;
+  margin-top: 15px;
+}
+
+.follow-info p {
+  margin: 0px auto;
+  font-weight: bold;
+}
