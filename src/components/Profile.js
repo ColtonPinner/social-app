@@ -124,20 +124,6 @@ const Profile = () => {
         <p>{followerCount} Followers</p>
         <p>{followingCount} Following</p>
       </div>
-      <div className="profile-fields">
-        <div className="profile-field">
-          <label>Email:</label>
-          <p>{profile.email}</p>
-        </div>
-        <div className="profile-field">
-          <label>Phone:</label>
-          <p>{profile.phone}</p>
-        </div>
-        <div className="profile-field">
-          <label>Date of Birth:</label>
-          <p>{profile.dob}</p>
-        </div>
-      </div>
     </div>
   );
 };
