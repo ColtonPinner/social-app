@@ -25,9 +25,6 @@ const Navbar = ({ profile }) => {
           />
         )}
       </Link>
-      <Link to="/messages">
-        <FontAwesomeIcon icon={faMessage} />
-      </Link>
       <Link to="/settings">
         <FontAwesomeIcon icon={faGear} />
       </Link>
