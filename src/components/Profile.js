@@ -6,6 +6,7 @@ import './Profile.css';
 const Profile = () => {
   const { id } = useParams(); // Get the user ID from the URL
   const [profile, setProfile] = useState(null);
+  const [tweets, setTweets] = useState([]); // State to store the user's tweets
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false); // State to manage follow status
@@ -14,18 +15,19 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) {
+      if (profileError) {
         setError('Error fetching profile');
       } else {
-        setProfile(data);
-        checkIfFollowing(data.id); // Check if the current user is following this profile
-        fetchFollowCounts(data.id); // Fetch follower and following counts
+        setProfile(profileData);
+        checkIfFollowing(profileData.id); // Check if the current user is following this profile
+        fetchFollowCounts(profileData.id); // Fetch follower and following counts
+        fetchTweets(profileData.id); // Fetch the user's tweets
       }
       setLoading(false);
     };
@@ -33,8 +35,22 @@ const Profile = () => {
     fetchProfile();
   }, [id]);
 
+  const fetchTweets = async (profileId) => {
+    const { data: tweetsData, error: tweetsError } = await supabase
+      .from('tweets')
+      .select('*')
+      .eq('user_id', profileId)
+      .order('created_at', { ascending: false });
+
+    if (tweetsError) {
+      setError('Error fetching tweets');
+    } else {
+      setTweets(tweetsData);
+    }
+  };
+
   const checkIfFollowing = async (profileId) => {
-    const { data: { user } } = await supabase.auth.getUser(); // Updated line
+    const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data, error } = await supabase
         .from('followers')
@@ -50,7 +66,6 @@ const Profile = () => {
   };
 
   const fetchFollowCounts = async (profileId) => {
-    // Fetch the number of followers
     const { count: followersCount, error: followerError } = await supabase
       .from('followers')
       .select('id', { count: 'exact' })
@@ -60,7 +75,6 @@ const Profile = () => {
       setFollowerCount(followersCount);
     }
 
-    // Fetch the number of users this profile is following
     const { count: followingCount, error: followingError } = await supabase
       .from('followers')
       .select('id', { count: 'exact' })
@@ -72,11 +86,10 @@ const Profile = () => {
   };
 
   const handleFollowClick = async () => {
-    const { data: { user } } = await supabase.auth.getUser(); // Updated line
-    if (!user || user.id === profile.id) return; // Prevent following yourself
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
     if (isFollowing) {
-      // Unfollow logic
       const { error } = await supabase
         .from('followers')
         .delete()
@@ -87,10 +100,9 @@ const Profile = () => {
         setError('Error unfollowing user');
       } else {
         setIsFollowing(false);
-        setFollowerCount(prevCount => prevCount - 1); // Decrease follower count
+        setFollowerCount(prevCount => prevCount - 1);
       }
     } else {
-      // Follow logic
       const { error } = await supabase
         .from('followers')
         .insert({ follower_id: user.id, following_id: profile.id });
@@ -99,7 +111,7 @@ const Profile = () => {
         setError('Error following user');
       } else {
         setIsFollowing(true);
-        setFollowerCount(prevCount => prevCount + 1); // Increase follower count
+        setFollowerCount(prevCount => prevCount + 1);
       }
     }
   };
@@ -111,11 +123,11 @@ const Profile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <img
-          src={profile.avatar_url || '/default-avatar.png'} // Replace with your default avatar path
-          alt={`${profile.username}'s avatar`}
+          src={profile.avatar_url || 'https://via.placeholder.com/150'}
+          alt="Profile"
           className="profile-picture"
         />
-        <h2>{profile.username}</h2> {/* Username is now below the profile picture */}
+        <h2>{profile.username}</h2>
       </div>
       <button className="follow-button" onClick={handleFollowClick}>
         {isFollowing ? 'Unfollow' : 'Follow'}
@@ -123,6 +135,19 @@ const Profile = () => {
       <div className="follow-info">
         <p>{followerCount} Followers</p>
         <p>{followingCount} Following</p>
+      </div>
+
+      <div className="tweets-box">
+        {tweets.length > 0 ? (
+          tweets.map(tweet => (
+            <div key={tweet.id} className="tweet">
+              <p>{tweet.content}</p>
+              <span>{new Date(tweet.created_at).toLocaleString()}</span>
+            </div>
+          ))
+        ) : (
+          <p>No tweets yet.</p>
+        )}
       </div>
     </div>
   );
