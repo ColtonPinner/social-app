@@ -127,16 +127,17 @@ const Profile = () => {
           alt="Profile"
           className="profile-picture"
         />
-        <h2>{profile.username}</h2>
-      </div>
-      <button className="follow-button" onClick={handleFollowClick}>
-        {isFollowing ? 'Unfollow' : 'Follow'}
-      </button>
-      <div className="follow-info">
+        <div>
+          <h2>{profile.username}</h2>
+          <div className="follow-info">
         <p>{followerCount} Followers</p>
         <p>{followingCount} Following</p>
       </div>
-
+          <button className="follow-button" onClick={handleFollowClick}>
+            {isFollowing ? 'Unfollow' : 'Follow'}
+          </button>
+        </div>
+      </div>
       <div className="tweets-box">
         {tweets.length > 0 ? (
           tweets.map(tweet => (
