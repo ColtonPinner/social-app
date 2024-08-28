@@ -1,5 +1,5 @@
 .feed-container {
-  margin-top: auto; /* Adjusted margin for better spacing */
+  margin: -50px auto; /* Adjusted margin for better spacing */
   display: flex;
   flex-direction: column;
   align-items: center; /* Center the tweets */
@@ -80,8 +80,16 @@
 }
 
 @media (max-width: 480px) {
+  .feed-container {
+    margin: 0px auto; /* Adjusted margin for better spacing */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the tweets */
+    padding: 20px;
+
   .tweet h2 {
     font-size: 1.2em; /* Adjusted font size for smaller screens */
+  }
   }
 
   .tweet p {

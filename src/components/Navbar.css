@@ -1,59 +1,38 @@
+/* General Navbar Styles */
 nav {
     display: flex;
     flex-direction: row;
     z-index: 1000;
     align-self: flex-end;
-    background-color: rgba(255, 255, 255, 0.8); /* Fixed syntax error */
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    backdrop-filter: blur(10px); /* Blur effect */
     border-radius: 20px;
-    height: -webkit-fit-content;
-    height: -moz-fit-content;
     height: fit-content;
     width: 100%;
     max-width: 800px;
     justify-content: flex-end;
     margin: 20px auto 0;
     padding: 10px 10px;
-    border-color: #ddd;
-    border-style: solid;
-    border-width: 1px;
+    border: 1px solid #ddd;
     position: fixed; /* Fixed position */
     top: 0; /* Align to the top of the page */
     left: 0; /* Align to the left of the page */
     right: 0; /* Align to the right of the page */
-}
-
-/* src/components/Navbar.css */
-.profile-link {
+  }
+  
+  /* Profile Picture in Navbar */
+  .profile-link {
     margin: auto;
     width: 30px;
     height: 30px;
-    border-radius: 50px;
+    border-radius: 50%;
     object-fit: cover;
-    border: .5px solid #00ff15;
-  } 
-
-@media (max-width: 460px) {
-    nav {
-        width: 100%; /* Full width */
-        height: auto; /* Adjust height */
-        margin: 0; /* Remove margin */
-        padding: 10px; /* Add padding */
-        position: fixed; /* Fixed position */
-        bottom: 0; /* Align to the bottom of the page */
-        top: auto; /* Override top alignment */
-        left: 0; /* Align to the left of the page */
-        right: 0; /* Align to the right of the page */
-        border-radius: 0px; /* No rounded corners */
-        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
-        backdrop-filter: blur(10px); /* Blur effect */
-        z-index: 1000; /* Ensure it stays on top */
-    }
-}
-
-
-nav a {
+    border: 1px solid #00ff15; /* Profile picture border */
+  }
+  
+  /* Link Styles */
+  nav a {
     display: inline-flex; /* Ensures items are aligned inline and flexibly */
     align-items: center; /* Centers items vertically */
     justify-content: center; /* Centers content horizontally */
@@ -63,14 +42,108 @@ nav a {
     font-size: 16px; /* Ensures consistent font size */
     text-decoration: none; /* Removes underline from links */
     background-color: transparent; /* Keeps background transparent */
-}
-
-@media (max-width: 460px) {
-    nav a {
-        border-radius: 0; /* Remove border radius */
-        width: 100%; /* Full width */
-        height: 68px; /* Make it square */
-        margin: 0; /* Remove margin */
-        padding: 0; /* Remove padding */
+  }
+  
+  /* Mobile View (Max-width: 460px) */
+  @media (max-width: 460px) {
+    nav {
+      width: 100%; /* Full width */
+      height: auto; /* Adjust height */
+      margin: 0; /* Remove margin */
+      padding: 10px; /* Add padding */
+      position: fixed; /* Fixed position */
+      bottom: 0; /* Align to the bottom of the page */
+      top: auto; /* Override top alignment */
+      left: 0; /* Align to the left of the page */
+      right: 0; /* Align to the right of the page */
+      border-radius: 0px; /* No rounded corners */
+      background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+      backdrop-filter: blur(10px); /* Blur effect */
+      z-index: 1000; /* Ensure it stays on top */
     }
-}
+  
+    nav a {
+      border-radius: 0; /* Remove border radius */
+      width: 100%; /* Full width */
+      height: 68px; /* Make it square */
+      margin: 0; /* Remove margin */
+      padding: 0; /* Remove padding */
+    }
+  }
+  
+  /* Notification Container */
+  .notification-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Notification Bell Icon */
+  .notification-bell {
+    position: relative;
+    cursor: pointer;
+    font-size: 20px; /* Adjust icon size */
+    display: flex;
+    align-items: center; /* Center bell icon */
+    justify-content: center; /* Center bell icon */
+    margin: 0 10px; /* Margin to match other links */
+  }
+  
+  /* Notification Count Badge */
+  .notification-count {
+    position: absolute;
+    top: -5px; /* Adjust as needed */
+    right: -5px; /* Adjust as needed */
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+  }
+  
+  /* Notification Box */
+  .notification-box {
+    position: fixed; /* Fixed to viewport */
+    top: 60px; /* Adjust based on navbar height */
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1001; /* Ensure it appears above other content */
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Individual Notification Item */
+  .notification-item {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .notification-item.unread {
+    background-color: #e6f7ff; /* Highlight unread notifications */
+  }
+  
+  .notification-item:hover {
+    background-color: #f0f8ff;
+  }
+  
+  .notification-item p {
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  .notification-item span {
+    display: block;
+    font-size: 12px;
+    color: #000000;
+  }
