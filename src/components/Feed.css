@@ -15,7 +15,7 @@
   width: 100%;
   margin-bottom: 20px; /* Add some space between tweets */
   padding: 10px; /* Add padding for better spacing */
-  border-bottom: 2px solid #ddd; /* Add a border for better separation */
+  border-bottom: 1px solid #ddd; /* Add a border for better separation */
 }
 
 .tweet h1 {

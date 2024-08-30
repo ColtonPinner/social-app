@@ -93,9 +93,6 @@ const Navbar = ({ profile }) => {
           />
         )}
       </Link>
-      <Link to="/messages">
-        <FontAwesomeIcon icon={faMessage} />
-      </Link>
       <div className="notification-container">
         <FontAwesomeIcon
           icon={faBell}

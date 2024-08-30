@@ -1,4 +1,4 @@
-/* General Navbar Styles */
+/* General Navbar Styles for Desktop */
 nav {
     display: flex;
     flex-direction: row;
@@ -44,30 +44,32 @@ nav {
     background-color: transparent; /* Keeps background transparent */
   }
   
-  /* Mobile View (Max-width: 460px) */
-  @media (max-width: 460px) {
+  /* Mobile View (Max-width: 360px) */
+  @media (max-width: 360px) {
     nav {
       width: 100%; /* Full width */
-      height: auto; /* Adjust height */
+      height: fit-content; /* Adjust height */
       margin: 0; /* Remove margin */
       padding: 10px; /* Add padding */
       position: fixed; /* Fixed position */
-      bottom: 0; /* Align to the bottom of the page */
+      bottom: 20px; /* Align to the bottom of the page */
       top: auto; /* Override top alignment */
-      left: 0; /* Align to the left of the page */
-      right: 0; /* Align to the right of the page */
-      border-radius: 0px; /* No rounded corners */
+      left: 50%; /* Center align */
+      transform: translateX(-50%); /* Center align */
+      border-radius: 20px; /* Rounded corners */
       background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
       backdrop-filter: blur(10px); /* Blur effect */
       z-index: 1000; /* Ensure it stays on top */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for the "island" effect */
+      max-width: 400px; /* Adjust width as needed */
+      justify-content: space-around; /* Distribute space between icons */
     }
   
     nav a {
       border-radius: 0; /* Remove border radius */
-      width: 100%; /* Full width */
-      height: 68px; /* Make it square */
+      width: fit-content; /* Adjust width */
       margin: 0; /* Remove margin */
-      padding: 0; /* Remove padding */
+      padding: 10px; /* Add padding */
     }
   }
   
@@ -88,6 +90,12 @@ nav {
     align-items: center; /* Center bell icon */
     justify-content: center; /* Center bell icon */
     margin: 0 10px; /* Margin to match other links */
+    transition: transform 0.3s; /* Transition for the bell movement */
+  }
+  
+  /* Shake Effect on Hover */
+  .notification-bell:hover {
+    transform: rotate(15deg); /* Shake effect */
   }
   
   /* Notification Count Badge */
@@ -104,9 +112,9 @@ nav {
   
   /* Notification Box */
   .notification-box {
-    position: fixed; /* Fixed to viewport */
-    top: 60px; /* Adjust based on navbar height */
-    right: 20px;
+    position: absolute; /* Positioned relative to the container */
+    top: -150px; /* Adjust based on bell icon height */
+    right: 0;
     width: 300px;
     max-height: 400px;
     background-color: white;
@@ -116,9 +124,14 @@ nav {
     overflow-y: auto;
     z-index: 1001; /* Ensure it appears above other content */
     padding: 15px;
-    display: flex;
+    display: none; /* Hidden by default */
     flex-direction: column;
     gap: 10px;
+  }
+  
+  /* Show Notification Box on Hover */
+  .notification-container:hover .notification-box {
+    display: flex; /* Show the notification box */
   }
   
   /* Individual Notification Item */
