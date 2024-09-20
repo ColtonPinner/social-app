@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './Settings.css'; // Import the Settings.css file
+import './Settings.css';
 
 const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
   <input
@@ -23,6 +23,7 @@ const Settings = ({ user }) => {
   const [username, setUsername] = useState(user?.username || '');
   const [phone, setPhone] = useState(user?.phone ? parsePhoneNumberFromString(user.phone, 'US').formatInternational() : '');
   const [dob, setDob] = useState(user?.dob ? new Date(user.dob) : null);
+  const [profileImage, setProfileImage] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ const Settings = ({ user }) => {
     }
 
     try {
+      // Update the user's profile details
       const { error } = await supabase.from('profiles').update({
         username,
         phone,
@@ -61,6 +63,47 @@ const Settings = ({ user }) => {
     } catch (error) {
       setError(error.message);
     }
+  };
+
+  const handleImageUpload = async () => {
+    if (!profileImage) return;
+
+    try {
+      // Get signed URL from backend
+      const response = await fetch('http://localhost:3000/api/generate-upload-url', { // Fixed the URL
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, fileName: profileImage.name }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate upload URL. Please try again.');
+      }
+
+      const { signedUrl } = await response.json();
+
+      // Upload the image to Supabase using signed URL
+      const uploadResponse = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': profileImage.type,
+        },
+        body: profileImage,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      setSuccess('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error.message);
+      setError('Error uploading image');
+    }
+  };
+
+  const handleFileChange = (event) => {
+    setProfileImage(event.target.files[0]);
   };
 
   const handleSignOut = async () => {
@@ -93,7 +136,9 @@ const Settings = ({ user }) => {
         dateFormat="MM-dd-yyyy"
         customInput={<CustomDateInput />}
       />
+      <input type="file" onChange={handleFileChange} />
       <button onClick={handleUpdate}>Update Profile</button>
+      <button onClick={handleImageUpload}>Upload Image</button>
       <button className="signout-button" onClick={handleSignOut}>Sign Out</button>
       {error && <p className="error-message">{error}</p>}
       {success && <p className="success-message">{success}</p>}

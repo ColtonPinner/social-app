@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faMessage, faGear, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faGear, faBell, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient'; // Adjust import path as needed
 import './Navbar.css';
 
@@ -9,6 +9,9 @@ const Navbar = ({ profile }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [searchResults, setSearchResults] = useState([]); // State for search results
+  const [showSearchResults, setShowSearchResults] = useState(false); // Toggle search results display
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -23,13 +26,12 @@ const Navbar = ({ profile }) => {
         console.error('Error fetching notifications:', error);
       } else {
         setNotifications(data);
-        setUnreadCount(data.filter(notification => !notification.is_read).length);
+        setUnreadCount(data.filter((notification) => !notification.is_read).length);
       }
     };
 
     fetchNotifications();
 
-    // Correct Realtime Subscription Setup
     const channel = supabase
       .channel('notifications')
       .on(
@@ -42,12 +44,11 @@ const Navbar = ({ profile }) => {
         },
         (payload) => {
           console.log('Change received!', payload);
-          fetchNotifications(); // Refetch notifications when a change is detected
+          fetchNotifications();
         }
       )
       .subscribe();
 
-    // Clean up the subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };
@@ -73,27 +74,52 @@ const Navbar = ({ profile }) => {
     }
   };
 
+  // Function to handle search input
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+    if (event.target.value.trim() === '') {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    } else {
+      fetchSearchResults(event.target.value);
+    }
+  };
+
+  // Function to fetch users based on search input
+  const fetchSearchResults = async (query) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .ilike('username', `%${query}%`) // Case-insensitive search
+      .limit(5); // Limit results to top 5
+
+    if (error) {
+      console.error('Error fetching search results:', error);
+    } else {
+      setSearchResults(data);
+      setShowSearchResults(true);
+    }
+  };
+
   return (
     <nav className="navbar">
-      <Link to="/tweets">
-        <FontAwesomeIcon icon={faHome} />
-      </Link>
-      <Link to="/profile">
-        {profile ? (
-          <img
-            src={profile.avatar_url || 'https://via.placeholder.com/150'}
-            alt="Profile"
-            className="profile-link"
-          />
-        ) : (
-          <img
-            src="https://via.placeholder.com/150"
-            alt="Profile"
-            className="profile-link"
-          />
+      <div className="nav-section">
+        <Link to="/tweets">
+          <FontAwesomeIcon icon={faHome} />
+        </Link>
+        {profile && (
+          <Link to={`/profile/${profile.id}`}>
+            <img
+              src={profile.avatar_url || 'https://via.placeholder.com/150'}
+              alt="Profile"
+              className="profile-link"
+            />
+          </Link>
         )}
-      </Link>
-      <div className="notification-container">
+      </div>
+
+      {/* Center Bell Section */}
+      <div className="nav-center">
         <FontAwesomeIcon
           icon={faBell}
           className="notification-bell"
@@ -119,9 +145,40 @@ const Navbar = ({ profile }) => {
           </div>
         )}
       </div>
-      <Link to="/settings">
-        <FontAwesomeIcon icon={faGear} />
-      </Link>
+
+      <div className="nav-section">
+        <Link to="/settings">
+          <FontAwesomeIcon icon={faGear} />
+        </Link>
+      </div>
+
+      {/* Search Bar Section moved to the right */}
+      <div className="nav-section search-section">
+        <div className="search-input-container">
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search or Ask basic..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="search-input"
+          />
+        </div>
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="search-results">
+            {searchResults.map((user) => (
+              <Link to={`/profile/${user.id}`} key={user.id} className="search-result-item">
+                <img
+                  src={user.avatar_url || 'https://via.placeholder.com/150'}
+                  alt={user.username}
+                  className="search-result-avatar"
+                />
+                <span>{user.username}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </nav>
   );
 };
