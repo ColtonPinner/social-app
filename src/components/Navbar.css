@@ -44,13 +44,6 @@ nav a {
   justify-content: center; /* Center the content */
 }
 
-/* Notification Container */
-.notification-container {
-  position: relative;
-  display: flex; /* Ensures proper flexbox alignment */
-  align-items: center; /* Centers items vertically */
-}
-
 /* Notification Bell Icon */
 .notification-bell {
   transform: rotate(20deg); /* Adjust the angle as needed */
@@ -97,33 +90,6 @@ nav a {
   display: block;
 }
 
-/* Notification Item */
-.notification-item {
-  padding: 10px;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.notification-item.unread {
-  background-color: #e6f7ff; /* Highlight unread notifications */
-}
-
-.notification-item:hover {
-  background-color: #f0f8ff;
-}
-
-.notification-item p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.notification-item span {
-  display: block;
-  font-size: 12px;
-  color: #888;
-}
-
 /* Mobile Styles */
 @media (max-width: 600px) {
   nav {
@@ -154,6 +120,7 @@ nav a {
   }
 }
 
+/* Search Bar Section */
 .search-section {
   display: flex;
   align-items: center;
@@ -166,7 +133,7 @@ nav a {
 }
 
 .search-input {
-  background-color: #00000006;
+  background: linear-gradient(135deg, #fffdfd); /* Fixed gradient */
   width: 100%;
   padding: 8px 30px 8px 30px; /* Adjust padding to leave space for the icon */
   border: 1px solid #ccc;
@@ -184,6 +151,7 @@ nav a {
   pointer-events: none; /* Prevents the icon from blocking input clicks */
 }
 
+/* Search Results Dropdown */
 .search-results {
   position: absolute;
   top: 100%;

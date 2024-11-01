@@ -101,7 +101,6 @@ const SignUp = ({ setUser }) => {
       <button className="primary" onClick={handleSignUp}>Sign Up</button>
       {error && <p>{error}</p>}
     </div>
-    <button className='pr'></button>
     </>
   );
 };
