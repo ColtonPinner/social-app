@@ -157,6 +157,7 @@ nav a {
   top: 100%;
   left: 0;
   width: 100%;
+  max-width: fit-content;
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 5px;

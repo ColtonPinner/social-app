@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@emotion/react": "^11.13.0",
-    "@emotion/styled": "^11.13.0",
-    "@fortawesome/fontawesome-svg-core": "^6.6.0",
-    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
     "@mui/joy": "^5.0.0-beta.48",
     "@mui/lab": "^5.0.0-alpha.173",
-    "@mui/material": "^5.16.7",
+    "@mui/material": "^6.4.2",
     "@mui/x-date-pickers": "^5.0.0",
     "@supabase/supabase-js": "^2.44.4",
     "@testing-library/jest-dom": "^5.17.0",
@@ -58,7 +60,10 @@
     ]
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
-    "eslint-plugin-jest": "^28.6.0"
+    "eslint-plugin-jest": "^28.6.0",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^4.0.1"
   }
 }
