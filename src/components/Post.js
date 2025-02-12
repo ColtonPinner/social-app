@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
@@ -6,8 +6,16 @@ import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 const Post = ({ user, addTweet }) => {
   const [content, setContent] = useState('');
   const [media, setMedia] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleFileUpload = async (file) => {
     const fileExt = file.name.split('.').pop();
@@ -55,6 +63,7 @@ const Post = ({ user, addTweet }) => {
       addTweet(data);
       setContent('');
       setMedia(null);
+      setPreview(null);
     } catch (err) {
       console.error('Post error:', err);
       setError(err.message);
@@ -63,20 +72,78 @@ const Post = ({ user, addTweet }) => {
     }
   };
 
+  const handleMediaChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setMedia(file);
+      setPreview(URL.createObjectURL(file)); // Preview image
+    }
+  };
+
+  const clearMedia = () => {
+    setMedia(null);
+    setPreview(null);
+  };
+
   return (
-    <div className="mx-auto max-w-2xl mt-32">
-      <div className="overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/50">
-        <div className="p-8">
-          <div className="space-y-6">
+    <div className="relative top-24 left-0 w-full flex flex-col items-center py-4 z-50">
+      {/* Post Box */}
+      <div className="w-full max-w-3xl px-6">
+        <div className="rounded-2xl bg-white border border-gray-200 ">
+          <div className="p-6 space-y-4">
+            {/* Text Input */}
             <textarea
               rows={4}
-              className="block w-full rounded-2xl border-0 py-4 px-4 text-gray-900 bg-gray-50/50 placeholder:text-gray-500 focus:ring-2 focus:ring-black focus:outline-none transition-all duration-200 text-base leading-relaxed resize-none"
+              className="block w-full rounded-lg border border-gray-200 py-3 px-4 text-gray-900 bg-gray-50/50 placeholder:text-gray-500 focus:ring-2 focus:ring-black focus:outline-none transition-all duration-200 text-base resize-none"
               placeholder="What's on your mind?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={loading}
             />
-            // ...existing code...
+
+            {/* Error Message Inside Post Box */}
+            {error && (
+              <div className="rounded-lg bg-red-100 text-red-700 border border-red-300 p-3 text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button onClick={() => setError('')}>
+                  <XMarkIcon className="h-5 w-5 text-red-500 hover:text-red-700 transition" />
+                </button>
+              </div>
+            )}
+
+            {/* Image Preview */}
+            {preview && (
+              <div className="relative mt-2">
+                <img src={preview} alt="Uploaded" className="rounded-lg w-full object-cover" />
+                <button 
+                  type="button" 
+                  className="absolute top-2 right-2 bg-gray-700 text-white p-1 rounded-full hover:bg-gray-900 transition"
+                  onClick={clearMedia}
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+
+            {/* Upload & Post Buttons */}
+            <div className="flex items-center justify-between">
+              {/* Upload Button */}
+              <label className="cursor-pointer flex items-center space-x-2 text-gray-700 hover:text-black transition">
+                <PhotoIcon className="h-6 w-6" />
+                <span>Upload Photo</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleMediaChange} />
+              </label>
+
+              {/* Post Button */}
+              <button
+                type="button"
+                onClick={handlePost}
+                disabled={loading}
+                className="px-5 py-2 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50 flex items-center"
+              >
+                {loading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Post'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

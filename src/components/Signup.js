@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, UserIcon, PhoneIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient';
 import { ReactComponent as Logo } from '../assets/basic-logo.svg';
 
@@ -8,22 +8,37 @@ const SignUp = ({ setUser }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    username: '',
     phone: '',
     dob: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email.includes('@')) newErrors.email = 'Invalid email address.';
+    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters.';
+    if (!formData.phone.match(/^\d{10}$/)) newErrors.phone = 'Phone number must be 10 digits.';
+    if (!formData.dob) newErrors.dob = 'Date of birth is required.';
+    return newErrors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError({});
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setError(validationErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
@@ -36,19 +51,18 @@ const SignUp = ({ setUser }) => {
       if (user) {
         const { error: profileError } = await supabase.from('profiles').insert({
           id: user.id,
-          username: formData.username,
           email: formData.email,
           phone: formData.phone,
           dob: formData.dob
         });
 
         if (profileError) throw profileError;
-        
+
         setUser(user);
-        navigate('/tweets');
+        navigate('/profile-setup'); // Redirect to Profile Setup Page (Page 2)
       }
     } catch (err) {
-      setError(err.message);
+      setError({ form: err.message });
     } finally {
       setLoading(false);
     }
@@ -56,131 +70,105 @@ const SignUp = ({ setUser }) => {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-80 space-y-8">  {/* Increased from max-w-xl */}
+      <div className="w-full max-w-md space-y-8">
         <Logo className="mx-auto h-12 w-auto" />
         <h2 className="text-center text-3xl font-bold text-gray-900">
-          Create your account
+          Create Your Account
         </h2>
-        
-        <form onSubmit={handleSubmit} className="mt-12 space-y-8">
-          <div className="bg-white/80 backdrop-blur-xl p-12 rounded-2xl border border-gray-200/50">
-            <div className="space-y-8 max-w-xl mx-auto"> {/* Increased from max-w-md */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                  Email
-                </label>
-                <div className="relative mt-3 rounded-md">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    required
-                    className="block w-full rounded-lg border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
-                  Username
-                </label>
-                <div className="relative mt-3 rounded-md">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <UserIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="text"
-                    name="username"
-                    id="username"
-                    required
-                    className="block w-full rounded-lg border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                    value={formData.username}
-                    onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  />
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 ">
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                  Password
-                </label>
-                <div className="relative mt-3 rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <LockClosedIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </div>
-                  <input
-                    type="password"
-                    name="password"
-                    id="password"
-                    required
-                    className="block w-full rounded-lg border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  />
-                </div>
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-900">Email</label>
+              <div className="relative mt-2">
+                <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  required
+                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
               </div>
-              
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium leading-6 text-gray-900">
-                  Phone Number
-                </label>
-                <div className="relative mt-2 rounded-md shadow-sm">
-                  <input
-                    type="tel"
-                    name="phone"
-                    id="phone"
-                    className="block w-full rounded-lg border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="dob" className="block text-sm font-medium leading-6 text-gray-900">
-                  Date of Birth
-                </label>
-                <div className="relative mt-2 rounded-md shadow-sm">
-                  <input
-                    type="date"
-                    name="dob"
-                    id="dob"
-                    className="block w-full rounded-lg border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                    value={formData.dob}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex w-full justify-center rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50"
-                >
-                  {loading ? 'Creating account...' : 'Sign up'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-                >
-                  Already have an account?
-                </button>
-              </div>
+              {error.email && <p className="text-red-500 text-sm mt-1">{error.email}</p>}
             </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900">Password</label>
+              <div className="relative mt-2">
+                <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="password"
+                  name="password"
+                  id="password"
+                  required
+                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              {error.password && <p className="text-red-500 text-sm mt-1">{error.password}</p>}
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-900">Phone Number</label>
+              <div className="relative mt-2">
+                <PhoneIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="tel"
+                  name="phone"
+                  id="phone"
+                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+              {error.phone && <p className="text-red-500 text-sm mt-1">{error.phone}</p>}
+            </div>
+
+            {/* Date of Birth */}
+            <div>
+              <label htmlFor="dob" className="block text-sm font-medium text-gray-900">Date of Birth</label>
+              <div className="relative mt-2">
+                <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                  type="date"
+                  name="dob"
+                  id="dob"
+                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                  value={formData.dob}
+                  onChange={handleChange}
+                />
+              </div>
+              {error.dob && <p className="text-red-500 text-sm mt-1">{error.dob}</p>}
+            </div>
+
+            {error.form && <p className="text-red-500 text-sm mt-3">{error.form}</p>}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-4 rounded-lg bg-black py-2 text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50"
+            >
+              {loading ? 'Creating Account...' : 'Next'}
+            </button>
+
+            {/* Return to Login Button */}
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="w-full mt-4 text-center text-sm font-semibold text-gray-700 hover:text-black transition"
+            >
+              Already have an account? <span className="underline">Return to Login</span>
+            </button>
+
           </div>
         </form>
       </div>
