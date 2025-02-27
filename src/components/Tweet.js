@@ -11,9 +11,9 @@ const TweetCard = styled(Card)(({ theme }) => ({
   boxShadow: 'none',
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: '12px',
-  width: '100%', // Changed from 260px to 100% to make it wider
-  maxWidth: '100%', // Ensure it doesn't exceed container width
-  minWidth: 400, // Added to ensure it doesn't shrink too much
+  width: 'auto', // Changed from 260px to 100% to make it wider
+  maxWidth: '360px', // Ensure it doesn't exceed container width
+  minWidth: 360, // Added to ensure it doesn't shrink too much
   '&:hover': {
     boxShadow: theme.shadows[1]
   }
