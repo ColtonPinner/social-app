@@ -92,7 +92,7 @@ const Post = ({ user, addTweet }) => {
   return (
     <div className="mt-16 md:mt-24 w-full flex flex-col items-center py-2 md:py-4">
       {/* Responsive post box container */}
-      <div className="w-full max-w-[500px] px-3 md:px-6 space-y-3 md:space-y-4">
+      <div className="w-full max-w-[380px] px-3 md:px-6 space-y-3 md:space-y-4">
         {/* Post Box */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-sm">
           <div className="p-3 md:p-6 space-y-3 md:space-y-4">
