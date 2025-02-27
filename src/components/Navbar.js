@@ -161,7 +161,7 @@ const Navbar = ({ profile }) => {
             placeholder="Search or Ask basic..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="search-input"
+            className="search-input h-9 text-sm" // Added h-9 (36px) and text-sm
           />
         </div>
         {showSearchResults && searchResults.length > 0 && (

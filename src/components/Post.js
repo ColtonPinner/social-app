@@ -60,7 +60,11 @@ const Post = ({ user, addTweet }) => {
         .single();
 
       if (error) throw error;
+
+      // Pass new post to parent
       addTweet(data);
+
+      // Reset fields
       setContent('');
       setMedia(null);
       setPreview(null);
@@ -76,7 +80,7 @@ const Post = ({ user, addTweet }) => {
     const file = event.target.files[0];
     if (file) {
       setMedia(file);
-      setPreview(URL.createObjectURL(file)); // Preview image
+      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -86,22 +90,23 @@ const Post = ({ user, addTweet }) => {
   };
 
   return (
-    <div className="relative top-24 left-0 w-full flex flex-col items-center py-4 z-50">
-      {/* Post Box */}
-      <div className="w-full max-w-3xl px-6">
-        <div className="rounded-2xl bg-white border border-gray-200 ">
+    <div className="mt-24 w-full flex flex-col items-center py-4">
+      {/* Center the post box and allow it to expand */}
+      <div className="w-[500px] px-6 space-y-4"> {/* Changed to max-w-5xl */}
+        {/* Post Box */}
+        <div className="rounded-xl bg-white border border-gray-200">
           <div className="p-6 space-y-4">
             {/* Text Input */}
             <textarea
-              rows={4}
+              rows={3}
               className="block w-full rounded-lg border border-gray-200 py-3 px-4 text-gray-900 bg-gray-50/50 placeholder:text-gray-500 focus:ring-2 focus:ring-black focus:outline-none transition-all duration-200 text-base resize-none"
-              placeholder="What's on your mind?"
+              placeholder="👋 Hey, what's on your mind?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={loading}
             />
 
-            {/* Error Message Inside Post Box */}
+            {/* Error Message */}
             {error && (
               <div className="rounded-lg bg-red-100 text-red-700 border border-red-300 p-3 text-sm flex items-center justify-between">
                 <span>{error}</span>
@@ -114,7 +119,11 @@ const Post = ({ user, addTweet }) => {
             {/* Image Preview */}
             {preview && (
               <div className="relative mt-2">
-                <img src={preview} alt="Uploaded" className="rounded-lg w-full object-cover" />
+                <img
+                  src={preview}
+                  alt="Uploaded"
+                  className="rounded-lg w-full object-cover"
+                />
                 <button 
                   type="button" 
                   className="absolute top-2 right-2 bg-gray-700 text-white p-1 rounded-full hover:bg-gray-900 transition"
@@ -130,8 +139,12 @@ const Post = ({ user, addTweet }) => {
               {/* Upload Button */}
               <label className="cursor-pointer flex items-center space-x-2 text-gray-700 hover:text-black transition">
                 <PhotoIcon className="h-6 w-6" />
-                <span>Upload Photo</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleMediaChange} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleMediaChange}
+                />
               </label>
 
               {/* Post Button */}
@@ -139,9 +152,13 @@ const Post = ({ user, addTweet }) => {
                 type="button"
                 onClick={handlePost}
                 disabled={loading}
-                className="px-5 py-2 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50 flex items-center"
+                className="px-5 py-2 rounded-full bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50 flex items-center"
               >
-                {loading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : 'Post'}
+                {loading ? (
+                  <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                ) : (
+                  'Post'
+                )}
               </button>
             </div>
           </div>

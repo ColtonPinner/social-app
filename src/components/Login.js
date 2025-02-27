@@ -42,10 +42,10 @@ const Login = ({ setUser }) => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-10">
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className="w-full max-w-2xl space-y-10 px-4 py-12 sm:px-6 lg:px-8">
         <div>
-          <Logo className="mx-auto h-12 w-auto" />
+          <Logo className="mx-auto h-20 w-auto" />
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
             Sign in to your account
           </h2>

@@ -127,34 +127,37 @@ nav a {
   margin-left: auto; /* Push the search bar to the far right */
 }
 
+/* Update search input container and input styles */
 .search-input-container {
   position: relative;
-  width: fit-content; /* Adjust width as needed */
+  display: flex;
+  align-items: center;
+  height: 36px; /* Reduced from default height */
 }
 
 .search-input {
-  background: linear-gradient(135deg, #fffdfd); /* Fixed gradient */
   width: 100%;
-  padding: 8px 30px 8px 30px; /* Adjust padding to leave space for the icon */
-  border: 1px solid #ccc;
-  border-radius: 20px; /* Rounded corners for the search bar */
-  outline: none; /* Removes default browser outline */
+  height: 36px; /* Match container height */
+  padding: 0 12px 0 32px; /* Adjust padding to maintain icon space */
+  border-radius: 18px; /* Half of height for perfect circle ends */
+  border: 1px solid #e5e7eb;
+  font-size: 14px; /* Slightly smaller font size */
+  line-height: 1;
 }
 
 .search-icon {
-  font-size: small;
   position: absolute;
-  left: 10px; /* Adjust left position as needed */
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #000000; /* Icon color */
-  pointer-events: none; /* Prevents the icon from blocking input clicks */
+  color: #9ca3af;
+  font-size: 14px; /* Smaller icon size */
 }
 
-/* Search Results Dropdown */
+/* Optional: adjust the search results positioning */
 .search-results {
   position: absolute;
-  top: 100%;
+  top: 40px; /* Adjust based on new input height */
   left: 0;
   width: 100%;
   max-width: fit-content;
