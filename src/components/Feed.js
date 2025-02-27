@@ -41,7 +41,6 @@ const Feed = ({ user }) => {
         user: profilesById[post.user_id] || null
       }));
       
-      console.log("Fetched and enriched posts:", enrichedPosts);
       setTweets(enrichedPosts);
     } catch (err) {
       setError(err.message);
@@ -53,20 +52,11 @@ const Feed = ({ user }) => {
   }, []);
 
   useEffect(() => {
-    // Load Font Awesome without integrity check
-    if (!document.getElementById('font-awesome-css')) {
-      const script = document.createElement('script');
-      script.src = 'https://kit.fontawesome.com/a076d05399.js';
-      script.crossOrigin = 'anonymous';
-      document.head.appendChild(script);
-    }
-    
     // Fetch tweets initially
     fetchAllTweets();
     
     // Set up auto-refresh every 30 seconds
     const refreshInterval = setInterval(() => {
-      console.log("Auto-refreshing feed...");
       fetchAllTweets();
     }, 30000); // 30 seconds
     
@@ -135,46 +125,58 @@ const Feed = ({ user }) => {
   };
 
   if (loading) return (
-    <div className="flex justify-center mt-8">
-      <ArrowPathIcon className="w-8 h-8 animate-spin text-gray-500" />
+    <div className="flex justify-center items-center min-h-[200px] pt-4 md:pt-8">
+      <ArrowPathIcon className="w-6 h-6 md:w-8 md:h-8 animate-spin text-gray-500" />
     </div>
   );
 
   if (error) return (
-    <div className="rounded-md bg-red-50 p-4 mt-4">
+    <div className="rounded-md bg-red-50 p-3 md:p-4 mx-2 md:mx-4 my-3 md:mt-4">
       <div className="flex">
-        <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+        <ExclamationCircleIcon className="h-5 w-5 text-red-400 flex-shrink-0" aria-hidden="true" />
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-red-800">Error loading posts</h3>
-          <div className="mt-2 text-sm text-red-700">{error}</div>
+          <h3 className="text-xs md:text-sm font-medium text-red-800">Error loading posts</h3>
+          <div className="mt-1 md:mt-2 text-xs md:text-sm text-red-700">{error}</div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 mt-4">
-      {/* Refresh button */}
-      <div className="flex justify-between items-center px-2">
-        <h2 className="text-lg font-semibold">Feed</h2>
+    <div className="max-w-5xl mx-auto space-y-2 md:space-y-4 px-2 md:px-4 pt-4 md:pt-6 pb-16 md:pb-8">
+      {/* Refresh button and header */}
+      <div className="flex justify-between items-center px-1 md:px-2">
+        <h2 className="text-base md:text-lg font-semibold">Feed</h2>
         <button 
           onClick={handleManualRefresh} 
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors"
           disabled={refreshing}
+          aria-label="Refresh feed"
         >
           <ArrowPathIcon 
-            className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} 
+            className={`w-4 h-4 md:w-5 md:h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} 
           />
         </button>
       </div>
       
-      {tweets.length > 0 ? (
-        tweets.map(tweet => (
-          <Tweet key={tweet.id} tweet={tweet} />
-        ))
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p>No posts yet. Be the first to create a post!</p>
+      {/* Tweet list */}
+      <div className="space-y-2 md:space-y-4">
+        {tweets.length > 0 ? (
+          tweets.map(tweet => (
+            <Tweet key={tweet.id} tweet={tweet} />
+          ))
+        ) : (
+          <div className="bg-white rounded-lg p-4 md:p-8 text-center text-gray-500 shadow-sm">
+            <p className="text-sm md:text-base">No posts yet. Be the first to create a post!</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Loading indicator for refresh */}
+      {refreshing && !loading && (
+        <div className="fixed bottom-4 right-4 bg-black bg-opacity-70 text-white py-1 px-3 rounded-full text-xs flex items-center space-x-1 shadow-lg">
+          <ArrowPathIcon className="w-3 h-3 animate-spin" />
+          <span>Updating...</span>
         </div>
       )}
     </div>
