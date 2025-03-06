@@ -51,7 +51,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    document.body.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -60,7 +64,7 @@ const App = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
@@ -77,7 +81,7 @@ const AppContent = ({ user, setUser, toggleTheme }) => {
   return (
     <>
       {!hideNavbar && <Navbar toggleTheme={toggleTheme} />}
-      <div className="container">
+      <div className="container mx-auto px-4">
         <Routes>
           <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
           <Route path="/login" element={user ? <Navigate to="/tweets" /> : <Login setUser={setUser} />} />
@@ -100,10 +104,10 @@ const HomePage = ({ user }) => {
   };
 
   return (
-    <div className="container">
-      <div className="main">
+    <div className="container mx-auto px-4">
+      <div className="main flex flex-col items-center">
         <Post user={user} addTweet={addTweet} />
-        <div className="feed-container">
+        <div className="feed-container w-full max-w-5xl">
           <Feed />
         </div>
       </div>

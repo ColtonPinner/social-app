@@ -11,7 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient';
 
-const Navbar = ({ profile }) => {
+const Navbar = ({ profile, toggleTheme }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -144,9 +144,9 @@ const Navbar = ({ profile }) => {
     <>
       {/* Desktop Navbar - Island Style with compact icons */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-50 px-4 pt-4">
-        <nav className="bg-white rounded-2xl border border-gray-200 flex items-center h-14 px-6 mx-auto max-w-5xl">
+        <nav className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 flex items-center h-14 px-6 mx-auto max-w-5xl">
           <div className="flex items-center space-x-2">
-            <Link to="/tweets" className="text-gray-700 text-xl hover:text-black transition-colors">
+            <Link to="/tweets" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
               <FontAwesomeIcon icon={faHome} />
             </Link>
             
@@ -162,7 +162,7 @@ const Navbar = ({ profile }) => {
             
             <div className="relative" ref={notificationRef}>
               <button 
-                className="p-2 text-gray-700 hover:bg-gray-100 rounded-full relative transition-colors"
+                className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full relative transition-colors"
                 onClick={handleToggleNotifications}
                 aria-label="Notifications"
               >
@@ -175,56 +175,56 @@ const Navbar = ({ profile }) => {
               </button>
               
               {showNotifications && (
-                <div className="absolute top-12 -right-32 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-lg z-10 border border-gray-200">
-                  <h3 className="p-3 font-semibold border-b border-gray-200">Notifications</h3>
+                <div className="absolute top-12 -right-32 w-80 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                  <h3 className="p-3 font-semibold border-b border-gray-200 dark:border-gray-700">Notifications</h3>
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-3 border-b border-gray-100 cursor-pointer ${notification.is_read ? '' : 'bg-gray-50'} hover:bg-gray-100`}
+                        className={`p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer ${notification.is_read ? '' : 'bg-gray-50 dark:bg-gray-700'} hover:bg-gray-100 dark:hover:bg-gray-600`}
                         onClick={() => markAsRead(notification.id)}
                       >
                         <p className="text-sm mb-1">{notification.message}</p>
-                        <span className="text-xs text-gray-500">{new Date(notification.created_at).toLocaleString()}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(notification.created_at).toLocaleString()}</span>
                       </div>
                     ))
                   ) : (
-                    <p className="p-4 text-center text-gray-500">No notifications.</p>
+                    <p className="p-4 text-center text-gray-500 dark:text-gray-400">No notifications.</p>
                   )}
                 </div>
               )}
             </div>
             
-            <Link to="/settings" className="text-gray-700 text-xl hover:text-black transition-colors">
+            <Link to="/settings" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
               <FontAwesomeIcon icon={faGear} />
             </Link>
           </div>
 
           <div className="ml-auto relative" ref={searchResultsRef}>
             <div className="relative">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-60 pl-9 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="w-60 pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400"
               />
             </div>
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-12 left-0 right-0 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
+              <div className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
                 {searchResults.map((user) => (
                   <Link 
                     to={`/profile/${user.id}`} 
                     key={user.id} 
-                    className="flex items-center p-3 hover:bg-gray-50"
+                    className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     <img
                       src={user.avatar_url || 'https://via.placeholder.com/150'}
                       alt={user.username}
                       className="w-8 h-8 rounded-full mr-3 object-cover"
                     />
-                    <span className="text-gray-800">{user.username}</span>
+                    <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
                   </Link>
                 ))}
               </div>
@@ -235,14 +235,14 @@ const Navbar = ({ profile }) => {
 
       {/* Mobile Navbar - Island Style with reduced radius */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-2 pointer-events-none">
-        <div className="bg-white rounded-2xl  border border-gray-200 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
-          <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 px-2 py-1 hover:text-black transition-colors active:scale-95">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl  border border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
+          <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
             <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
             <span className="text-[10px]">Home</span>
           </Link>
           
           <button 
-            className="flex flex-col items-center justify-center text-gray-700 px-2 py-1 hover:text-black transition-colors active:scale-95"
+            className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95"
             onClick={toggleMobileSearch}
           >
             <FontAwesomeIcon icon={faSearch} className="text-xl mb-1" />
@@ -250,7 +250,7 @@ const Navbar = ({ profile }) => {
           </button>
           
           <button 
-            className="flex flex-col items-center justify-center text-gray-700 px-2 py-1 relative hover:text-black transition-colors active:scale-95"
+            className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 relative hover:text-black dark:hover:text-white transition-colors active:scale-95"
             onClick={handleToggleNotifications}
           >
             <FontAwesomeIcon icon={faBell} className="text-xl mb-1" />
@@ -263,13 +263,13 @@ const Navbar = ({ profile }) => {
           </button>
           
           {profile && (
-            <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 px-2 py-1 hover:text-black transition-colors active:scale-95">
+            <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
               <FontAwesomeIcon icon={faUser} className="text-xl mb-1" />
               <span className="text-[10px]">Profile</span>
             </Link>
           )}
           
-          <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 px-2 py-1 hover:text-black transition-colors active:scale-95">
+          <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
             <FontAwesomeIcon icon={faGear} className="text-xl mb-1" />
             <span className="text-[10px]">Settings</span>
           </Link>
@@ -278,22 +278,22 @@ const Navbar = ({ profile }) => {
 
       {/* Mobile Search Overlay - Enhanced */}
       {showMobileSearch && (
-        <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex items-center">
+        <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-800 z-50 flex flex-col">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
             <div className="relative flex-1 mr-2">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="w-full pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400"
                 autoFocus
               />
             </div>
             <button 
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" 
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" 
               onClick={toggleMobileSearch}
               aria-label="Close search"
             >
@@ -307,7 +307,7 @@ const Navbar = ({ profile }) => {
                 <Link 
                   to={`/profile/${user.id}`} 
                   key={user.id} 
-                  className="flex items-center p-4 border-b border-gray-100 hover:bg-gray-50 active:bg-gray-100"
+                  className="flex items-center p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600"
                   onClick={toggleMobileSearch}
                 >
                   <img
@@ -315,18 +315,18 @@ const Navbar = ({ profile }) => {
                     alt={user.username}
                     className="w-10 h-10 rounded-full mr-4 object-cover"
                   />
-                  <span className="text-gray-800 text-base">{user.username}</span>
+                  <span className="text-gray-800 dark:text-gray-200 text-base">{user.username}</span>
                 </Link>
               ))
             ) : searchQuery ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500">No results found</p>
-                <p className="text-gray-400 text-sm mt-2">Try a different search term</p>
+                <p className="text-gray-500 dark:text-gray-400">No results found</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Try a different search term</p>
               </div>
             ) : (
               <div className="p-8 text-center">
-                <p className="text-gray-500">Search for users by username</p>
-                <p className="text-gray-400 text-sm mt-2">Start typing to see results</p>
+                <p className="text-gray-500 dark:text-gray-400">Search for users by username</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Start typing to see results</p>
               </div>
             )}
           </div>
@@ -335,11 +335,11 @@ const Navbar = ({ profile }) => {
 
       {/* Mobile Notifications - Enhanced */}
       {showNotifications && (
-        <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-800 z-50 flex flex-col">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h3 className="text-lg font-medium">Notifications</h3>
             <button 
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" 
+              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" 
               onClick={handleToggleNotifications}
               aria-label="Close notifications"
             >
@@ -352,18 +352,18 @@ const Navbar = ({ profile }) => {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 ${notification.is_read ? '' : 'bg-gray-50'} active:bg-gray-100`}
+                  className={`p-4 border-b border-gray-100 dark:border-gray-700 ${notification.is_read ? '' : 'bg-gray-50 dark:bg-gray-700'} active:bg-gray-100 dark:active:bg-gray-600`}
                   onClick={() => markAsRead(notification.id)}
                 >
                   <p className="text-sm mb-1">{notification.message}</p>
-                  <span className="text-xs text-gray-500">{new Date(notification.created_at).toLocaleString()}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(notification.created_at).toLocaleString()}</span>
                 </div>
               ))
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <FontAwesomeIcon icon={faBell} className="text-gray-300 text-4xl mb-3" />
-                <p className="text-gray-500">No notifications</p>
-                <p className="text-gray-400 text-sm mt-2">You're all caught up!</p>
+                <FontAwesomeIcon icon={faBell} className="text-gray-300 dark:text-gray-600 text-4xl mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">No notifications</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">You're all caught up!</p>
               </div>
             )}
           </div>
