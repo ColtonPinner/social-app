@@ -263,20 +263,11 @@ const Navbar = ({ profile, toggleTheme }) => {
                 alt="Profile"
                 className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
               />
-              <span className="text-[10px]">Profile</span>
+              <span className="text-[10px]"></span>
             </Link>
           )}
           
-          {profile && (
-            <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
-              <img
-                src={profile.avatar_url || 'https://via.placeholder.com/150'}
-                alt="Settings"
-                className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
-              />
-              <span className="text-[10px]">Settings</span>
-            </Link>
-          )}
+          
         </div>
       </nav>
 
