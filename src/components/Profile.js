@@ -294,6 +294,22 @@ const Profile = () => {
     }
   };
 
+  const handleDeletePost = async (postId) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Error deleting post');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen pt-16">
@@ -467,7 +483,7 @@ const Profile = () => {
         {posts.length > 0 ? (
           posts.map((post, index) => (
             <React.Fragment key={post.id}>
-              <Tweet tweet={post} />
+              <Tweet tweet={post} onDelete={() => handleDeletePost(post.id)} />
               {index < posts.length - 1 && <hr className="border-t border-gray-300 my-4" />}
             </React.Fragment>
           ))

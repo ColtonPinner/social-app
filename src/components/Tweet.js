@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HeartIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import { HeartIcon, ChatBubbleLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
 
-const Tweet = ({ tweet }) => {
+const Tweet = ({ tweet, onDelete }) => {
   const formattedDate = new Date(tweet.created_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
@@ -71,6 +71,14 @@ const Tweet = ({ tweet }) => {
               <ChatBubbleLeftIcon className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" />
               <span className="ml-1 text-xs">{tweet.comments_count || 0}</span>
             </button>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(tweet.id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            )}
            </div>
         </div>
       </div>

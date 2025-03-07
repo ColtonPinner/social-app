@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import './App.css';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import SignUp from './components/Signup';
@@ -13,6 +12,7 @@ import { supabase } from './supabaseClient';
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
@@ -23,11 +23,13 @@ const App = () => {
         const session = JSON.parse(storedSession);
         setUser(session.user);
         await supabase.auth.setSession(session);
+        fetchUserProfile(session.user.id);
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setUser(session.user);
           localStorage.setItem('supabase-session', JSON.stringify(session));
+          fetchUserProfile(session.user.id);
         }
       }
       setLoading(false);
@@ -39,16 +41,39 @@ const App = () => {
       if (session) {
         setUser(session.user);
         localStorage.setItem('supabase-session', JSON.stringify(session));
+        fetchUserProfile(session.user.id);
       } else {
         setUser(null);
+        setProfile(null);
         localStorage.removeItem('supabase-session');
       }
     });
 
+    const refreshInterval = setInterval(() => {
+      getUser();
+    }, 60000); // Refresh session every 60 seconds
+
     return () => {
       authListener.subscription.unsubscribe();
+      clearInterval(refreshInterval);
     };
   }, []);
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -69,18 +94,18 @@ const App = () => {
 
   return (
     <Router>
-      <AppContent user={user} setUser={setUser} toggleTheme={toggleTheme} />
+      <AppContent user={user} profile={profile} setUser={setUser} toggleTheme={toggleTheme} />
     </Router>
   );
 };
 
-const AppContent = ({ user, setUser, toggleTheme }) => {
+const AppContent = ({ user, profile, setUser, toggleTheme }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <>
-      {!hideNavbar && <Navbar toggleTheme={toggleTheme} />}
+      {!hideNavbar && <Navbar profile={profile} toggleTheme={toggleTheme} />}
       <div className="container mx-auto px-4">
         <Routes>
           <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />

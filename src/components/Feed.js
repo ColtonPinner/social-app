@@ -8,6 +8,8 @@ const Feed = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [newTweet, setNewTweet] = useState('');
+  const [image, setImage] = useState(null);
 
   const fetchAllTweets = useCallback(async () => {
     try {
@@ -105,6 +107,80 @@ const Feed = ({ user }) => {
     fetchAllTweets();
   };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setImage(file);
+    }
+  };
+
+  const handlePostTweet = async () => {
+    if (!newTweet && !image) return;
+
+    let imageUrl = null;
+    if (image) {
+      const fileExt = image.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `tweets/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('tweets')
+        .upload(filePath, image);
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        setError('Error uploading image');
+        return;
+      }
+
+      const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+        .from('tweets')
+        .getPublicUrl(filePath);
+
+      if (publicUrlError) {
+        console.error('Error getting public URL:', publicUrlError);
+        setError('Error getting public URL');
+        return;
+      }
+
+      imageUrl = publicUrlData.publicUrl;
+    }
+
+    const { error: postError } = await supabase
+      .from('posts')
+      .insert({
+        user_id: user.id,
+        content: newTweet,
+        image_url: imageUrl,
+      });
+
+    if (postError) {
+      console.error('Error posting tweet:', postError);
+      setError('Error posting tweet');
+      return;
+    }
+
+    setNewTweet('');
+    setImage(null);
+    fetchAllTweets();
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      setTweets(prevTweets => prevTweets.filter(tweet => tweet.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Error deleting post');
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center min-h-[200px] pt-4 md:pt-8">
       <ArrowPathIcon className="w-6 h-6 md:w-8 md:h-8 animate-spin text-gray-500" />
@@ -124,12 +200,35 @@ const Feed = ({ user }) => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto pt-4 pb-24 px-6 md:px-8">
+    <div className="max-w-7xl mx-auto pt-4 pb-24 px-6 md:px-8">
+      {user && (
+        <div className="mb-6">
+          <textarea
+            className="w-full p-3 border rounded-lg"
+            rows="3"
+            placeholder="What's happening?"
+            value={newTweet}
+            onChange={(e) => setNewTweet(e.target.value)}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="mt-2"
+          />
+          <button
+            onClick={handlePostTweet}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+          >
+            Tweet
+          </button>
+        </div>
+      )}
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {tweets.length > 0 ? (
           tweets.map(tweet => (
             <div key={tweet.id} className="py-4 w-full">
-              <Tweet tweet={tweet} />
+              <Tweet tweet={tweet} onDelete={tweet.user.id === user?.id ? handleDeletePost : null} />
             </div>
           ))
         ) : (

@@ -3,10 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faHome, 
-  faGear, 
   faBell, 
   faSearch,
-  faUser,
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient';
@@ -150,16 +148,6 @@ const Navbar = ({ profile, toggleTheme }) => {
               <FontAwesomeIcon icon={faHome} />
             </Link>
             
-            {profile && (
-              <Link to={`/profile/${profile.id}`} className="hover:opacity-80 transition-opacity">
-                <img
-                  src={profile.avatar_url || 'https://via.placeholder.com/150'}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              </Link>
-            )}
-            
             <div className="relative" ref={notificationRef}>
               <button 
                 className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full relative transition-colors"
@@ -195,9 +183,15 @@ const Navbar = ({ profile, toggleTheme }) => {
               )}
             </div>
             
-            <Link to="/settings" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
-              <FontAwesomeIcon icon={faGear} />
-            </Link>
+            {profile && (
+              <Link to="/settings" className="hover:opacity-80 transition-opacity border-2 border-green-500 rounded-full">
+                <img
+                  src={profile.avatar_url || 'https://via.placeholder.com/150'}
+                  alt="Settings"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              </Link>
+            )}
           </div>
 
           <div className="ml-auto relative" ref={searchResultsRef}>
@@ -238,7 +232,7 @@ const Navbar = ({ profile, toggleTheme }) => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl  border border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
           <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
             <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
-            <span className="text-[10px]">Home</span>
+            <span className="text-[10px]"></span>
           </Link>
           
           <button 
@@ -246,7 +240,7 @@ const Navbar = ({ profile, toggleTheme }) => {
             onClick={toggleMobileSearch}
           >
             <FontAwesomeIcon icon={faSearch} className="text-xl mb-1" />
-            <span className="text-[10px]">Search</span>
+            <span className="text-[10px]"></span>
           </button>
           
           <button 
@@ -259,20 +253,30 @@ const Navbar = ({ profile, toggleTheme }) => {
                 {unreadCount}
               </span>
             )}
-            <span className="text-[10px]">Alerts</span>
+            <span className="text-[10px]"></span>
           </button>
           
           {profile && (
             <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
-              <FontAwesomeIcon icon={faUser} className="text-xl mb-1" />
+              <img
+                src={profile.avatar_url || 'https://via.placeholder.com/150'}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
+              />
               <span className="text-[10px]">Profile</span>
             </Link>
           )}
           
-          <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
-            <FontAwesomeIcon icon={faGear} className="text-xl mb-1" />
-            <span className="text-[10px]">Settings</span>
-          </Link>
+          {profile && (
+            <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
+              <img
+                src={profile.avatar_url || 'https://via.placeholder.com/150'}
+                alt="Settings"
+                className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
+              />
+              <span className="text-[10px]">Settings</span>
+            </Link>
+          )}
         </div>
       </nav>
 
