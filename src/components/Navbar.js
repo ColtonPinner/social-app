@@ -202,7 +202,7 @@ const Navbar = ({ profile, toggleTheme }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-60 pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400"
+                className="w-52 h-10 pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
               />
             </div>
             {showSearchResults && searchResults.length > 0 && (
@@ -267,7 +267,6 @@ const Navbar = ({ profile, toggleTheme }) => {
             </Link>
           )}
           
-          
         </div>
       </nav>
 
@@ -283,7 +282,7 @@ const Navbar = ({ profile, toggleTheme }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400"
+                className="w-full pl-9 pr-4 py-3 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
                 autoFocus
               />
             </div>

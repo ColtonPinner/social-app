@@ -20,6 +20,7 @@ const Settings = ({ user, setUser }) => {
     full_name: '',
     phone: '',
     dob: null,
+    bio: '',
   });
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -47,6 +48,7 @@ const Settings = ({ user, setUser }) => {
             full_name: data.full_name || '',
             phone: data.phone ? parsePhoneNumberFromString(data.phone, 'US')?.formatNational() || data.phone : '',
             dob: data.dob ? new Date(data.dob) : null,
+            bio: data.bio || '',
           });
           
           // Set image preview if avatar_url exists
@@ -174,7 +176,8 @@ const Settings = ({ user, setUser }) => {
         username: formData.username,
         full_name: formData.full_name,
         phone: formData.phone,
-        // Removing dob field since it doesn't exist in the database
+        dob: formData.dob ? formData.dob.toISOString() : null,
+        bio: formData.bio,
       };
       
       const { error } = await supabase
@@ -330,6 +333,22 @@ const Settings = ({ user, setUser }) => {
               dropdownMode="select"
               maxDate={new Date()}
               minDate={new Date('1900-01-01')}
+            />
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              className="block w-full rounded-lg border-0 px-4 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-black sm:leading-6"
+              rows="4"
+              placeholder="Tell us a little about yourself"
             />
           </div>
         </div>

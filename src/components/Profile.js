@@ -8,11 +8,7 @@ import {
   UserCircleIcon,
   UsersIcon,
   UserPlusIcon,
-  UserMinusIcon,
-  PencilIcon,
-  CheckIcon,
-  XMarkIcon,
-  CameraIcon
+  UserMinusIcon
 } from '@heroicons/react/24/outline';
 
 const Profile = () => {
@@ -27,10 +23,7 @@ const Profile = () => {
   const [followingCount, setFollowingCount] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     // Get the current logged in user
@@ -64,7 +57,6 @@ const Profile = () => {
         
         console.log("Profile data:", profileData);
         setProfile(profileData);
-        setBio(profileData.bio || '');
         setAvatarUrl(profileData.avatar_url || '');
         
         // Check follow status
@@ -236,64 +228,6 @@ const Profile = () => {
     }
   };
 
-  const handleBioSave = async () => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ bio })
-        .eq('id', currentUser.id);
-
-      if (error) throw error;
-
-      setProfile(prevProfile => ({ ...prevProfile, bio }));
-      setIsEditingBio(false);
-    } catch (error) {
-      console.error('Error updating bio:', error);
-      setError('Error updating bio');
-    }
-  };
-
-  const handleAvatarUpload = async (event) => {
-    try {
-      setIsUploading(true);
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      if (publicUrlError) throw publicUrlError;
-
-      const avatarUrl = publicUrlData.publicUrl;
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', currentUser.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(avatarUrl);
-      setProfile(prevProfile => ({ ...prevProfile, avatar_url: avatarUrl }));
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      setError('Error uploading avatar');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleDeletePost = async (postId) => {
     try {
       const { error } = await supabase
@@ -360,20 +294,6 @@ const Profile = () => {
               <UserCircleIcon className="h-20 w-20 md:h-16 md:w-16 text-gray-400" />
             )}
           </div>
-          {currentUser && currentUser.id === id && (
-            <div className="flex flex-col items-center sm:items-start mt-4">
-              <label className="w-32 px-4 py-2 bg-black rounded-full cursor-pointer transition text-sm font-medium text-white flex items-center justify-center">
-                Edit Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                  disabled={isUploading}
-                />
-              </label>
-            </div>
-          )}
           
           {/* User Info */}
           <div className="flex flex-col items-center sm:items-start w-full">
@@ -389,42 +309,9 @@ const Profile = () => {
 
             {/* Bio Section */}
             <div className="mt-2 w-full">
-              {isEditingBio ? (
-                <div className="flex items-center space-x-2">
-                  <textarea
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-2 text-sm md:text-base text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition-all duration-200 resize-none"
-                    rows={3}
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                  />
-                  <button
-                    onClick={handleBioSave}
-                    className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition"
-                  >
-                    <CheckIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setIsEditingBio(false)}
-                    className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <p className="text-gray-600 text-sm md:text-base break-words max-w-full">
-                    {profile.bio || "No bio available"}
-                  </p>
-                  {currentUser && currentUser.id === id && (
-                    <button
-                      onClick={() => setIsEditingBio(true)}
-                      className="p-2 rounded-full bg-black text-white"
-                    >
-                      Edit Bio
-                    </button>
-                  )}
-                </div>
-              )}
+              <p className="text-gray-600 text-sm md:text-base break-words max-w-full">
+                {profile.bio || "No bio available"}
+              </p>
             </div>
 
             <div className="flex space-x-4 mt-2 text-xs md:text-sm">
