@@ -9,6 +9,7 @@ import Settings from './components/Settings';
 import Messages from './components/Messages';
 import Profile from './components/Profile';
 import { supabase } from './supabaseClient';
+import { Analytics } from "@vercel/analytics/react"
 
 const App = () => {
   const [user, setUser] = useState(null);
