@@ -8,6 +8,7 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient';
+import { Transition } from '@headlessui/react';
 
 const Navbar = ({ profile, toggleTheme }) => {
   const [notifications, setNotifications] = useState([]);
@@ -202,26 +203,36 @@ const Navbar = ({ profile, toggleTheme }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-52 h-10 pl-9 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
+                className="w-52 h-10 pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
               />
             </div>
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
-                {searchResults.map((user) => (
-                  <Link 
-                    to={`/profile/${user.id}`} 
-                    key={user.id} 
-                    className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <img
-                      src={user.avatar_url || 'https://via.placeholder.com/150'}
-                      alt={user.username}
-                      className="w-8 h-8 rounded-full mr-3 object-cover"
-                    />
-                    <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
-                  </Link>
-                ))}
-              </div>
+              <Transition
+                show={showSearchResults}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <div className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                  {searchResults.map((user) => (
+                    <Link 
+                      to={`/profile/${user.id}`} 
+                      key={user.id} 
+                      className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <img
+                        src={user.avatar_url || 'https://via.placeholder.com/150'}
+                        alt={user.username}
+                        className="w-8 h-8 rounded-full mr-3 object-cover"
+                      />
+                      <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
+                    </Link>
+                  ))}
+                </div>
+              </Transition>
             )}
           </div>
         </nav>
@@ -282,7 +293,7 @@ const Navbar = ({ profile, toggleTheme }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-3 rounded-full border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
+                className="w-full pl-9 pr-4 py-3 rounded-md border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
                 autoFocus
               />
             </div>

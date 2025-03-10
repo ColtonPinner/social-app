@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { format } from 'date-fns';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
@@ -10,10 +10,17 @@ import {
   ExclamationCircleIcon, 
   CheckCircleIcon, 
   XMarkIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  UsersIcon,
+  UserPlusIcon,
+  UserMinusIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+import Tweet from './Tweet';
 
-const Settings = ({ user, setUser }) => {
+const ProfileSettings = ({ user, setUser }) => {
+  const { id } = useParams(); // Get the user ID from the URL
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -26,7 +33,13 @@ const Settings = ({ user, setUser }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [posts, setPosts] = useState([]); // State to store the user's posts
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   // Fetch user profile data on component mount
   useEffect(() => {
@@ -64,6 +77,210 @@ const Settings = ({ user, setUser }) => {
     
     fetchUserProfile();
   }, [user]);
+
+  // Fetch profile data and posts when ID changes
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        console.log("Fetching profile for ID:", id);
+        
+        // Fetch the profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (profileError) throw profileError;
+        
+        console.log("Profile data:", profileData);
+        setProfile(profileData);
+        setAvatarUrl(profileData.avatar_url || '');
+        
+        // Check follow status
+        if (user?.id && user.id !== id) {
+          console.log("Checking if following, current user:", user.id, "profile:", id);
+          checkIfFollowing(id);
+        }
+        
+        // Fetch follow counts
+        fetchFollowCounts(id);
+        
+        // Fetch the user's posts
+        fetchUserPosts(id);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setError('Error fetching profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProfileData();
+    }
+  }, [id, user]);
+
+  const fetchUserPosts = async (profileId) => {
+    try {
+      // First get the posts
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', profileId)
+        .order('created_at', { ascending: false });
+
+      if (postsError) throw postsError;
+      
+      // Get all users for these posts
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, full_name');
+        
+      if (profilesError) throw profilesError;
+      
+      // Create a lookup table for profiles by ID
+      const profilesById = profilesData.reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {});
+      
+      // Enrich the posts with user data
+      const enrichedPosts = postsData.map(post => ({
+        ...post,
+        user: profilesById[post.user_id] || null
+      }));
+      
+      setPosts(enrichedPosts);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      setError('Error fetching user posts');
+    }
+  };
+
+  const checkIfFollowing = async (profileId) => {
+    try {
+      if (!user?.id) return false;
+      
+      const { data, error } = await supabase
+        .from('followers')
+        .select('*')
+        .eq('follower_id', user.id)
+        .eq('following_id', profileId)
+        .maybeSingle();
+  
+      if (error) {
+        console.error('Error checking follow status:', error);
+        return false;
+      }
+      
+      setIsFollowing(!!data);
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+      setIsFollowing(false);
+    }
+  };
+
+  const fetchFollowCounts = async (profileId) => {
+    try {
+      // Get followers count
+      const { count: followers, error: followerError } = await supabase
+        .from('followers')
+        .select('id', { count: 'exact' })
+        .eq('following_id', profileId);
+  
+      if (followerError) {
+        console.error('Error fetching follower count:', followerError);
+        // Don't update state if there's an error
+      } else {
+        setFollowerCount(followers || 0);
+      }
+  
+      // Get following count
+      const { count: following, error: followingError } = await supabase
+        .from('followers')
+        .select('id', { count: 'exact' })
+        .eq('follower_id', profileId);
+  
+      if (followingError) {
+        console.error('Error fetching following count:', followingError);
+        // Don't update state if there's an error
+      } else {
+        setFollowingCount(following || 0);
+      }
+    } catch (error) {
+      console.error('Error in fetchFollowCounts:', error);
+      // Continue execution, don't throw
+    }
+  };
+
+  const handleFollowClick = async () => {
+    // If not logged in, redirect to login
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    // Don't allow following yourself
+    if (user.id === id) return;
+    
+    setFollowLoading(true);
+    setError(null);
+  
+    try {
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('followers')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', id);
+  
+        if (error) throw error;
+        
+        setIsFollowing(false);
+        setFollowerCount(prevCount => Math.max(0, prevCount - 1));
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('followers')
+          .insert({
+            follower_id: user.id,
+            following_id: id
+          });
+  
+        if (error) throw error;
+        
+        setIsFollowing(true);
+        setFollowerCount(prevCount => prevCount + 1);
+      }
+      
+      // Add a short timeout to allow the user to see the button change state
+      setTimeout(() => {
+        setFollowLoading(false);
+      }, 300);
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      setError(`Error ${isFollowing ? 'unfollowing' : 'following'} user`);
+      setFollowLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Error deleting post');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -409,4 +626,4 @@ const Settings = ({ user, setUser }) => {
   );
 };
 
-export default Settings;
+export default ProfileSettings;
