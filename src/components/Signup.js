@@ -104,122 +104,128 @@ const SignUp = ({ setUser }) => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md space-y-8">
-        <Logo className="mx-auto h-12 w-auto" />
-        <h2 className="text-center text-3xl font-bold text-gray-900">
-          Create Your Account
-        </h2>
+    <div className="min-h-screen relative">
+      {/* Logo in upper left */}
+      <div className="absolute top-8 left-8">
+        <Logo className="h-12 w-auto" />
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="bg-white p-8 rounded-2xl border border-gray-200">
-            
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-900">
-                Email
-              </label>
-              <div className="relative mt-2">
-                <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  required
-                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md space-y-8">
+          <h2 className="text-center text-3xl font-bold text-gray-900">
+            Create Your Account
+          </h2>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200">
+              
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+                  Email
+                </label>
+                <div className="relative mt-2">
+                  <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    required
+                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
+                {error.email && <p className="text-red-500 text-sm mt-1">{error.email}</p>}
               </div>
-              {error.email && <p className="text-red-500 text-sm mt-1">{error.email}</p>}
-            </div>
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-900">
-                Password
-              </label>
-              <div className="relative mt-2">
-                <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  required
-                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
+              {/* Password */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+                  Password
+                </label>
+                <div className="relative mt-2">
+                  <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    required
+                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
+                {error.password && <p className="text-red-500 text-sm mt-1">{error.password}</p>}
               </div>
-              {error.password && <p className="text-red-500 text-sm mt-1">{error.password}</p>}
-            </div>
 
-            {/* Phone Number */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-900">
-                Phone Number
-              </label>
-              <div className="relative mt-2">
-                {/* 
-                  Custom mask for US: (XXX) XXX-XXXX
-                  Disables dropdown & country code for a purely US-based format 
-                */}
-                <PhoneInput
-                  country="us"
-                  value={formData.phone}
-                  onChange={handlePhoneChange}
-                  masks={{ us: '(...) ...-....' }}
-                  disableDropdown
-                  disableCountryCode
-                  onlyCountries={['us']}
-                  placeholder="(555) 555-5555"
-                  inputClass="!w-full !rounded-lg !border-0 !py-2 !pl-10 !ring-1 !ring-gray-300 focus:!ring-2 focus:!ring-black transition"
-                />
+              {/* Phone Number */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-900">
+                  Phone Number
+                </label>
+                <div className="relative mt-2">
+                  {/* 
+                    Custom mask for US: (XXX) XXX-XXXX
+                    Disables dropdown & country code for a purely US-based format 
+                  */}
+                  <PhoneInput
+                    country="us"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    masks={{ us: '(...) ...-....' }}
+                    disableDropdown
+                    disableCountryCode
+                    onlyCountries={['us']}
+                    placeholder="(555) 555-5555"
+                    inputClass="!w-full !rounded-lg !border-0 !py-2 !pl-10 !ring-1 !ring-gray-300 focus:!ring-2 focus:!ring-black transition"
+                  />
+                </div>
+                {error.phone && <p className="text-red-500 text-sm mt-1">{error.phone}</p>}
               </div>
-              {error.phone && <p className="text-red-500 text-sm mt-1">{error.phone}</p>}
-            </div>
 
-            {/* Date of Birth */}
-            <div>
-              <label htmlFor="dob" className="block text-sm font-medium text-gray-900">
-                Date of Birth
-              </label>
-              <div className="relative mt-2">
-                <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <input
-                  type="date"
-                  name="dob"
-                  id="dob"
-                  className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
-                  value={formData.dob}
-                  onChange={handleChange}
-                />
+              {/* Date of Birth */}
+              <div>
+                <label htmlFor="dob" className="block text-sm font-medium text-gray-900">
+                  Date of Birth
+                </label>
+                <div className="relative mt-2">
+                  <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="date"
+                    name="dob"
+                    id="dob"
+                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    value={formData.dob}
+                    onChange={handleChange}
+                  />
+                </div>
+                {error.dob && <p className="text-red-500 text-sm mt-1">{error.dob}</p>}
               </div>
-              {error.dob && <p className="text-red-500 text-sm mt-1">{error.dob}</p>}
+
+              {/* Form-Level Error */}
+              {error.form && <p className="text-red-500 text-sm mt-3">{error.form}</p>}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-4 rounded-lg bg-black py-2 text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50"
+              >
+                {loading ? 'Creating Account...' : 'Next'}
+              </button>
+
+              {/* Return to Login Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="w-full mt-4 text-center text-sm font-semibold text-gray-700 hover:text-black transition"
+              >
+                Already have an account? <span className="underline">Return to Login</span>
+              </button>
             </div>
-
-            {/* Form-Level Error */}
-            {error.form && <p className="text-red-500 text-sm mt-3">{error.form}</p>}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-4 rounded-lg bg-black py-2 text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50"
-            >
-              {loading ? 'Creating Account...' : 'Next'}
-            </button>
-
-            {/* Return to Login Button */}
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="w-full mt-4 text-center text-sm font-semibold text-gray-700 hover:text-black transition"
-            >
-              Already have an account? <span className="underline">Return to Login</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
