@@ -200,9 +200,9 @@ const Feed = ({ user }) => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto pt-4 pb-24 px-6 md:px-8">
+    <div className="max-w-7xl mx-auto pt-4 pb-24 px-2 md:px-8">
       {user && (
-        <div className="mb-6">
+        <div className="mb-6 px-2 md:px-0">
           <textarea
             className="w-full p-3 border rounded-lg"
             rows="3"
@@ -225,9 +225,9 @@ const Feed = ({ user }) => {
         </div>
       )}
       
-      {/* Updated container with border */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-        <div className="max-h-[70vh] overflow-y-auto px-4">
+      {/* Tweets Container */}
+      <div className="md:bg-white md:dark:bg-gray-800 md:rounded-2xl md:shadow-sm md:overflow-hidden md:border md:border-gray-200 md:dark:border-gray-700">
+        <div className="md:max-h-[calc(100vh-240px)] md:overflow-y-auto px-2 md:px-4">
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {tweets.length > 0 ? (
               tweets.map(tweet => (
