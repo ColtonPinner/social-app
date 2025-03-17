@@ -10,6 +10,7 @@ import Messages from './components/Messages';
 import Profile from './components/Profile';
 import { supabase } from './supabaseClient';
 import { Analytics } from "@vercel/analytics/react"
+import Footer from './components/Footer';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -103,11 +104,12 @@ const App = () => {
 const AppContent = ({ user, profile, setUser, toggleTheme }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
+  const hideFooter = hideNavbar; // Hide footer on login/signup pages
 
   return (
     <>
       {!hideNavbar && <Navbar profile={profile} toggleTheme={toggleTheme} />}
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 pb-16"> {/* Added padding bottom for footer */}
         <Routes>
           <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
           <Route path="/login" element={user ? <Navigate to="/tweets" /> : <Login setUser={setUser} />} />
@@ -118,6 +120,8 @@ const AppContent = ({ user, profile, setUser, toggleTheme }) => {
           <Route path="/settings" element={user ? <Settings user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
+      {!hideFooter && <Footer />}
+      <Analytics />
     </>
   );
 };

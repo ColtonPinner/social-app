@@ -240,7 +240,7 @@ const Navbar = ({ profile, toggleTheme }) => {
       </div>
 
       {/* Mobile Navbar - Island Style with reduced radius */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-2 pointer-events-none">
+      <nav className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-2 pointer-events-none">
         <div className="bg-white dark:bg-gray-800 rounded-2xl  border border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
           <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
             <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />

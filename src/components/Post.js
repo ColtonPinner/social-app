@@ -90,7 +90,7 @@ const Post = ({ user, addTweet }) => {
   };
 
   return (
-    <div className="mt-16 md:mt-24 w-full flex flex-col items-center py-2 md:py-4">
+    <div className="mt-24 md:mt-28 w-full flex flex-col items-center py-2 md:py-4">
       {/* Responsive post box container - updated width classes */}
       <div className="w-full max-w-3xl lg:max-w-3xl xl:max-w-2xl px-3 md:px-6 space-y-3 md:space-y-4">
         {/* Post Box */}
