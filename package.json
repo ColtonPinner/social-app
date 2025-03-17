@@ -14,13 +14,16 @@
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^6.4.2",
     "@mui/x-date-pickers": "^5.0.0",
+    "@react-native-community/cli": "^18.0.0",
+    "@react-navigation/native": "^7.0.15",
+    "@react-navigation/native-stack": "^7.2.1",
     "@supabase/supabase-js": "^2.44.4",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@vercel/analytics": "^1.5.0",
     "date-fns": "^3.6.0",
-    "expo": "^51.0.0",
+    "expo": "^52.0.39",
     "libphonenumber-js": "^1.11.7",
     "next": "^14.2.5",
     "next.js": "^1.0.3",
@@ -31,7 +34,9 @@
     "react-dom": "^18.3.1",
     "react-image-file-resizer": "^0.4.8",
     "react-input-mask": "^2.0.4",
-    "react-native": "^0.74.3",
+    "react-native": "^0.78.0",
+    "react-native-safe-area-context": "^5.3.0",
+    "react-native-screens": "^4.9.2",
     "react-phone-input-2": "^2.15.1",
     "react-router": "^6.24.1",
     "react-router-dom": "^6.24.1",
@@ -39,10 +44,13 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-native start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "ios": "react-native run-ios",
+    "android": "react-native run-android",
+    "pod-install": "cd ios && pod install"
   },
   "eslintConfig": {
     "extends": [

@@ -224,18 +224,29 @@ const Feed = ({ user }) => {
           </button>
         </div>
       )}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        {tweets.length > 0 ? (
-          tweets.map(tweet => (
-            <div key={tweet.id} className="py-4 w-full">
-              <Tweet tweet={tweet} onDelete={tweet.user.id === user?.id ? handleDeletePost : null} />
-            </div>
-          ))
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 m-4 text-center shadow-sm w-full">
-            <p className="text-gray-500 dark:text-gray-400">No posts yet. Start the conversation!</p>
+      
+      {/* Updated container with border */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="max-h-[70vh] overflow-y-auto px-4">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {tweets.length > 0 ? (
+              tweets.map(tweet => (
+                <div key={tweet.id} className="py-4 w-full">
+                  <Tweet 
+                    tweet={tweet} 
+                    onDelete={tweet.user.id === user?.id ? handleDeletePost : null} 
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="py-6 text-center">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No posts yet. Start the conversation!
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
