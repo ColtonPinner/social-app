@@ -47,6 +47,7 @@ const ProfileSettings = ({ user, setUser }) => {
       try {
         if (!user?.id) return;
         
+        // Fetch profile data
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -68,6 +69,20 @@ const ProfileSettings = ({ user, setUser }) => {
           if (data.avatar_url) {
             setImagePreview(data.avatar_url);
           }
+
+          // Fetch follow counts
+          const { count: followers } = await supabase
+            .from('followers')
+            .select('id', { count: 'exact' })
+            .eq('following_id', user.id);
+
+          const { count: following } = await supabase
+            .from('followers')
+            .select('id', { count: 'exact' })
+            .eq('follower_id', user.id);
+
+          setFollowerCount(followers || 0);
+          setFollowingCount(following || 0);
         }
       } catch (error) {
         console.error('Error fetching profile:', error.message);
@@ -452,11 +467,23 @@ const ProfileSettings = ({ user, setUser }) => {
       <div className="flex-1">
         <div className="max-w-2xl mx-auto px-4 pt-24 pb-8">
           <div className="bg-white rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Account Settings</h2>
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Account Settings</h2>
+              <div className="flex space-x-6">
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-gray-900">{followerCount}</div>
+                  <div className="text-sm text-gray-500">Followers</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-gray-900">{followingCount}</div>
+                  <div className="text-sm text-gray-500">Following</div>
+                </div>
+              </div>
+            </div>
             
             {/* Profile Image Section */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2"></label>
               <div className="flex items-center space-x-6">
                 <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border">
                   {imagePreview ? (
