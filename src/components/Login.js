@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient';
 import { ReactComponent as Logo } from '../assets/basic-logo.svg';
@@ -42,13 +42,13 @@ const Login = ({ setUser }) => {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative flex flex-col">
       {/* Logo in upper left */}
       <div className="absolute top-8 left-8">
         <Logo className="h-12 w-auto" />
       </div>
 
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md space-y-10 px-4 py-12 sm:px-6 lg:px-8">
           <div>
             <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
@@ -133,6 +133,29 @@ const Login = ({ setUser }) => {
           </form>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="w-full bg-white/80 backdrop-blur-xl border-t border-gray-200/50 py-4 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="text-xs md:text-sm text-gray-500 text-center md:text-left mb-2 md:mb-0">
+            © {new Date().getFullYear()} basic. All rights reserved.
+          </div>
+          <div className="flex flex-wrap justify-center md:justify-end space-x-4 md:space-x-6">
+            <Link to="/privacy" className="text-xs md:text-sm text-gray-500 hover:text-gray-700">
+              Privacy
+            </Link>
+            <Link to="/terms" className="text-xs md:text-sm text-gray-500 hover:text-gray-700">
+              Terms
+            </Link>
+            <a 
+              href="mailto:support@socialapp.com" 
+              className="text-xs md:text-sm text-gray-500 hover:text-gray-700"
+            >
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
