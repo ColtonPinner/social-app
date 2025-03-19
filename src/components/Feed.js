@@ -222,7 +222,8 @@ const Feed = ({ user }) => {
                 <div key={tweet.id} className="py-4 w-full">
                   <Tweet 
                     tweet={tweet} 
-                    onDelete={tweet.user.id === user?.id ? handleDeletePost : null} 
+                    onDelete={tweet.user.id === user?.id ? handleDeletePost : null}
+                    currentUser={user} 
                   />
                 </div>
               ))
