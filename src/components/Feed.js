@@ -5,7 +5,6 @@ import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outlin
 
 const Feed = ({ user }) => {
   const [tweets, setTweets] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [newTweet, setNewTweet] = useState('');
@@ -42,7 +41,6 @@ const Feed = ({ user }) => {
       setError(err.message);
       console.error('Error fetching tweets:', err);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -101,10 +99,6 @@ const Feed = ({ user }) => {
       console.error('Error fetching single post:', err);
       return null;
     }
-  };
-
-  const handleManualRefresh = () => {
-    fetchAllTweets();
   };
 
   const handleImageUpload = (event) => {
@@ -180,12 +174,6 @@ const Feed = ({ user }) => {
       setError('Error deleting post');
     }
   };
-
-  if (loading) return (
-    <div className="flex justify-center items-center min-h-[200px] pt-4 md:pt-8">
-      <ArrowPathIcon className="w-6 h-6 md:w-8 md:h-8 animate-spin text-gray-500" />
-    </div>
-  );
 
   if (error) return (
     <div className="rounded-md bg-red-50 p-3 md:p-4 mx-2 md:mx-4 my-3 md:mt-4">
