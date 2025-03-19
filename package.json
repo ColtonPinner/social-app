@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@capacitor/cli": "^7.1.0",
+    "@capacitor/core": "^7.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -41,16 +43,14 @@
     "react-router": "^6.24.1",
     "react-router-dom": "^6.24.1",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "workbox-cli": "^7.3.0"
   },
   "scripts": {
-    "start": "react-native start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "ios": "react-native run-ios",
-    "android": "react-native run-android",
-    "pod-install": "cd ios && pod install"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -74,7 +74,8 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
     "eslint-plugin-jest": "^28.6.0",
-    "postcss": "^8.5.1",
-    "tailwindcss": "^4.0.1"
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.0",
+    "@tailwindcss/postcss": "^0.1.0"
   }
 }
