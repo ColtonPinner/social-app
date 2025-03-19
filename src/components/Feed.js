@@ -111,52 +111,52 @@ const Feed = ({ user }) => {
   const handlePostTweet = async () => {
     if (!newTweet && !image) return;
 
-    let imageUrl = null;
-    if (image) {
-      const fileExt = image.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `tweets/${fileName}`;
+    try {
+      let imageUrl = null;
+      if (image) {
+        const fileExt = image.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `tweets/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('tweets')
-        .upload(filePath, image);
+        const { error: uploadError } = await supabase.storage
+          .from('tweets')
+          .upload(filePath, image);
 
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        setError('Error uploading image');
-        return;
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+          .from('tweets')
+          .getPublicUrl(filePath);
+
+        if (publicUrlError) throw publicUrlError;
+
+        imageUrl = publicUrlData.publicUrl;
       }
 
-      const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-        .from('tweets')
-        .getPublicUrl(filePath);
+      const { error: postError } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          content: newTweet,
+          image_url: imageUrl,
+        });
 
-      if (publicUrlError) {
-        console.error('Error getting public URL:', publicUrlError);
-        setError('Error getting public URL');
-        return;
-      }
+      if (postError) throw postError;
 
-      imageUrl = publicUrlData.publicUrl;
-    }
+      // Reset form
+      setNewTweet('');
+      setImage(null);
+      
+      // Immediately fetch new tweets
+      await fetchAllTweets();
+      
+      // Force a page refresh
+      window.location.reload();
 
-    const { error: postError } = await supabase
-      .from('posts')
-      .insert({
-        user_id: user.id,
-        content: newTweet,
-        image_url: imageUrl,
-      });
-
-    if (postError) {
-      console.error('Error posting tweet:', postError);
+    } catch (err) {
+      console.error('Error posting tweet:', err);
       setError('Error posting tweet');
-      return;
     }
-
-    setNewTweet('');
-    setImage(null);
-    fetchAllTweets();
   };
 
   const handleDeletePost = async (postId) => {
