@@ -9,6 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
+import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 const Navbar = ({ profile, toggleTheme }) => {
   const [notifications, setNotifications] = useState([]);
@@ -236,6 +237,15 @@ const Navbar = ({ profile, toggleTheme }) => {
               </Transition>
             )}
           </div>
+          
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Toggle theme"
+          >
+            <SunIcon className="h-5 w-5 hidden dark:block" />
+            <MoonIcon className="h-5 w-5 block dark:hidden" />
+          </button>
         </nav>
       </div>
 

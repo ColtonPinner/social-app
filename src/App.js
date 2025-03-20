@@ -104,12 +104,12 @@ const App = () => {
 const AppContent = ({ user, profile, setUser, toggleTheme }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
-  const hideFooter = hideNavbar; // Hide footer on login/signup pages
+  const hideFooter = hideNavbar;
 
   return (
-    <>
+    <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
       {!hideNavbar && <Navbar profile={profile} toggleTheme={toggleTheme} />}
-      <div className="container mx-auto px-4 pb-16"> {/* Added padding bottom for footer */}
+      <div className="container mx-auto px-4 pb-16 text-light-text dark:text-dark-text">
         <Routes>
           <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
           <Route path="/login" element={user ? <Navigate to="/tweets" /> : <Login setUser={setUser} />} />
@@ -120,9 +120,11 @@ const AppContent = ({ user, profile, setUser, toggleTheme }) => {
           <Route path="/settings" element={user ? <Settings user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
-      {!hideFooter && <Footer />}
+      {!hideFooter && (
+        <Footer className="bg-light-secondary dark:bg-dark-secondary border-t border-light-accent dark:border-dark-border" />
+      )}
       <Analytics />
-    </>
+    </div>
   );
 };
 
