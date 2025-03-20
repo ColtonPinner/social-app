@@ -144,7 +144,7 @@ const Navbar = ({ profile, toggleTheme }) => {
     <>
       {/* Desktop Navbar - Island Style with compact icons */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-50 px-4 pt-4">
-        <nav className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 flex items-center h-14 px-6 mx-auto max-w-5xl">
+        <nav className="bg-white dark:bg-black rounded-2xl border border-gray-200 flex items-center h-14 px-6 mx-auto max-w-5xl">
           <div className="flex items-center space-x-2">
             <Link to="/tweets" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
               <FontAwesomeIcon icon={faHome} />
@@ -251,7 +251,7 @@ const Navbar = ({ profile, toggleTheme }) => {
 
       {/* Mobile Navbar - Island Style with reduced radius */}
       <nav className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-2 pointer-events-none">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl  border border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
+        <div className="bg-white dark:bg-black rounded-2xl  border border-gray-200 dark:border-gray-200 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
           <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
             <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
             <span className="text-[10px]"></span>

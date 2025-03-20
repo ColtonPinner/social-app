@@ -94,12 +94,12 @@ const Post = ({ user, addTweet }) => {
       {/* Responsive post box container - updated width classes */}
       <div className="w-full max-w-3xl lg:max-w-3xl xl:max-w-2xl px-3 md:px-6 space-y-3 md:space-y-4">
         {/* Post Box */}
-        <div className="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="rounded-xl bg-white dark:bg-black border border-gray-200 dark:border-gray-200 shadow-sm">
           <div className="p-3 md:p-6 space-y-3 md:space-y-4">
             {/* Text Input */}
             <textarea
               rows={3}
-              className="block w-full rounded-lg border border-gray-200 dark:border-gray-700 py-2 md:py-3 px-3 md:px-4 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition-all duration-200 text-sm md:text-base resize-none"
+              className="block w-full rounded-lg border border-gray-200 dark:border-gray-200 py-2 md:py-3 px-3 md:px-4 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-black placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-black dark:focus:ring-white focus:outline-none transition-all duration-200 text-sm md:text-base resize-none"
               placeholder="👋 Hey, what's on your mind?"
               value={content}
               onChange={(e) => setContent(e.target.value)}

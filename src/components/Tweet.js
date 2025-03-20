@@ -107,7 +107,7 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
   });
   
   return (
-    <div className="w-full py-3">
+    <div className="w-full py-3 text-light-text dark:text-dark-text">
       {/* Header with avatar and user info */}
       <div className="flex items-start space-x-3">
         {/* Avatar */}
@@ -115,7 +115,7 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
           <img 
             src={tweet.user?.avatar_url || 'https://via.placeholder.com/40'} 
             alt={tweet.user?.username}
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover border border-light-border dark:border-dark-border"
           />
         </Link>
         
@@ -125,26 +125,26 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
           <div className="flex items-center mb-1">
             <Link 
               to={`/profile/${tweet.user_id}`}
-              className="font-semibold text-sm hover:underline truncate"
+              className="font-semibold text-sm hover:underline truncate text-light-text dark:text-dark-text"
             >
               {tweet.user?.username || "Anonymous"}
             </Link>
-            <span className="inline-block mx-1 text-gray-400">•</span>
-            <span className="text-xs text-gray-500">{formattedDate}</span>
+            <span className="inline-block mx-1 text-light-muted dark:text-dark-textSecondary">•</span>
+            <span className="text-xs text-light-muted dark:text-dark-textSecondary">{formattedDate}</span>
           </div>
           
           {/* Tweet text */}
-          <p className="text-[15px] text-gray-900 mb-2 whitespace-pre-wrap break-words">
+          <p className="text-[15px] text-light-text dark:text-dark-text mb-2 whitespace-pre-wrap break-words">
             {tweet.text || tweet.content || tweet.message || ""}
           </p>
           
-          {/* Media content (image or video) */}
+          {/* Media content */}
           {tweet.image_url && (
-            <div className="mt-2 mb-2 rounded-md overflow-hidden">
+            <div className="mt-2 mb-2 rounded-md overflow-hidden border border-light-border dark:border-dark-border">
               {tweet.image_url.match(/\.(mp4|webm)$/) ? (
                 <video
                   controls
-                  className="w-full h-auto rounded-md max-h-[450px] object-cover bg-black"
+                  className="w-full h-auto rounded-md max-h-[450px] object-cover bg-light-secondary dark:bg-dark-secondary"
                 >
                   <source src={tweet.image_url} type="video/mp4" />
                   Your browser does not support video playback.
@@ -164,7 +164,7 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
             <button 
               onClick={handleLike}
               className={`flex items-center transition-colors group ${
-                isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                isLiked ? 'text-dark-error' : 'text-light-muted dark:text-dark-textSecondary hover:text-dark-error'
               }`}
             >
               {isLiked ? (
@@ -177,7 +177,7 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
             
             <button 
               onClick={() => setShowCommentModal(true)}
-              className="flex items-center text-gray-500 hover:text-blue-500 transition-colors group"
+              className="flex items-center text-light-muted dark:text-dark-textSecondary hover:text-dark-accent transition-colors group"
             >
               <ChatBubbleLeftIcon className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" />
               <span className="ml-1 text-xs">{comments.length}</span>
@@ -195,11 +195,14 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
 
           {/* Comment Modal */}
           {showCommentModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-xl max-w-lg w-full p-4 max-h-[80vh] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
+              <div className="bg-light-primary dark:bg-dark-secondary rounded-xl max-w-lg w-full p-4 max-h-[80vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Comments</h3>
-                  <button onClick={() => setShowCommentModal(false)}>
+                  <h3 className="text-lg font-semibold text-light-text dark:text-dark-text">Comments</h3>
+                  <button 
+                    onClick={() => setShowCommentModal(false)}
+                    className="text-light-muted dark:text-dark-textSecondary hover:text-light-text dark:hover:text-dark-text"
+                  >
                     <XMarkIcon className="w-6 h-6" />
                   </button>
                 </div>
@@ -210,17 +213,23 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Write a comment..."
-                    className="w-full p-3 border rounded-lg resize-none bg-gray-50 focus:ring-2 focus:ring-black focus:outline-none transition"
+                    className="w-full p-3 rounded-lg resize-none 
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary
+                      transition"
                     rows="3"
                   />
                   <button
                     onClick={handleComment}
                     disabled={!comment.trim()}
-                    className={`px-4 py-2 bg-black text-white rounded-lg transition ${
-                      comment.trim() 
-                        ? 'hover:bg-gray-800 active:bg-gray-900' 
-                        : 'opacity-50 cursor-not-allowed'
-                    }`}
+                    className={`px-4 py-2 rounded-lg transition
+                      ${comment.trim() 
+                        ? 'bg-dark-accent hover:bg-dark-accentHover text-white' 
+                        : 'bg-light-secondary dark:bg-dark-tertiary text-light-muted dark:text-dark-textSecondary cursor-not-allowed'
+                      }`}
                   >
                     Post Comment
                   </button>
@@ -233,18 +242,18 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
                       <img
                         src={comment.user?.avatar_url || 'https://via.placeholder.com/32'}
                         alt=""
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full border border-light-border dark:border-dark-border"
                       />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
+                          <span className="font-semibold text-sm text-light-text dark:text-dark-text">
                             {comment.user?.username}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-light-muted dark:text-dark-textSecondary">
                             {new Date(comment.created_at).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700">{comment.content}</p>
+                        <p className="text-sm text-light-text dark:text-dark-text">{comment.content}</p>
                       </div>
                     </div>
                   ))}

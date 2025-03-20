@@ -214,9 +214,9 @@ const Feed = ({ user }) => {
       )}
       
       {/* Tweets Container */}
-      <div className="md:bg-white md:dark:bg-gray-800 md:rounded-2xl md:shadow-sm md:overflow-hidden md:border md:border-gray-200 md:dark:border-gray-700">
+      <div className="md:bg-white md:dark:bg-black md:rounded-2xl md:shadow-sm md:overflow-hidden md:border md:border-gray-200 md:dark:border-gray-200">
         <div className="md:max-h-[calc(100vh-240px)] md:overflow-y-auto px-2 md:px-4">
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-gray-200 dark:divide-gray-200">
             {tweets.length > 0 ? (
               tweets.map(tweet => (
                 <div key={tweet.id} className="py-4 w-full">
@@ -229,7 +229,7 @@ const Feed = ({ user }) => {
               ))
             ) : (
               <div className="py-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400">
+                <p className="text-gray-500 dark:text-white">
                   No posts yet. Start the conversation!
                 </p>
               </div>

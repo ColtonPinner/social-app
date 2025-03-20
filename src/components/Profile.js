@@ -247,7 +247,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen pt-16">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-gray-500" />
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-light-muted dark:text-dark-textSecondary" />
       </div>
     );
   }
@@ -255,12 +255,12 @@ const Profile = () => {
   if (error) {
     return (
       <div className="max-w-2xl mx-auto px-4 pt-16 md:pt-24">
-        <div className="bg-red-50 p-4 rounded-md">
+        <div className="bg-light-secondary dark:bg-dark-tertiary p-4 rounded-md">
           <div className="flex">
-            <ExclamationCircleIcon className="h-5 w-5 text-red-400 flex-shrink-0" />
+            <ExclamationCircleIcon className="h-5 w-5 text-dark-error flex-shrink-0" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
+              <h3 className="text-sm font-medium text-light-text dark:text-dark-text">Error</h3>
+              <div className="mt-2 text-sm text-dark-error">{error}</div>
             </div>
           </div>
         </div>
@@ -271,18 +271,25 @@ const Profile = () => {
   if (!profile) {
     return (
       <div className="max-w-2xl mx-auto px-4 pt-16 md:pt-24 text-center">
-        <p className="text-gray-500">User not found</p>
+        <p className="text-light-muted dark:text-dark-textSecondary">User not found</p>
       </div>
     );
   }
 
   return (
-    <div className="display:flex max-w-2xl mx-auto px-4 pt-16 md:pt-24 pb-6 md:pb-8">
+    <div className="max-w-2xl mx-auto px-4 pb-6 md:pb-8">
+      {/* Add spacing from navbar */}
+      <div className="h-20"></div>
+      
       {/* Profile Header */}
-      <div className="bg-white rounded-lg p-4 md:p-6 mb-4 md:mb-6 shadow-sm border border-gray-300">
+      <div className="bg-light-primary dark:bg-dark-secondary rounded-lg p-4 md:p-6 mb-4 md:mb-6 
+        shadow-sm border border-light-border dark:border-dark-border transform transition-all duration-300">
         <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-          {/* Profile Image */}
-          <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border flex-shrink-0">
+          {/* Profile Image - Made larger */}
+          <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-full overflow-hidden 
+            bg-light-secondary dark:bg-dark-tertiary flex items-center justify-center 
+            border-4 border-light-border dark:border-dark-border flex-shrink-0
+            shadow-lg">
             {avatarUrl ? (
               <img 
                 src={avatarUrl}
@@ -291,51 +298,54 @@ const Profile = () => {
                 loading="lazy"
               />
             ) : (
-              <UserCircleIcon className="h-20 w-20 md:h-16 md:w-16 text-gray-400" />
+              <UserCircleIcon className="h-24 w-24 md:h-32 md:w-32 text-light-muted dark:text-dark-textSecondary" />
             )}
           </div>
           
-          {/* User Info */}
+          {/* User Info - Enhanced spacing and sizing */}
           <div className="flex flex-col items-center sm:items-start w-full">
-            <h2 className="text-lg md:text-xl font-bold text-gray-900 break-words max-w-full">
+            <h2 className="text-xl md:text-2xl font-bold text-light-text dark:text-dark-text break-words max-w-full">
               {profile.username || "User"}
             </h2>
             
             {profile.full_name && (
-              <p className="text-gray-600 text-sm md:text-base break-words max-w-full">
+              <p className="text-base md:text-lg text-light-muted dark:text-dark-textSecondary break-words max-w-full mt-1">
                 {profile.full_name}
               </p>
             )}
 
-            {/* Bio Section */}
-            <div className="mt-2 w-full">
-              <p className="text-gray-600 text-sm md:text-base break-words max-w-full">
+            {/* Bio Section - Improved spacing */}
+            <div className="mt-3 w-full">
+              <p className="text-sm md:text-base text-light-muted dark:text-dark-textSecondary break-words max-w-full">
                 {profile.bio || "No bio available"}
               </p>
             </div>
 
-            <div className="flex space-x-4 mt-2 text-xs md:text-sm">
-              <div className="flex items-center">
-                <UsersIcon className="h-3 w-3 md:h-4 md:w-4 mr-1 text-gray-500" />
-                <span>{followerCount} Followers</span>
+            {/* Stats Row - Enhanced visual separation */}
+            <div className="flex space-x-6 mt-4 text-sm md:text-base">
+              <div className="flex items-center text-light-muted dark:text-dark-textSecondary">
+                <UsersIcon className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                <span className="font-medium">{followerCount}</span>
+                <span className="ml-1">Followers</span>
               </div>
-              <div className="flex items-center">
-                <UsersIcon className="h-3 w-3 md:h-4 md:w-4 mr-1 text-gray-500" />
-                <span>{followingCount} Following</span>
+              <div className="flex items-center text-light-muted dark:text-dark-textSecondary">
+                <UsersIcon className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                <span className="font-medium">{followingCount}</span>
+                <span className="ml-1">Following</span>
               </div>
             </div>
             
-            {/* Follow Button */}
+            {/* Follow Button - Enhanced styling */}
             {currentUser && (currentUser.id !== id) && (
               <button
                 onClick={handleFollowClick}
                 disabled={followLoading}
-                className={`mt-3 md:mt-4 px-4 md:px-5 py-1.5 md:py-2 rounded-full text-sm font-medium flex items-center justify-center w-full sm:w-auto
-                  transition-all duration-200 ${
-                  isFollowing 
-                    ? 'bg-gray-100 text-gray-800 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-gray-300' 
-                    : 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
-                } ${followLoading ? 'opacity-75' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+                className={`mt-4 px-6 py-2 rounded-full text-sm font-medium 
+                  flex items-center justify-center w-full sm:w-auto transition-all duration-200 
+                  ${isFollowing 
+                    ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text hover:bg-dark-error/10 hover:text-dark-error border-2 border-light-border dark:border-dark-border' 
+                    : 'bg-dark-accent hover:bg-dark-accentHover text-white'
+                  } ${followLoading ? 'opacity-75' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
                 aria-label={isFollowing ? "Unfollow user" : "Follow user"}
               >
                 {followLoading ? (
@@ -365,17 +375,22 @@ const Profile = () => {
       </div>
       
       {/* Posts Section */}
-      <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2 md:mb-4 px-1">Posts</h3>
+      <h3 className="text-base md:text-lg font-medium text-light-text dark:text-dark-text mb-2 md:mb-4 px-1">
+        Posts
+      </h3>
       <div className="space-y-3 md:space-y-4">
         {posts.length > 0 ? (
           posts.map((post, index) => (
             <React.Fragment key={post.id}>
               <Tweet tweet={post} onDelete={() => handleDeletePost(post.id)} />
-              {index < posts.length - 1 && <hr className="border-t border-gray-300 my-4" />}
+              {index < posts.length - 1 && (
+                <hr className="border-t border-light-border dark:border-dark-border my-4" />
+              )}
             </React.Fragment>
           ))
         ) : (
-          <div className="bg-white rounded-lg p-6 md:p-8 text-center text-gray-500 shadow-sm border border-gray-300">
+          <div className="bg-light-primary dark:bg-dark-secondary rounded-lg p-6 md:p-8 text-center 
+            text-light-muted dark:text-dark-textSecondary shadow-sm border border-light-border dark:border-dark-border">
             <p>No posts yet.</p>
           </div>
         )}
