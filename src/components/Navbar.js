@@ -142,9 +142,12 @@ const Navbar = ({ profile, toggleTheme }) => {
 
   return (
     <>
-      {/* Desktop Navbar - Island Style with compact icons */}
-      <div className="hidden md:block fixed top-0 left-0 right-0 z-50 px-4 pt-4">
-        <nav className="bg-white dark:bg-black rounded-2xl border border-gray-200 flex items-center h-14 px-6 mx-auto max-w-5xl">
+      {/* Desktop Navbar - Floating island design */}
+      <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-4 pt-4">
+        <nav className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
+          border border-light-border dark:border-dark-border
+          rounded-2xl flex items-center h-14 px-6 mx-auto max-w-5xl"
+        >
           <div className="flex items-center space-x-2">
             <Link to="/tweets" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
               <FontAwesomeIcon icon={faHome} />
@@ -165,7 +168,10 @@ const Navbar = ({ profile, toggleTheme }) => {
               </button>
               
               {showNotifications && (
-                <div className="absolute top-12 -right-32 w-80 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                <div className="absolute top-12 -right-32 w-80 max-h-96 overflow-y-auto 
+                  backdrop-blur-lg bg-white/80 dark:bg-black/80 
+                  rounded-lg shadow-lg z-10 border border-white/20 dark:border-white/10"
+                >
                   <h3 className="p-3 font-semibold border-b border-gray-200 dark:border-gray-700">Notifications</h3>
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
@@ -218,7 +224,10 @@ const Navbar = ({ profile, toggleTheme }) => {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <div className="absolute top-12 left-0 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                <div className="absolute top-12 left-0 right-0 
+                  backdrop-blur-lg bg-white/80 dark:bg-black/80 
+                  rounded-lg shadow-lg z-10 border border-white/20 dark:border-white/10"
+                >
                   {searchResults.map((user) => (
                     <Link 
                       to={`/profile/${user.id}`} 
@@ -249,52 +258,59 @@ const Navbar = ({ profile, toggleTheme }) => {
         </nav>
       </div>
 
-      {/* Mobile Navbar - Island Style with reduced radius */}
-      <nav className="md:hidden fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-2 pointer-events-none">
-        <div className="bg-white dark:bg-black rounded-2xl  border border-gray-200 dark:border-gray-200 flex justify-around items-center h-16 px-2 mx-auto max-w-md pointer-events-auto">
-          <Link to="/tweets" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
-            <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
-            <span className="text-[10px]"></span>
-          </Link>
-          
-          <button 
-            className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95"
-            onClick={toggleMobileSearch}
-          >
-            <FontAwesomeIcon icon={faSearch} className="text-xl mb-1" />
-            <span className="text-[10px]"></span>
-          </button>
-          
-          <button 
-            className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 relative hover:text-black dark:hover:text-white transition-colors active:scale-95"
-            onClick={handleToggleNotifications}
-          >
-            <FontAwesomeIcon icon={faBell} className="text-xl mb-1" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-            <span className="text-[10px]"></span>
-          </button>
-          
-          {profile && (
-            <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
-              <img
-                src={profile.avatar_url || 'https://via.placeholder.com/150'}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
-              />
-              <span className="text-[10px]"></span>
+      {/* Mobile Navbar - Floating island design */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-4">
+        <nav className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
+          border border-light-border dark:border-dark-border
+          rounded-2xl flex items-center h-16 mx-auto max-w-md"
+        >
+          <div className="flex justify-around items-center w-full px-4">
+            <Link to="/tweets" className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+              <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
+              <span className="text-[10px]">Home</span>
             </Link>
-          )}
-          
-        </div>
-      </nav>
+            
+            <button 
+              className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
+              onClick={toggleMobileSearch}
+            >
+              <FontAwesomeIcon icon={faSearch} className="text-xl mb-1" />
+              <span className="text-[10px]">Search</span>
+            </button>
+            
+            <button 
+              className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors relative"
+              onClick={handleToggleNotifications}
+            >
+              <FontAwesomeIcon icon={faBell} className="text-xl mb-1" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-1 bg-dark-error text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+              <span className="text-[10px]">Alerts</span>
+            </button>
+            
+            {profile && (
+              <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+                <img
+                  src={profile.avatar_url || 'https://via.placeholder.com/150'}
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full object-cover border border-light-border dark:border-dark-border"
+                />
+                <span className="text-[10px]">Profile</span>
+              </Link>
+            )}
+          </div>
+        </nav>
+      </div>
 
       {/* Mobile Search Overlay - Enhanced */}
       {showMobileSearch && (
-        <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-800 z-50 flex flex-col">
+        <div className="md:hidden fixed inset-0 
+          backdrop-blur-xl bg-white/90 dark:bg-black/90 
+          z-50 flex flex-col"
+        >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
             <div className="relative flex-1 mr-2">
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
@@ -351,7 +367,10 @@ const Navbar = ({ profile, toggleTheme }) => {
 
       {/* Mobile Notifications - Enhanced */}
       {showNotifications && (
-        <div className="md:hidden fixed inset-0 bg-white dark:bg-gray-800 z-50 flex flex-col">
+        <div className="md:hidden fixed inset-0 
+          backdrop-blur-xl bg-white/90 dark:bg-black/90 
+          z-50 flex flex-col"
+        >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h3 className="text-lg font-medium">Notifications</h3>
             <button 
