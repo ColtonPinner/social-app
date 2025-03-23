@@ -258,47 +258,43 @@ const Navbar = ({ profile, toggleTheme }) => {
         </nav>
       </div>
 
-      {/* Mobile Navbar - Floating island design */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-4">
+      {/* Mobile Navbar - Top floating island design */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 px-4 pt-4">
         <nav className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
           border border-light-border dark:border-dark-border
-          rounded-2xl flex items-center h-16 mx-auto max-w-md"
+          rounded-2xl flex items-center h-12 mx-auto max-w-md"
         >
           <div className="flex justify-around items-center w-full px-4">
-            <Link to="/tweets" className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
-              <FontAwesomeIcon icon={faHome} className="text-xl mb-1" />
-              <span className="text-[10px]">Home</span>
+            <Link to="/tweets" className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+              <FontAwesomeIcon icon={faHome} className="text-xl" />
             </Link>
             
             <button 
-              className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
+              className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
               onClick={toggleMobileSearch}
             >
-              <FontAwesomeIcon icon={faSearch} className="text-xl mb-1" />
-              <span className="text-[10px]">Search</span>
+              <FontAwesomeIcon icon={faSearch} className="text-xl" />
             </button>
             
             <button 
-              className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors relative"
+              className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors relative"
               onClick={handleToggleNotifications}
             >
-              <FontAwesomeIcon icon={faBell} className="text-xl mb-1" />
+              <FontAwesomeIcon icon={faBell} className="text-xl" />
               {unreadCount > 0 && (
-                <span className="absolute top-0 right-1 bg-dark-error text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-dark-error text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
-              <span className="text-[10px]">Alerts</span>
             </button>
             
             {profile && (
-              <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+              <Link to={`/profile/${profile.id}`} className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
                 <img
                   src={profile.avatar_url || 'https://via.placeholder.com/150'}
                   alt="Profile"
                   className="w-8 h-8 rounded-full object-cover border border-light-border dark:border-dark-border"
                 />
-                <span className="text-[10px]">Profile</span>
               </Link>
             )}
           </div>
