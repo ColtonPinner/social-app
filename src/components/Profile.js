@@ -24,6 +24,7 @@ const Profile = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [followError, setFollowError] = useState(null);
 
   useEffect(() => {
     // Get the current logged in user
@@ -177,56 +178,76 @@ const Profile = () => {
   };
 
   const handleFollowClick = async () => {
-    // If not logged in, redirect to login
     if (!currentUser) {
       navigate('/login');
       return;
     }
     
-    // Don't allow following yourself
     if (currentUser.id === id) return;
     
     setFollowLoading(true);
-    setError(null);
+    setFollowError(null);
   
     try {
       if (isFollowing) {
-        // Unfollow
+        // Optimistic UI update
+        setIsFollowing(false);
+        setFollowerCount(prev => Math.max(0, prev - 1));
+  
         const { error } = await supabase
           .from('followers')
           .delete()
-          .eq('follower_id', currentUser.id)
-          .eq('following_id', id);
-  
-        if (error) throw error;
-        
-        setIsFollowing(false);
-        setFollowerCount(prevCount => Math.max(0, prevCount - 1));
-      } else {
-        // Follow
-        const { error } = await supabase
-          .from('followers')
-          .insert({
+          .match({
             follower_id: currentUser.id,
             following_id: id
           });
   
-        if (error) throw error;
-        
+        if (error) {
+          throw new Error(error.message);
+        }
+      } else {
+        // Optimistic UI update
         setIsFollowing(true);
-        setFollowerCount(prevCount => prevCount + 1);
+        setFollowerCount(prev => prev + 1);
+  
+        const { error } = await supabase
+          .from('followers')
+          .insert({
+            follower_id: currentUser.id,
+            following_id: id,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+  
+        if (error) {
+          // Check for unique constraint violation
+          if (error.code === '23505') {
+            throw new Error('Already following this user');
+          }
+          throw new Error(error.message);
+        }
       }
-      
-      // Add a short timeout to allow the user to see the button change state
-      setTimeout(() => {
-        setFollowLoading(false);
-      }, 300);
     } catch (error) {
-      console.error('Error updating follow status:', error);
-      setError(`Error ${isFollowing ? 'unfollowing' : 'following'} user`);
+      console.error('Follow action failed:', error);
+      setFollowError(error.message);
+      
+      // Revert optimistic updates
+      setIsFollowing(prev => !prev);
+      setFollowerCount(prev => isFollowing ? prev + 1 : Math.max(0, prev - 1));
+    } finally {
       setFollowLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (followError) {
+      const timer = setTimeout(() => {
+        setFollowError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [followError]);
 
   const handleDeletePost = async (postId) => {
     try {
@@ -337,38 +358,45 @@ const Profile = () => {
             
             {/* Follow Button - Enhanced styling */}
             {currentUser && (currentUser.id !== id) && (
-              <button
-                onClick={handleFollowClick}
-                disabled={followLoading}
-                className={`mt-4 px-6 py-2 rounded-full text-sm font-medium 
-                  flex items-center justify-center w-full sm:w-auto transition-all duration-200 
-                  ${isFollowing 
-                    ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text hover:bg-dark-error/10 hover:text-dark-error border-2 border-light-border dark:border-dark-border' 
-                    : 'bg-dark-accent hover:bg-dark-accentHover text-white'
-                  } ${followLoading ? 'opacity-75' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
-                aria-label={isFollowing ? "Unfollow user" : "Follow user"}
-              >
-                {followLoading ? (
-                  <>
-                    <ArrowPathIcon className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2 animate-spin" />
-                    <span className="truncate">{isFollowing ? 'Unfollowing...' : 'Following...'}</span>
-                  </>
-                ) : (
-                  <>
-                    {isFollowing ? (
-                      <>
-                        <UserMinusIcon className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                        <span className="truncate">Unfollow</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlusIcon className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                        <span className="truncate">Follow</span>
-                      </>
-                    )}
-                  </>
+              <div className="w-full sm:w-auto mt-4">
+                <button
+                  onClick={handleFollowClick}
+                  disabled={followLoading}
+                  className={`w-full sm:w-auto px-6 py-2 rounded-full text-sm font-medium 
+                    flex items-center justify-center transition-all duration-200 
+                    ${isFollowing 
+                      ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text hover:bg-dark-error/10 hover:text-dark-error border-2 border-light-border dark:border-dark-border' 
+                      : 'bg-dark-accent hover:bg-dark-accentHover text-white'
+                    } ${followLoading ? 'opacity-75 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
+                  aria-label={isFollowing ? "Unfollow user" : "Follow user"}
+                >
+                  {followLoading ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                      <span>{isFollowing ? 'Unfollowing...' : 'Following...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      {isFollowing ? (
+                        <>
+                          <UserMinusIcon className="h-4 w-4 mr-2" />
+                          <span>Unfollow</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlusIcon className="h-4 w-4 mr-2" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </>
+                  )}
+                </button>
+                {followError && (
+                  <p className="text-dark-error text-sm mt-2 text-center">
+                    {followError}
+                  </p>
                 )}
-              </button>
+              </div>
             )}
           </div>
         </div>
