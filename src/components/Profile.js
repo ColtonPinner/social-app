@@ -8,7 +8,8 @@ import {
   UserCircleIcon,
   UsersIcon,
   UserPlusIcon,
-  UserMinusIcon
+  UserMinusIcon,
+  ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 const Profile = () => {
@@ -240,6 +241,16 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   useEffect(() => {
     if (followError) {
       const timer = setTimeout(() => {
@@ -396,6 +407,24 @@ const Profile = () => {
                     {followError}
                   </p>
                 )}
+              </div>
+            )}
+
+            {currentUser && currentUser.id === id && (
+              <div className="w-full sm:w-auto mt-4">
+                <button
+                  onClick={handleLogout}
+                  className="w-full sm:w-auto px-6 py-2 rounded-full text-sm font-medium 
+                    flex items-center justify-center transition-all duration-200
+                    bg-light-secondary dark:bg-dark-tertiary 
+                    text-dark-error hover:bg-dark-error/10
+                    border-2 border-light-border dark:border-dark-border
+                    hover:scale-[1.02] active:scale-[0.98]"
+                  aria-label="Log out"
+                >
+                  <ArrowLeftOnRectangleIcon className="h-4 w-4 mr-2" />
+                  <span>Log out</span>
+                </button>
               </div>
             )}
           </div>
