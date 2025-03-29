@@ -11,45 +11,11 @@ import Profile from './components/Profile';
 import { supabase } from './supabaseClient';
 import { Analytics } from "@vercel/analytics/react"
 import Footer from './components/Footer';
-import useSystemTheme from './hooks/useSystemTheme';
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const systemTheme = useSystemTheme();
-  const [theme, setTheme] = useState(() => {
-    // Check for saved preference first
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) return savedTheme;
-    
-    // Otherwise use system theme
-    return systemTheme;
-  });
-
-  // Update theme when system preference changes
-  useEffect(() => {
-    // Only update if user hasn't manually set a preference
-    if (!localStorage.getItem('theme')) {
-      setTheme(systemTheme);
-    }
-  }, [systemTheme]);
-
-  // Apply theme changes
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    // Save manual preference
-    localStorage.setItem('theme', newTheme);
-  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -116,19 +82,19 @@ const App = () => {
 
   return (
     <Router>
-      <AppContent user={user} profile={profile} setUser={setUser} toggleTheme={toggleTheme} />
+      <AppContent user={user} profile={profile} setUser={setUser} />
     </Router>
   );
 };
 
-const AppContent = ({ user, profile, setUser, toggleTheme }) => {
+const AppContent = ({ user, profile, setUser }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
   const hideFooter = hideNavbar;
 
   return (
     <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
-      {!hideNavbar && <Navbar profile={profile} toggleTheme={toggleTheme} />}
+      {!hideNavbar && <Navbar profile={profile} />}
       <div className="container mx-auto px-4 pb-16 text-light-text dark:text-dark-text">
         <Routes>
           <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
