@@ -226,7 +226,13 @@ const Navbar = ({ profile }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-52 h-10 pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
+                className="w-52 h-10 pl-9 pr-4 py-2 rounded-lg 
+                  bg-light-secondary dark:bg-dark-tertiary 
+                  text-light-text dark:text-dark-text
+                  border border-light-border dark:border-dark-border
+                  focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                  placeholder-light-muted dark:placeholder-dark-textSecondary
+                  transition-all duration-200"
               />
             </div>
             {showSearchResults && searchResults.length > 0 && (
@@ -240,21 +246,25 @@ const Navbar = ({ profile }) => {
                 leaveTo="transform opacity-0 scale-95"
               >
                 <div className="absolute top-12 left-0 right-0 
-                  backdrop-blur-lg bg-white/80 dark:bg-black/80 
-                  rounded-lg shadow-lg z-10 border border-white/20 dark:border-white/10"
+                  backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
+                  rounded-2xl shadow-lg z-10 border border-light-border dark:border-dark-border 
+                  overflow-hidden"
                 >
                   {searchResults.map((user) => (
                     <Link 
                       to={`/profile/${user.id}`} 
                       key={user.id} 
-                      className="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="flex items-center p-3 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50
+                        border-b border-light-border dark:border-dark-border last:border-none
+                        text-light-text dark:text-dark-text"
                     >
                       <img
                         src={user.avatar_url || 'https://via.placeholder.com/150'}
                         alt={user.username}
-                        className="w-8 h-8 rounded-full mr-3 object-cover"
+                        className="w-8 h-8 rounded-full mr-3 object-cover 
+                          border border-light-border dark:border-dark-border"
                       />
-                      <span className="text-gray-800 dark:text-gray-200">{user.username}</span>
+                      <span className="font-medium">{user.username}</span>
                     </Link>
                   ))}
                 </div>
@@ -322,7 +332,13 @@ const Navbar = ({ profile }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-3 rounded-md border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:focus:ring-gray-400" // Adjusted padding for height
+                className="w-full pl-9 pr-4 py-3 rounded-lg
+                  bg-light-secondary dark:bg-dark-tertiary 
+                  text-light-text dark:text-dark-text
+                  border border-light-border dark:border-dark-border
+                  focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                  placeholder-light-muted dark:placeholder-dark-textSecondary
+                  transition-all duration-200"
                 autoFocus
               />
             </div>
@@ -411,9 +427,3 @@ const Navbar = ({ profile }) => {
 };
 
 export default Navbar;
-
-module.exports = {
-  // ...other config
-  darkMode: 'media', // Changed from 'class' to 'media'
-  // ...rest of config
-};

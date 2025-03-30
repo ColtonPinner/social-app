@@ -1,10 +1,9 @@
-const { text } = require("@fortawesome/fontawesome-svg-core");
-
-module.exports = {
-  darkMode: 'class',
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
+  darkMode: 'media', // Changed from 'class' to 'media'
   theme: {
     extend: {
       colors: {

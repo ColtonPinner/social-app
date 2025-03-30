@@ -189,47 +189,63 @@ const Feed = ({ user }) => {
 
   return (
     <div className="max-w-7xl mx-auto pt-4 pb-24 px-2 md:px-8">
+      {/* New Tweet Form */}
       {user && (
         <div className="mb-6 px-2 md:px-0">
-          <textarea
-            className="w-full p-3 border rounded-lg"
-            rows="3"
-            placeholder="What's happening?"
-            value={newTweet}
-            onChange={(e) => setNewTweet(e.target.value)}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="mt-2"
-          />
-          <button
-            onClick={handlePostTweet}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
-          >
-            Tweet
-          </button>
+          <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
+            border border-light-border dark:border-dark-border
+            rounded-2xl p-4">
+            <textarea
+              className="w-full p-3 rounded-lg resize-none
+                bg-light-secondary dark:bg-dark-tertiary 
+                text-light-text dark:text-dark-text
+                border border-light-border dark:border-dark-border
+                focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                placeholder-light-muted dark:placeholder-dark-textSecondary"
+              rows="3"
+              placeholder="What's happening?"
+              value={newTweet}
+              onChange={(e) => setNewTweet(e.target.value)}
+            />
+            <div className="mt-3 flex items-center justify-between">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="text-sm text-light-text dark:text-dark-text"
+              />
+              <button
+                onClick={handlePostTweet}
+                className="px-6 py-2 bg-dark-accent hover:bg-dark-accentHover text-white rounded-full
+                  transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Tweet
+              </button>
+            </div>
+          </div>
         </div>
       )}
       
       {/* Tweets Container */}
-      <div className="md:bg-white md:dark:bg-black md:rounded-2xl md:shadow-sm md:overflow-hidden md:border md:border-gray-200 md:dark:border-gray-200">
-        <div className="md:max-h-[calc(100vh-240px)] md:overflow-y-auto px-2 md:px-4">
-          <div className="divide-y divide-gray-200 dark:divide-gray-200">
+      <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 
+        md:border md:border-light-border md:dark:border-dark-border
+        md:rounded-2xl"
+      >
+        <div className="px-4">
+          <div className="divide-y divide-light-border dark:divide-dark-border">
             {tweets.length > 0 ? (
               tweets.map(tweet => (
                 <div key={tweet.id} className="py-4 w-full">
                   <Tweet 
                     tweet={tweet} 
-                    onDelete={tweet.user.id === user?.id ? handleDeletePost : null}
+                    onDelete={tweet.user?.id === user?.id ? handleDeletePost : null}
                     currentUser={user} 
                   />
                 </div>
               ))
             ) : (
               <div className="py-6 text-center">
-                <p className="text-gray-500 dark:text-white">
+                <p className="text-light-muted dark:text-dark-textSecondary">
                   No posts yet. Start the conversation!
                 </p>
               </div>
