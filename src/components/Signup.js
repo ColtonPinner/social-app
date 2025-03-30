@@ -4,7 +4,9 @@ import { EnvelopeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { supabase } from '../supabaseClient';
-import { ReactComponent as Logo } from '../assets/basic-logo.svg';
+import { ReactComponent as LogoLight } from '../assets/basic-logo-light.svg';
+import { ReactComponent as LogoDark } from '../assets/basic-logo-dark.svg';
+import Footer from './Footer';
 
 const SignUp = ({ setUser }) => {
   const [formData, setFormData] = useState({
@@ -104,71 +106,95 @@ const SignUp = ({ setUser }) => {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col">
-      {/* Logo in upper left */}
-      <div className="absolute top-8 left-8">
-        <Logo className="h-12 w-auto" />
+    <div className="min-h-screen flex flex-col bg-light-primary dark:bg-dark-primary">
+      {/* Logo in upper left - with theme switching */}
+      <div className="p-8">
+        <div className="dark:hidden">
+          <LogoLight className="h-12 w-auto text-light-text" />
+        </div>
+        <div className="hidden dark:block">
+          <LogoDark className="h-12 w-auto text-dark-text" />
+        </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      {/* Main content */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md space-y-8">
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Create Your Account
-          </h2>
+          <div>
+            <h2 className="text-center text-3xl font-bold tracking-tight text-light-text dark:text-dark-text">
+              Create Your Account
+            </h2>
+          </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div className="bg-white p-8 rounded-2xl border border-gray-200">
-              
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
+              border border-light-border dark:border-dark-border
+              p-6 md:p-8 rounded-2xl space-y-6 w-full"
+            >
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+                <label htmlFor="email" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Email
                 </label>
                 <div className="relative mt-2">
-                  <EnvelopeIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <EnvelopeIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
                   <input
                     type="email"
                     name="email"
                     id="email"
                     required
-                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary"
                     value={formData.email}
                     onChange={handleChange}
                   />
                 </div>
-                {error.email && <p className="text-red-500 text-sm mt-1">{error.email}</p>}
+                {error.email && (
+                  <p className="mt-1 text-sm text-dark-error">{error.email}</p>
+                )}
               </div>
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+                <label htmlFor="password" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Password
                 </label>
                 <div className="relative mt-2">
-                  <LockClosedIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <LockClosedIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
                   <input
                     type="password"
                     name="password"
                     id="password"
                     required
-                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary"
                     value={formData.password}
                     onChange={handleChange}
                   />
                 </div>
-                {error.password && <p className="text-red-500 text-sm mt-1">{error.password}</p>}
+                {error.password && (
+                  <p className="mt-1 text-sm text-dark-error">{error.password}</p>
+                )}
               </div>
 
               {/* Phone Number */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-900">
+                <label htmlFor="phone" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Phone Number
                 </label>
                 <div className="relative mt-2">
-                  {/* 
-                    Custom mask for US: (XXX) XXX-XXXX
-                    Disables dropdown & country code for a purely US-based format 
-                  */}
                   <PhoneInput
                     country="us"
                     value={formData.phone}
@@ -178,78 +204,86 @@ const SignUp = ({ setUser }) => {
                     disableCountryCode
                     onlyCountries={['us']}
                     placeholder="(555) 555-5555"
-                    inputClass="!w-full !rounded-lg !border-0 !py-2 !pl-10 !ring-1 !ring-gray-300 focus:!ring-2 focus:!ring-black transition"
+                    inputClass="!w-full !rounded-lg !py-1.5 !pl-10
+                      !bg-light-secondary dark:!bg-dark-tertiary 
+                      !text-light-text dark:!text-dark-text
+                      !border !border-light-border dark:!border-dark-border
+                      focus:!ring-2 focus:!ring-dark-accent !outline-none"
                   />
                 </div>
-                {error.phone && <p className="text-red-500 text-sm mt-1">{error.phone}</p>}
+                {error.phone && (
+                  <p className="mt-1 text-sm text-dark-error">{error.phone}</p>
+                )}
               </div>
 
               {/* Date of Birth */}
               <div>
-                <label htmlFor="dob" className="block text-sm font-medium text-gray-900">
+                <label htmlFor="dob" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Date of Birth
                 </label>
                 <div className="relative mt-2">
-                  <CalendarIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <CalendarIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
                   <input
                     type="date"
                     name="dob"
                     id="dob"
-                    className="w-full rounded-lg border-0 py-2 pl-10 ring-1 ring-gray-300 focus:ring-2 focus:ring-black transition"
+                    required
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none"
                     value={formData.dob}
                     onChange={handleChange}
                   />
                 </div>
-                {error.dob && <p className="text-red-500 text-sm mt-1">{error.dob}</p>}
+                {error.dob && (
+                  <p className="mt-1 text-sm text-dark-error">{error.dob}</p>
+                )}
               </div>
 
-              {/* Form-Level Error */}
-              {error.form && <p className="text-red-500 text-sm mt-3">{error.form}</p>}
+              {error.form && (
+                <div className="rounded-md bg-dark-error/10 p-4 border border-dark-error/20">
+                  <p className="text-sm text-dark-error">{error.form}</p>
+                </div>
+              )}
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-4 rounded-lg bg-black py-2 text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50"
-              >
-                {loading ? 'Creating Account...' : 'Next'}
-              </button>
+              <div className="space-y-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full justify-center rounded-lg 
+                    bg-dark-accent hover:bg-dark-accentHover
+                    px-3 py-2 text-sm font-semibold text-white 
+                    transition-all duration-200 
+                    hover:scale-[1.02] active:scale-[0.98]
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Creating Account...' : 'Next'}
+                </button>
 
-              {/* Return to Login Button */}
-              <button
-                type="button"
-                onClick={() => navigate('/login')}
-                className="w-full mt-4 text-center text-sm font-semibold text-gray-700 hover:text-black transition"
-              >
-                Already have an account? <span className="underline">Return to Login</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="flex w-full justify-center rounded-lg
+                    border border-light-border dark:border-dark-border
+                    bg-light-secondary dark:bg-dark-tertiary
+                    px-3 py-2 text-sm font-semibold
+                    text-light-text dark:text-dark-text
+                    hover:bg-light-secondary/70 dark:hover:bg-dark-tertiary/70
+                    transition-all duration-200"
+                >
+                  Return to Login
+                </button>
+              </div>
             </div>
           </form>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="w-full bg-white/80 backdrop-blur-xl border-t border-gray-200/50 py-4 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="text-xs md:text-sm text-gray-500 text-center md:text-left mb-2 md:mb-0">
-            © {new Date().getFullYear()} basic. All rights reserved.
-          </div>
-          <div className="flex flex-wrap justify-center md:justify-end space-x-4 md:space-x-6">
-            <Link to="/privacy" className="text-xs md:text-sm text-gray-500 hover:text-gray-700">
-              Privacy
-            </Link>
-            <Link to="/terms" className="text-xs md:text-sm text-gray-500 hover:text-gray-700">
-              Terms
-            </Link>
-            <a 
-              href="mailto:support@socialapp.com" 
-              className="text-xs md:text-sm text-gray-500 hover:text-gray-700"
-            >
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
