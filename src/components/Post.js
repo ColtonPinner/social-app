@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { PhotoIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 const Post = ({ user, addTweet }) => {
@@ -9,6 +9,16 @@ const Post = ({ user, addTweet }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [suggestions] = useState([
+    "What's happening in your world? 🌍",
+    "Share something interesting! ✨",
+    "Got any exciting news? 📢",
+    "What's inspiring you today? 💫",
+    "Share your thoughts with others! 💭",
+    "What's making you smile today? 😊",
+    "What's your latest adventure? 🚀",
+    "Any creative ideas to share? 💡",
+  ]);
 
   useEffect(() => {
     if (error) {
@@ -16,6 +26,15 @@ const Post = ({ user, addTweet }) => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  const getRandomSuggestion = () => {
+    const randomIndex = Math.floor(Math.random() * suggestions.length);
+    return suggestions[randomIndex];
+  };
+
+  const handleSuggestion = () => {
+    setContent(getRandomSuggestion().replace(/\s*[🌍✨📢💫💭😊🚀💡]\s*$/, ''));
+  };
 
   const handleFileUpload = async (file) => {
     const fileExt = file.name.split('.').pop();
@@ -97,21 +116,35 @@ const Post = ({ user, addTweet }) => {
           border border-light-border dark:border-dark-border
           rounded-2xl overflow-hidden">
           <div className="p-4 md:p-6 space-y-4">
-            {/* Text Input */}
-            <textarea
-              rows={3}
-              className="w-full p-3 rounded-lg resize-none
-                bg-light-secondary dark:bg-dark-tertiary 
-                text-light-text dark:text-dark-text
-                border border-light-border dark:border-dark-border
-                focus:ring-2 focus:ring-dark-accent focus:outline-none 
-                placeholder-light-muted dark:placeholder-dark-textSecondary
-                transition-all duration-200"
-              placeholder="👋 Hey, what's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={loading}
-            />
+            {/* Text Input with AI Suggestion Button */}
+            <div className="relative">
+              <textarea
+                rows={3}
+                className="w-full p-3 rounded-lg resize-none
+                  bg-light-secondary dark:bg-dark-tertiary 
+                  text-light-text dark:text-dark-text
+                  border border-light-border dark:border-dark-border
+                  focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                  placeholder-light-muted dark:placeholder-dark-textSecondary
+                  transition-all duration-200"
+                placeholder={getRandomSuggestion()}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                onClick={handleSuggestion}
+                className="absolute top-3 right-3 p-1.5 rounded-full
+                  text-light-muted dark:text-dark-textSecondary
+                  hover:text-light-text dark:hover:text-dark-text
+                  hover:bg-light-secondary dark:hover:bg-dark-tertiary
+                  transition-all duration-200"
+                title="Get AI suggestion"
+                type="button"
+              >
+                <SparklesIcon className="h-5 w-5" />
+              </button>
+            </div>
 
             {/* Error Message */}
             {error && (

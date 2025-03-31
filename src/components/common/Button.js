@@ -3,8 +3,12 @@ const Button = ({ variant = 'primary', children, ...props }) => {
     primary: 'bg-dark-accent hover:bg-dark-accentHover text-white',
     secondary: 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text border border-light-border dark:border-dark-border',
     danger: 'bg-dark-error hover:bg-dark-error/90 text-white',
-    white: 'bg-white dark:bg-dark-tertiary hover:bg-gray-50 dark:hover:bg-dark-tertiary/70 text-gray-900 dark:text-dark-text border border-gray-200 dark:border-dark-border',
-    black: 'bg-gray-900 dark:bg-black hover:bg-gray-800 dark:hover:bg-gray-900 text-white border border-gray-800 dark:border-gray-700',
+    white: `bg-white text-gray-900 border border-gray-200
+      dark:bg-white dark:text-gray-900 dark:border-gray-300
+      hover:bg-gray-50 dark:hover:bg-gray-100`,
+    black: `bg-black text-white border border-black
+      dark:bg-white dark:text-black dark:border-white
+      hover:bg-gray-900 dark:hover:bg-gray-100`,
   };
 
   return (

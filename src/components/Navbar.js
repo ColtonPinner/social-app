@@ -5,7 +5,8 @@ import {
   faHome, 
   faBell, 
   faSearch,
-  faTimes
+  faTimes,
+  faEnvelope // Add this import
 } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
@@ -205,6 +206,14 @@ const Navbar = ({ profile }) => {
                 </div>
               )}
             </div>
+
+            <Link 
+              to="/messages" 
+              className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Messages"
+            >
+              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
+            </Link>
             
             {profile && (
               <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
@@ -283,6 +292,13 @@ const Navbar = ({ profile }) => {
           <div className="flex justify-around items-center w-full px-4">
             <Link to="/tweets" className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
               <FontAwesomeIcon icon={faHome} className="text-xl" />
+            </Link>
+            
+            <Link 
+              to="/messages" 
+              className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
+            >
+              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
             </Link>
             
             <button 
