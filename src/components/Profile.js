@@ -34,8 +34,15 @@ const Profile = ({ currentUser }) => {
   });
 
   useEffect(() => {
-    fetchProfile();
-    fetchTweets();
+    const loadProfile = async () => {
+      if (!id) return;
+      setLoading(true);
+      await fetchProfile();
+      await fetchTweets();
+      setLoading(false);
+    };
+
+    loadProfile();
   }, [id]);
 
   const fetchProfile = async () => {
@@ -62,21 +69,42 @@ const Profile = ({ currentUser }) => {
   };
 
   const fetchTweets = async () => {
-    const { data, error } = await supabase
-      .from('tweets')
-      .select(`
-        *,
-        profiles:user_id (username, avatar_url)
-      `)
-      .eq('user_id', id)
-      .order('created_at', { ascending: false });
+    try {
+      // First verify we have a valid profile ID
+      if (!id) {
+        console.error('No profile ID provided');
+        return;
+      }
 
-    if (error) {
+      const { data: tweetsData, error } = await supabase
+        .from('tweets')
+        .select(`
+          *,
+          profiles!tweets_user_id_fkey (
+            username,
+            avatar_url,
+            full_name
+          )
+        `)
+        .eq('user_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform the data to match the Tweet component expectations
+      const formattedTweets = tweetsData.map(tweet => ({
+        ...tweet,
+        user: tweet.profiles
+      }));
+
+      console.log('Formatted tweets:', formattedTweets);
+      setTweets(formattedTweets);
+    } catch (error) {
       console.error('Error fetching tweets:', error);
-      return;
+      setTweets([]);
     }
-
-    setTweets(data);
   };
 
   const handleInputChange = (e) => {
@@ -146,6 +174,10 @@ const Profile = ({ currentUser }) => {
       setSaving(false);
     }
   };
+
+  console.log('Profile ID:', id);
+  console.log('Current tweets state:', tweets);
+  console.log('Profile data:', profile);
 
   if (loading) {
     return (
@@ -386,31 +418,34 @@ const Profile = ({ currentUser }) => {
           >
             <div className="p-4 border-b border-light-border dark:border-dark-border">
               <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
-                Posts
+                Posts by {profile.username}
               </h2>
             </div>
 
-            {tweets.length > 0 ? (
-              <div className="divide-y divide-light-border dark:divide-dark-border">
-                {tweets.map(tweet => (
-                  <Tweet 
-                    key={tweet.id} 
-                    tweet={tweet}
-                    className="p-4 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50 transition-colors"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-light-muted dark:text-dark-textSecondary" />
-                <p className="text-light-muted dark:text-dark-textSecondary">
-                  {currentUser?.id === profile.id 
-                    ? "You haven't posted anything yet"
-                    : "This user hasn't posted anything yet"
-                  }
-                </p>
-              </div>
-            )}
+            <div>
+              {tweets && tweets.length > 0 ? (
+                <div className="divide-y divide-light-border dark:divide-dark-border">
+                  {tweets.map(tweet => (
+                    <Tweet 
+                      key={tweet.id} 
+                      tweet={tweet}
+                      currentUser={currentUser}
+                      className="p-4 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50 transition-colors"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-light-muted dark:text-dark-textSecondary" />
+                  <p className="text-light-muted dark:text-dark-textSecondary">
+                    {currentUser?.id === profile?.id 
+                      ? "You haven't posted anything yet"
+                      : `${profile.username} hasn't posted anything yet`
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
