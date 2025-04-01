@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faHome, 
-  faBell, 
-  faSearch,
-  faTimes,
-  faEnvelope // Add this import
-} from '@fortawesome/free-solid-svg-icons';
+import { ReactComponent as HomeIcon } from '../assets/icons/home.svg';
+import { ReactComponent as BellIcon } from '../assets/icons/bell.svg';
+import { ReactComponent as MessageIcon } from '../assets/icons/message.svg';
+import { ReactComponent as SearchIcon } from '../assets/icons/search.svg';
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
 
@@ -165,8 +161,8 @@ const Navbar = ({ profile }) => {
           rounded-2xl flex items-center h-14 px-6 mx-auto max-w-5xl"
         >
           <div className="flex items-center space-x-2">
-            <Link to="/tweets" className="text-gray-700 dark:text-gray-200 text-xl hover:text-black dark:hover:text-white transition-colors">
-              <FontAwesomeIcon icon={faHome} />
+            <Link to="/tweets" className="text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors">
+              <HomeIcon className="h-6 w-6" />
             </Link>
             
             <div className="relative" ref={notificationRef}>
@@ -175,7 +171,7 @@ const Navbar = ({ profile }) => {
                 onClick={handleToggleNotifications}
                 aria-label="Notifications"
               >
-                <FontAwesomeIcon icon={faBell} className="text-xl" />
+                <BellIcon className="h-6 w-6" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {unreadCount}
@@ -212,7 +208,7 @@ const Navbar = ({ profile }) => {
               className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               aria-label="Messages"
             >
-              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
+              <MessageIcon className="h-6 w-6" />
             </Link>
             
             {profile && (
@@ -229,7 +225,7 @@ const Navbar = ({ profile }) => {
 
           <div className="ml-auto relative" ref={searchResultsRef}>
             <div className="relative">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search users..."
@@ -291,28 +287,28 @@ const Navbar = ({ profile }) => {
         >
           <div className="flex justify-around items-center w-full px-4">
             <Link to="/tweets" className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
-              <FontAwesomeIcon icon={faHome} className="text-xl" />
+              <HomeIcon className="h-6 w-6" />
             </Link>
             
             <Link 
               to="/messages" 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
             >
-              <FontAwesomeIcon icon={faEnvelope} className="text-xl" />
+              <MessageIcon className="h-6 w-6" />
             </Link>
             
             <button 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
               onClick={toggleMobileSearch}
             >
-              <FontAwesomeIcon icon={faSearch} className="text-xl" />
+              <SearchIcon className="h-6 w-6" />
             </button>
             
             <button 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors relative"
               onClick={handleToggleNotifications}
             >
-              <FontAwesomeIcon icon={faBell} className="text-xl" />
+              <BellIcon className="h-6 w-6" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-dark-error text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   {unreadCount}
@@ -341,7 +337,7 @@ const Navbar = ({ profile }) => {
         >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
             <div className="relative flex-1 mr-2">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -430,7 +426,7 @@ const Navbar = ({ profile }) => {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <FontAwesomeIcon icon={faBell} className="text-gray-300 dark:text-gray-600 text-4xl mb-3" />
+                <BellIcon className="text-gray-300 dark:text-gray-600 h-10 w-10 mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">No notifications</p>
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">You're all caught up!</p>
               </div>
