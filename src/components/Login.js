@@ -130,8 +130,10 @@ const Login = ({ setUser }) => {
                   type="submit"
                   disabled={loading}
                   className="flex w-full justify-center rounded-lg 
-                    bg-dark-accent hover:bg-dark-accentHover
-                    px-3 py-2 text-sm font-semibold text-white 
+                    bg-light-text dark:bg-dark-text
+                    hover:bg-light-textSecondary dark:hover:bg-dark-textSecondary
+                    px-3 py-2 text-sm font-semibold
+                    text-light-primary dark:text-dark-primary
                     transition-all duration-200 
                     hover:scale-[1.02] active:scale-[0.98]
                     disabled:opacity-50 disabled:cursor-not-allowed"

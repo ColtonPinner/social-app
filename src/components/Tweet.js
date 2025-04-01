@@ -4,7 +4,7 @@ import { HeartIcon, ChatBubbleLeftIcon, TrashIcon, XMarkIcon } from '@heroicons/
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { supabase } from '../supabaseClient';
 
-const Tweet = ({ tweet, onDelete, currentUser }) => {
+const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(tweet.likes_count || 0);
   const [showCommentModal, setShowCommentModal] = useState(false);
@@ -117,7 +117,7 @@ const Tweet = ({ tweet, onDelete, currentUser }) => {
   });
   
   return (
-    <div className="w-full py-3 text-light-text dark:text-dark-text">
+    <div className={`w-full py-3 text-light-text dark:text-dark-text ${className}`}>
       {/* Header with avatar and user info */}
       <div className="flex items-start space-x-3">
         {/* Avatar */}

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ReactComponent as HomeIcon } from '../assets/icons/home.svg';
-import { ReactComponent as BellIcon } from '../assets/icons/bell.svg';
-import { ReactComponent as MessageIcon } from '../assets/icons/message.svg';
-import { ReactComponent as SearchIcon } from '../assets/icons/search.svg';
+import { 
+  HomeIcon,
+  BellIcon,
+  ChatBubbleOvalLeftIcon as MessageIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  XMarkIcon
+} from '@heroicons/react/24/solid'; // Changed from 'outline' to 'solid'
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
 
@@ -55,7 +58,6 @@ const Navbar = ({ profile }) => {
       )
       .subscribe();
 
-    // Close notifications and search when clicking outside
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
@@ -70,7 +72,6 @@ const Navbar = ({ profile }) => {
 
     document.addEventListener('mousedown', handleClickOutside);
     
-    // Close search and notifications when changing routes
     setShowNotifications(false);
     setShowSearchResults(false);
     setShowMobileSearch(false);
@@ -82,13 +83,10 @@ const Navbar = ({ profile }) => {
   }, [profile, location.pathname]);
 
   useEffect(() => {
-    // Check if the user's system prefers dark mode
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    // Set initial theme based on system preference
     document.documentElement.classList.toggle('dark', mediaQuery.matches);
 
-    // Listen for system theme changes
     const handleChange = (e) => {
       document.documentElement.classList.toggle('dark', e.matches);
     };
@@ -154,7 +152,7 @@ const Navbar = ({ profile }) => {
 
   return (
     <>
-      {/* Desktop Navbar - Floating island design */}
+      {/* Desktop Navbar */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-40 px-4 pt-4">
         <nav className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
           border border-light-border dark:border-dark-border
@@ -279,7 +277,7 @@ const Navbar = ({ profile }) => {
         </nav>
       </div>
 
-      {/* Mobile Navbar - Top floating island design */}
+      {/* Mobile Navbar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 px-4 pt-4">
         <nav className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
           border border-light-border dark:border-dark-border
@@ -329,7 +327,7 @@ const Navbar = ({ profile }) => {
         </nav>
       </div>
 
-      {/* Mobile Search Overlay - Enhanced */}
+      {/* Mobile Search Modal */}
       {showMobileSearch && (
         <div className="md:hidden fixed inset-0 
           backdrop-blur-xl bg-white/90 dark:bg-black/90 
@@ -359,7 +357,7 @@ const Navbar = ({ profile }) => {
               onClick={toggleMobileSearch}
               aria-label="Close search"
             >
-              <FontAwesomeIcon icon={faTimes} className="text-xl" />
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
           
@@ -395,7 +393,7 @@ const Navbar = ({ profile }) => {
         </div>
       )}
 
-      {/* Mobile Notifications - Enhanced */}
+      {/* Mobile Notifications Modal */}
       {showNotifications && (
         <div className="md:hidden fixed inset-0 
           backdrop-blur-xl bg-white/90 dark:bg-black/90 
@@ -408,7 +406,7 @@ const Navbar = ({ profile }) => {
               onClick={handleToggleNotifications}
               aria-label="Close notifications"
             >
-              <FontAwesomeIcon icon={faTimes} className="text-xl" />
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
           
