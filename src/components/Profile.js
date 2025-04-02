@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   UserIcon, 
-  EnvelopeIcon, 
   LinkIcon,
-  PencilIcon,
   ArrowPathIcon,
   PhotoIcon,
-  XMarkIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/solid';
 import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
@@ -23,8 +21,7 @@ const Profile = ({ currentUser }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(null);
-
-  // Form state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
@@ -32,78 +29,46 @@ const Profile = ({ currentUser }) => {
     avatar_url: '',
     bio: ''
   });
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
       if (!id) return;
       setLoading(true);
-      await fetchProfile();
-      await fetchTweets();
+      await Promise.all([
+        fetchProfile(),
+        fetchTweets(),
+        fetchFollowData(),
+        checkIfFollowing()
+      ]);
       setLoading(false);
     };
 
     loadProfile();
   }, [id]);
 
-  const fetchProfile = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
-      .single();
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMenuOpen && !event.target.closest('[data-menu]')) {
+        setIsMenuOpen(false);
+      }
+    };
 
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return;
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
-    setProfile(data);
-    setFormData({
-      username: data.username || '',
-      full_name: data.full_name || '',
-      website: data.website || '',
-      avatar_url: data.avatar_url || '',
-      bio: data.bio || ''
-    });
-    setLoading(false);
-  };
-
-  const fetchTweets = async () => {
+  // Handlers
+  const handleLogout = async () => {
     try {
-      // First verify we have a valid profile ID
-      if (!id) {
-        console.error('No profile ID provided');
-        return;
-      }
-
-      const { data: tweetsData, error } = await supabase
-        .from('tweets')
-        .select(`
-          *,
-          profiles!tweets_user_id_fkey (
-            username,
-            avatar_url,
-            full_name
-          )
-        `)
-        .eq('user_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      // Transform the data to match the Tweet component expectations
-      const formattedTweets = tweetsData.map(tweet => ({
-        ...tweet,
-        user: tweet.profiles
-      }));
-
-      console.log('Formatted tweets:', formattedTweets);
-      setTweets(formattedTweets);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/login');
     } catch (error) {
-      console.error('Error fetching tweets:', error);
-      setTweets([]);
+      console.error('Error logging out:', error);
     }
   };
 
@@ -127,58 +92,215 @@ const Profile = ({ currentUser }) => {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    setError('');
-
     try {
-      let avatar_url = formData.avatar_url;
+      setSaving(true);
+      setError('');
 
-      // Upload new avatar if there's a preview
+      // Basic validation
+      if (!formData.username.trim()) {
+        setError('Username is required');
+        return;
+      }
+
+      // If there's a new avatar image
+      let avatar_url = formData.avatar_url;
       if (preview) {
         const file = await fetch(preview).then(r => r.blob());
         const fileExt = file.type.split('/')[1];
-        const fileName = `${id}-${Math.random()}.${fileExt}`;
+        const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
 
+        // Upload the new avatar
         const { error: uploadError } = await supabase.storage
-          .from('avatars')
+          .from('public')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
+        // Get the public URL
+        const { data: { publicURL } } = supabase.storage
+          .from('public')
           .getPublicUrl(filePath);
 
-        avatar_url = publicUrl;
+        avatar_url = publicURL;
       }
 
-      const { error } = await supabase
+      // Update profile
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           ...formData,
           avatar_url,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
+      // Refresh profile data
       await fetchProfile();
+      
       setIsEditing(false);
       setPreview(null);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError(error.message);
+      setError('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
-  console.log('Profile ID:', id);
-  console.log('Current tweets state:', tweets);
-  console.log('Profile data:', profile);
+  const checkIfFollowing = async () => {
+    if (!currentUser) return;
+    
+    const { data, error } = await supabase
+      .from('follows')
+      .select('*')
+      .eq('follower_id', currentUser.id)
+      .eq('following_id', id)
+      .single();
 
+    if (error && error.code !== 'PGNF') {
+      console.error('Error checking follow status:', error);
+    }
+
+    setIsFollowing(!!data);
+  };
+
+  const handleFollow = async () => {
+    if (!currentUser) return;
+    
+    setIsFollowLoading(true);
+    try {
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', id);
+
+        if (error) throw error;
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('follows')
+          .insert({
+            follower_id: currentUser.id,
+            following_id: id,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
+
+      setIsFollowing(!isFollowing);
+      await fetchFollowData(); // Refresh follow counts
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  // Data fetching
+  const fetchProfile = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
+
+    setProfile(data);
+    setFormData({
+      username: data.username || '',
+      full_name: data.full_name || '',
+      website: data.website || '',
+      avatar_url: data.avatar_url || '',
+      bio: data.bio || ''
+    });
+  };
+
+  const fetchTweets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tweets')
+        .select(`
+          id,
+          content,
+          created_at,
+          media_url,
+          user_id,
+          profiles!tweets_user_id_fkey (
+            id,
+            username,
+            avatar_url,
+            full_name
+          ),
+          likes:tweet_likes (
+            user_id
+          ),
+          comments:tweet_comments (
+            id,
+            content,
+            created_at,
+            user_id,
+            profiles!tweet_comments_user_id_fkey (
+              username,
+              avatar_url
+            )
+          )
+        `)
+        .eq('user_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedTweets = data.map(tweet => ({
+        ...tweet,
+        user: tweet.profiles,
+        likes: tweet.likes || [],
+        comments: tweet.comments || []
+      }));
+
+      setTweets(formattedTweets);
+    } catch (error) {
+      console.error('Error fetching tweets:', error);
+      setTweets([]);
+    }
+  };
+
+  const fetchFollowData = async () => {
+    try {
+      const followersQuery = supabase
+        .from('follows')
+        .select('follower_id, profiles!follows_follower_id_fkey(*)')
+        .eq('following_id', id);
+
+      const followingQuery = supabase
+        .from('follows')
+        .select('following_id, profiles!follows_following_id_fkey(*)')
+        .eq('follower_id', id);
+
+      const [{ data: followersData, error: followersError }, { data: followingData, error: followingError }] = 
+        await Promise.all([followersQuery, followingQuery]);
+
+      if (followersError) throw followersError;
+      if (followingError) throw followingError;
+
+      setFollowers(followersData.map(f => f.profiles));
+      setFollowing(followingData.map(f => f.profiles));
+    } catch (error) {
+      console.error('Error fetching follow data:', error);
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -208,51 +330,146 @@ const Profile = ({ currentUser }) => {
                   alt={profile.username}
                   className="w-32 h-32 rounded-full border-4 border-light-primary dark:border-dark-primary object-cover"
                 />
-                {currentUser?.id === profile.id && !isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 rounded-lg
-                      bg-light-text dark:bg-dark-text
-                      text-light-primary dark:text-dark-primary
-                      hover:bg-light-textSecondary dark:hover:bg-dark-textSecondary
-                      transition-all duration-200 
-                      hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    Edit Profile
-                  </button>
-                )}
-              </div>
+                <div className="flex items-center space-x-3">
+                  {currentUser?.id === profile.id && !isEditing ? (
+                    <div className="relative" data-menu>
+                      <button
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors"
+                      >
+                        <EllipsisVerticalIcon className="h-5 w-5 text-light-text dark:text-dark-text" />
+                      </button>
 
-              {/* Profile Info */}
-              {!isEditing && (
-                <div className="space-y-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">
-                      {profile.full_name || profile.username}
-                    </h1>
-                    <p className="text-light-muted dark:text-dark-textSecondary">
-                      @{profile.username}
-                    </p>
-                  </div>
-
-                  {profile.bio && (
-                    <p className="text-light-text dark:text-dark-text px-4 py-2">
-                      {profile.bio}
-                    </p>
-                  )}
-
-                  {profile.website && (
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 text-dark-accent hover:underline"
+                      {isMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg 
+                          bg-light-primary dark:bg-dark-primary 
+                          border border-light-border dark:border-dark-border
+                          divide-y divide-light-border dark:divide-dark-border"
+                        >
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsEditing(true);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm
+                              text-light-text dark:text-dark-text
+                              hover:bg-light-secondary dark:hover:bg-dark-tertiary
+                              transition-colors rounded-t-lg"
+                          >
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              handleLogout();
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm
+                              text-dark-error
+                              hover:bg-light-secondary dark:hover:bg-dark-tertiary
+                              transition-colors rounded-b-lg"
+                          >
+                            Logout
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleFollow}
+                      disabled={isFollowLoading}
+                      className={`group relative px-4 py-2 rounded-full
+                        text-sm font-medium text-light-text dark:text-dark-text
+                        bg-light-secondary dark:bg-dark-tertiary
+                        border border-light-border dark:border-dark-border
+                        flex items-center justify-center
+                        space-x-2
+                        hover:bg-light-secondary/80 dark:hover:bg-dark-tertiary/80
+                        active:bg-light-secondary/90 dark:active:bg-dark-tertiary/90
+                        focus:outline-none focus:ring-2 focus:ring-dark-accent
+                        focus:ring-offset-2 focus:ring-offset-light-primary dark:focus:ring-offset-dark-primary
+                        focus:ring-opacity-50
+                        focus:ring-inset rounded-full
+                        inline-flex items-center justify-center
+                        transition-all duration-200 
+                        hover:scale-[1.02] active:scale-[0.98]
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        ${isFollowing 
+                          ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text border border-light-border dark:border-dark-border hover:bg-dark-error hover:text-light-primary hover:border-transparent' 
+                          : 'bg-dark-accent text-light-primary hover:bg-dark-accent/90'
+                        }`}
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      <span>{new URL(profile.website).hostname}</span>
-                    </a>
+                      {isFollowLoading ? (
+                        <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <span className={`${isFollowing ? 'group-hover:hidden' : ''}`}>
+                            {isFollowing ? 'Following' : 'Follow'}
+                          </span>
+                          {isFollowing && (
+                            <span className="hidden group-hover:inline">
+                              Unfollow
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Info Section */}
+          <div className="px-4 md:px-6 py-4">
+            <div className="space-y-4">
+              {/* Name and Username */}
+              <div>
+                <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">
+                  {profile.full_name || profile.username}
+                </h1>
+                <p className="text-light-muted dark:text-dark-textSecondary">
+                  @{profile.username}
+                </p>
+              </div>
+
+              {/* Follow Stats */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1">
+                  <span className="font-semibold text-light-text dark:text-dark-text">
+                    {following.length}
+                  </span>
+                  <span className="text-light-muted dark:text-dark-textSecondary">
+                    Following
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span className="font-semibold text-light-text dark:text-dark-text">
+                    {followers.length}
+                  </span>
+                  <span className="text-light-muted dark:text-dark-textSecondary">
+                    Followers
+                  </span>
+                </div>
+              </div>
+
+              {/* Bio */}
+              {profile.bio && (
+                <p className="text-light-text dark:text-dark-text">
+                  {profile.bio}
+                </p>
+              )}
+
+              {/* Website */}
+              {profile.website && (
+                <a
+                  href={profile.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-dark-accent hover:underline"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  <span>{new URL(profile.website).hostname}</span>
+                </a>
               )}
             </div>
           </div>
@@ -412,40 +629,34 @@ const Profile = ({ currentUser }) => {
 
         {/* Tweets Section */}
         <div className="mt-6">
-          <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
-            border border-light-border dark:border-dark-border
-            rounded-2xl overflow-hidden"
-          >
-            <div className="p-4 border-b border-light-border dark:border-dark-border">
-              <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
-                Posts by {profile.username}
-              </h2>
-            </div>
+          <div className="p-4 border-b border-light-border dark:border-dark-border">
+            <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
+              Posts
+            </h2>
+          </div>
 
-            <div>
-              {tweets && tweets.length > 0 ? (
-                <div className="divide-y divide-light-border dark:divide-dark-border">
-                  {tweets.map(tweet => (
-                    <Tweet 
-                      key={tweet.id} 
-                      tweet={tweet}
-                      currentUser={currentUser}
-                      className="p-4 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50 transition-colors"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-light-muted dark:text-dark-textSecondary" />
-                  <p className="text-light-muted dark:text-dark-textSecondary">
-                    {currentUser?.id === profile?.id 
-                      ? "You haven't posted anything yet"
-                      : `${profile.username} hasn't posted anything yet`
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
+          <div>
+            {tweets && tweets.length > 0 ? (
+              <div className="divide-y divide-light-border dark:divide-dark-border">
+                {tweets.map(tweet => (
+                  <Tweet 
+                    key={tweet.id} 
+                    tweet={tweet}
+                    currentUser={currentUser}
+                    className="p-4 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50 transition-colors"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-light-muted dark:text-dark-textSecondary">
+                  {currentUser?.id === profile?.id 
+                    ? "You haven't posted anything yet"
+                    : `${profile.username} hasn't posted anything yet`
+                  }
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
