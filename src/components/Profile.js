@@ -361,6 +361,18 @@ const Profile = ({ currentUser }) => {
                           <button
                             onClick={() => {
                               setIsMenuOpen(false);
+                              navigate('/settings');
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm
+                              text-light-text dark:text-dark-text
+                              hover:bg-light-secondary dark:hover:bg-dark-tertiary
+                              transition-colors"
+                          >
+                            Settings
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
                               handleLogout();
                             }}
                             className="w-full px-4 py-2 text-left text-sm

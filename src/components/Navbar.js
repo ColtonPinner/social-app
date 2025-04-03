@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  HomeIcon,
-  BellIcon,
-  ChatBubbleOvalLeftIcon as MessageIcon,
-  MagnifyingGlassIcon as SearchIcon,
-  XMarkIcon
-} from '@heroicons/react/24/solid'; // Changed from 'outline' to 'solid'
+  House,
+  Bell,
+  ChatDots,
+  MagnifyingGlass,
+  X
+} from '@phosphor-icons/react';
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
 
@@ -160,7 +160,7 @@ const Navbar = ({ profile }) => {
         >
           <div className="flex items-center space-x-2">
             <Link to="/tweets" className="text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors">
-              <HomeIcon className="h-6 w-6" />
+              <House size={24} weight="fill" />
             </Link>
             
             <div className="relative" ref={notificationRef}>
@@ -169,7 +169,7 @@ const Navbar = ({ profile }) => {
                 onClick={handleToggleNotifications}
                 aria-label="Notifications"
               >
-                <BellIcon className="h-6 w-6" />
+                <Bell size={24} weight="fill" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {unreadCount}
@@ -206,7 +206,7 @@ const Navbar = ({ profile }) => {
               className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               aria-label="Messages"
             >
-              <MessageIcon className="h-6 w-6" />
+              <ChatDots size={24} weight="fill" />
             </Link>
             
             {profile && (
@@ -223,7 +223,7 @@ const Navbar = ({ profile }) => {
 
           <div className="ml-auto relative" ref={searchResultsRef}>
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
+              <MagnifyingGlass size={20} weight="bold" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search users..."
@@ -285,28 +285,28 @@ const Navbar = ({ profile }) => {
         >
           <div className="flex justify-around items-center w-full px-4">
             <Link to="/tweets" className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
-              <HomeIcon className="h-6 w-6" />
+              <House size={24} weight="fill" />
             </Link>
             
             <Link 
               to="/messages" 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
             >
-              <MessageIcon className="h-6 w-6" />
+              <ChatDots size={24} weight="fill" />
             </Link>
             
             <button 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
               onClick={toggleMobileSearch}
             >
-              <SearchIcon className="h-6 w-6" />
+              <MagnifyingGlass size={24} weight="fill" />
             </button>
             
             <button 
               className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors relative"
               onClick={handleToggleNotifications}
             >
-              <BellIcon className="h-6 w-6" />
+              <Bell size={24} weight="fill" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-dark-error text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   {unreadCount}
@@ -335,7 +335,7 @@ const Navbar = ({ profile }) => {
         >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
             <div className="relative flex-1 mr-2">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
+              <MagnifyingGlass size={20} weight="bold" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -357,7 +357,7 @@ const Navbar = ({ profile }) => {
               onClick={toggleMobileSearch}
               aria-label="Close search"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <X size={24} weight="bold" />
             </button>
           </div>
           
@@ -406,7 +406,7 @@ const Navbar = ({ profile }) => {
               onClick={handleToggleNotifications}
               aria-label="Close notifications"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <X size={24} weight="bold" />
             </button>
           </div>
           
@@ -424,7 +424,7 @@ const Navbar = ({ profile }) => {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <BellIcon className="text-gray-300 dark:text-gray-600 h-10 w-10 mb-3" />
+                <Bell className="text-gray-300 dark:text-gray-600 h-10 w-10 mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">No notifications</p>
                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">You're all caught up!</p>
               </div>
