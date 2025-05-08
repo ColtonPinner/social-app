@@ -608,16 +608,27 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     </p>
                   )}
 
-                  {/* Website */}
+                  {/* Website - With proper URL parsing */}
                   {profile.website && (
                     <a
-                      href={profile.website}
+                      href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center space-x-2 text-dark-accent hover:underline"
                     >
                       <LinkIcon className="h-4 w-4" />
-                      <span>{new URL(profile.website).hostname}</span>
+                      <span>
+                        {(() => {
+                          try {
+                            const url = profile.website.startsWith('http')
+                              ? profile.website
+                              : `https://${profile.website}`;
+                            return new URL(url).hostname;
+                          } catch {
+                            return profile.website;
+                          }
+                        })()}
+                      </span>
                     </a>
                   )}
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EnvelopeIcon, LockClosedIcon, CalendarIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, CalendarIcon, UserIcon, InformationCircleIcon, LinkIcon } from '@heroicons/react/24/outline';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { supabase } from '../supabaseClient';
@@ -12,9 +12,11 @@ const SignUp = ({ setUser }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    username: '',
+    full_name: '', // Add this field
+    website: '',   // Add this field
     phone: '',
     dob: '',
-    username: '',
     bio: '',
   });
   const [profileImage, setProfileImage] = useState(null);
@@ -104,27 +106,36 @@ const SignUp = ({ setUser }) => {
     }
 
     try {
-      // Sign up using Supabase Auth
+      // 1. Sign up user with metadata (to use in trigger)
       const {
         data: { user },
         error: signUpError
       } = await supabase.auth.signUp({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.full_name || formData.username,
+            username: formData.username,
+          }
+        }
       });
 
       if (signUpError) throw signUpError;
+      if (!user) throw new Error('Signup failed');
 
-      // Upload profile picture if available
+      // 2. Upload profile picture if available
       let avatarUrl = null;
-      if (profileImage && user) {
+      if (profileImage) {
         const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
+        const fileName = `${user.id}.${fileExt}`;
+        const filePath = fileName;
 
         const { error: uploadError } = await supabase.storage
-          .from('avatars') // Make sure this bucket exists in your Supabase project
-          .upload(filePath, profileImage);
+          .from('avatars')
+          .upload(filePath, profileImage, {
+            upsert: true
+          });
 
         if (uploadError) throw uploadError;
 
@@ -135,26 +146,27 @@ const SignUp = ({ setUser }) => {
         avatarUrl = data.publicUrl;
       }
 
-      // Insert into 'profiles' table
-      if (user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            username: formData.username,
-            email: formData.email,
-            phone: formData.phone,
-            dob: formData.dob,
-            bio: formData.bio || null,
-            avatar_url: avatarUrl
-          });
+      // 3. Update the profile with additional info
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          username: formData.username,
+          full_name: formData.full_name || formData.username,
+          avatar_url: avatarUrl,
+          website: formData.website || null,
+          // Store extra data in metadata if needed
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
 
-        if (profileError) throw profileError;
+      if (updateError) throw updateError;
 
-        setUser(user);
-        navigate('/profile-setup'); // Page 2 for further setup
-      }
+      // Success! Set user and navigate
+      setUser(user);
+      navigate('/tweets');
+      
     } catch (err) {
+      console.error('Signup error:', err);
       setError({ form: err.message });
     } finally {
       setLoading(false);
@@ -260,6 +272,32 @@ const SignUp = ({ setUser }) => {
                 )}
               </div>
 
+              {/* Full Name */}
+              <div>
+                <label htmlFor="full_name" className="block text-sm font-medium text-light-text dark:text-dark-text">
+                  Full Name <span className="text-light-muted dark:text-dark-textSecondary text-xs">(optional)</span>
+                </label>
+                <div className="relative mt-2">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <UserIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
+                  <input
+                    type="text"
+                    name="full_name"
+                    id="full_name"
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary"
+                    value={formData.full_name}
+                    onChange={handleChange}
+                    placeholder="Your full name"
+                  />
+                </div>
+              </div>
+
               {/* Bio */}
               <div>
                 <label htmlFor="bio" className="block text-sm font-medium text-light-text dark:text-dark-text">
@@ -283,6 +321,32 @@ const SignUp = ({ setUser }) => {
                     value={formData.bio}
                     onChange={handleChange}
                     placeholder="Tell us about yourself"
+                  />
+                </div>
+              </div>
+
+              {/* Website */}
+              <div>
+                <label htmlFor="website" className="block text-sm font-medium text-light-text dark:text-dark-text">
+                  Website <span className="text-light-muted dark:text-dark-textSecondary text-xs">(optional)</span>
+                </label>
+                <div className="relative mt-2">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <LinkIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
+                  <input
+                    type="url"
+                    name="website"
+                    id="website"
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary"
+                    value={formData.website}
+                    onChange={handleChange}
+                    placeholder="https://yourwebsite.com"
                   />
                 </div>
               </div>

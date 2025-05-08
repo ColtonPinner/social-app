@@ -58,7 +58,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
 
   // Fetch comments when modal is opened
   const fetchComments = useCallback(async () => {
-    if (!showCommentModal) return; // This condition also does NOT check for currentUser
+    if (!showCommentModal) return;
     setIsLoadingComments(true);
     try {
       // Convert tweet.id to a number to match BIGINT in database
@@ -66,18 +66,45 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
       
       console.log('Fetching comments for tweet:', tweetId, typeof tweetId);
       
-      const { data, error } = await supabase
+      // Step 1: Fetch comments without using the relationship syntax
+      const { data: commentsData, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          user:user_id(id, username, avatar_url)
-        `)
+        .select('*')
         .eq('tweet_id', tweetId)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      console.log('Fetched comments:', data);
-      setComments(data || []);
+      
+      // Step 2: If we have comments, fetch the user data separately
+      if (commentsData && commentsData.length > 0) {
+        // Extract unique user IDs
+        const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
+        
+        // Fetch user data for these IDs
+        const { data: usersData } = await supabase
+          .from('profiles')  // Using profiles table for user data
+          .select('id, username, avatar_url')
+          .in('id', userIds);
+        
+        // Create a map of user data by ID for quick lookup
+        const usersMap = {};
+        if (usersData) {
+          usersData.forEach(user => {
+            usersMap[user.id] = user;
+          });
+        }
+        
+        // Join the user data with the comments
+        const commentsWithUsers = commentsData.map(comment => ({
+          ...comment,
+          user: usersMap[comment.user_id] || null
+        }));
+        
+        console.log('Fetched comments with users:', commentsWithUsers);
+        setComments(commentsWithUsers || []);
+      } else {
+        setComments([]);
+      }
     } catch (err) {
       console.error('Error fetching comments:', err);
     } finally {
@@ -218,7 +245,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
           </div>
           
           {/* Tweet text */}
-          <p className="text-[15px] text-light-text dark:text-dark-text mb-2 whitespace-pre-wrap break-words">
+          <p className="text-[16px] text-light-text dark:text-dark-text mb-2 whitespace-pre-wrap break-words">
             {tweet.text || tweet.content || tweet.message || ""}
           </p>
           

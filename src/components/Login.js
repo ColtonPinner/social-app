@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient';
 import { ReactComponent as LogoLight } from '../assets/basic-logo-light.svg';
 import { ReactComponent as LogoDark } from '../assets/basic-logo-dark.svg';
@@ -10,13 +10,23 @@ const Login = ({ setUser }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setMessage('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ 
@@ -35,17 +45,30 @@ const Login = ({ setUser }) => {
   };
 
   const handleForgotPassword = async () => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      setError(error.message);
-    } else {
-      setError('Password reset link sent to your email.');
+    // Validate email first
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address first');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    setMessage('');
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+      setMessage('Password reset link sent to your email.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-light-primary dark:bg-dark-primary">
-      {/* Logo in upper left - with theme switching */}
+      {/* Logo in upper left */}
       <div className="p-8">
         <div className="dark:hidden">
           <LogoLight className="h-12 w-auto text-light-text" />
@@ -55,7 +78,7 @@ const Login = ({ setUser }) => {
         </div>
       </div>
 
-      {/* Main content - Takes remaining space */}
+      {/* Main content */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md space-y-8">
           <div>
@@ -69,6 +92,7 @@ const Login = ({ setUser }) => {
               border border-light-border dark:border-dark-border
               p-6 md:p-8 rounded-2xl space-y-6 w-full"
             >
+              {/* Email field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Email
@@ -82,18 +106,21 @@ const Login = ({ setUser }) => {
                     name="email"
                     id="email"
                     required
+                    autoComplete="email"
                     className="block w-full rounded-lg py-1.5 pl-10
                       bg-light-secondary dark:bg-dark-tertiary 
                       text-light-text dark:text-dark-text
                       border border-light-border dark:border-dark-border
                       focus:ring-2 focus:ring-dark-accent focus:outline-none 
                       placeholder-light-muted dark:placeholder-dark-textSecondary"
+                    placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
 
+              {/* Password field */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-light-text dark:text-dark-text">
                   Password
@@ -103,25 +130,49 @@ const Login = ({ setUser }) => {
                     <LockClosedIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" aria-hidden="true" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     id="password"
                     required
-                    className="block w-full rounded-lg py-1.5 pl-10
+                    autoComplete="current-password"
+                    className="block w-full rounded-lg py-1.5 pl-10 pr-10
                       bg-light-secondary dark:bg-dark-tertiary 
                       text-light-text dark:text-dark-text
                       border border-light-border dark:border-dark-border
                       focus:ring-2 focus:ring-dark-accent focus:outline-none 
                       placeholder-light-muted dark:placeholder-dark-textSecondary"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <button
+                      type="button"
+                      className="text-light-muted dark:text-dark-textSecondary hover:text-light-text dark:hover:text-dark-text"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
+              {/* Error message */}
               {error && (
                 <div className="rounded-md bg-dark-error/10 p-4 border border-dark-error/20">
                   <p className="text-sm text-dark-error">{error}</p>
+                </div>
+              )}
+
+              {/* Success message */}
+              {message && (
+                <div className="rounded-md bg-green-500/10 p-4 border border-green-500/20">
+                  <p className="text-sm text-green-600 dark:text-green-400">{message}</p>
                 </div>
               )}
 
@@ -165,17 +216,6 @@ const Login = ({ setUser }) => {
                 </button>
               </div>
 
-              <div className="text-center mt-4">
-                <span className="text-light-muted dark:text-dark-textSecondary">
-                  Don't have an account?{' '}
-                  <Link 
-                    to="/signup"
-                    className="text-dark-accent hover:underline font-medium"
-                  >
-                    Sign up here
-                  </Link>
-                </span>
-              </div>
             </div>
           </form>
         </div>

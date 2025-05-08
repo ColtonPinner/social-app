@@ -315,7 +315,7 @@ const Navbar = ({ profile }) => {
             </button>
             
             {profile && (
-              <Link to={`/ProfilePage/${profile.id}`} className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+              <Link to={`/profile/${profile.id}`} className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
                 <img
                   src={profile.avatar_url || 'https://via.placeholder.com/150'}
                   alt="Profile"
