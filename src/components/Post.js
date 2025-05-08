@@ -37,12 +37,20 @@ const Post = ({ user, addTweet }) => {
   };
 
   const handleFileUpload = async (file) => {
+    if (!user?.id) throw new Error('User not found');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Only JPEG, PNG, or WEBP images are allowed');
+    }
+    if (file.size > 5 * 1024 * 1024) throw new Error('File too large (max 5MB)');
+
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    // Ensure user.id and fileName do not have leading/trailing slashes
+    const filePath = `${user.id}/${fileName}`.replace(/\/{2,}/g, '/');
 
     const { error: uploadError } = await supabase.storage
-      .from('post-media')
+      .from('media') // <-- use your actual bucket name here
       .upload(filePath, file);
 
     if (uploadError) throw uploadError;
@@ -61,13 +69,29 @@ const Post = ({ user, addTweet }) => {
     try {
       let imageUrl = null;
       if (media) {
-        const filePath = await handleFileUpload(media);
-        const { data } = await supabase.storage
-          .from('post-media')
-          .getPublicUrl(filePath);
-        imageUrl = data.publicUrl;
+        try {
+          console.log("Uploading file...");
+          const filePath = await handleFileUpload(media);
+          console.log("File uploaded to path:", filePath);
+          
+          const { data } = await supabase.storage
+            .from('media')
+            .getPublicUrl(filePath);
+            
+          console.log("Got public URL:", data);
+          imageUrl = data.publicUrl;
+        } catch (uploadErr) {
+          console.error("File upload error:", uploadErr);
+          throw uploadErr;
+        }
       }
-
+      
+      console.log("Attempting to create post with:", {
+        text: content,
+        user_id: user.id,
+        image_url: imageUrl
+      });
+      
       const { data, error } = await supabase
         .from('posts')
         .insert({
@@ -78,17 +102,18 @@ const Post = ({ user, addTweet }) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
+      
+      console.log("Post created successfully:", data);
 
-      // Pass new post to parent
       addTweet(data);
-
-      // Reset fields
       setContent('');
       setMedia(null);
       setPreview(null);
     } catch (err) {
-      console.error('Post error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -111,12 +136,10 @@ const Post = ({ user, addTweet }) => {
   return (
     <div className="mt-24 md:mt-28 w-full flex flex-col items-center py-2 md:py-4">
       <div className="w-full max-w-3xl lg:max-w-3xl xl:max-w-2xl px-3 md:px-6">
-        {/* Post Box - Updated with navbar matching style */}
         <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
           border border-light-border dark:border-dark-border
           rounded-2xl overflow-hidden">
           <div className="p-4 md:p-6 space-y-4">
-            {/* Text Input with AI Suggestion Button */}
             <div className="relative">
               <textarea
                 rows={3}
@@ -146,7 +169,6 @@ const Post = ({ user, addTweet }) => {
               </button>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="rounded-lg bg-dark-error/10 text-dark-error 
                 border border-dark-error/20 p-3 text-sm 
@@ -161,7 +183,6 @@ const Post = ({ user, addTweet }) => {
               </div>
             )}
 
-            {/* Image Preview */}
             {preview && (
               <div className="relative mt-2">
                 <img
@@ -180,7 +201,6 @@ const Post = ({ user, addTweet }) => {
               </div>
             )}
 
-            {/* Upload & Post Buttons */}
             <div className="flex items-center justify-between pt-2">
               <label className="cursor-pointer flex items-center justify-center h-10 w-10 
                 rounded-full hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors">

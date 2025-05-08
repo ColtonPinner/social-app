@@ -7,7 +7,7 @@ import Post from './components/Post';
 import Feed from './components/Feed';
 import Settings from './components/Settings';
 import Messages from './components/Messages';
-import Profile from './components/Profile';
+import ProfilePage from './components/ProfilePage';
 import { supabase } from './supabaseClient';
 import { Analytics } from "@vercel/analytics/react"
 import Footer from './components/Footer';
@@ -102,8 +102,7 @@ const AppContent = ({ user, profile, setUser }) => {
           <Route path="/signup" element={user ? <Navigate to="/tweets" /> : <SignUp setUser={setUser} />} />
           <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages" element={user ? <Messages user={user} /> : <Navigate to="/login" />} />
-          <Route path="/profile/:id" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
-          <Route path="/settings" element={user ? <Settings user={user} /> : <Navigate to="/login" />} />
+          <Route path="/profile/:id" element={user ? <ProfilePage currentUser={user} setUser={setUser} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
       {!hideFooter && (

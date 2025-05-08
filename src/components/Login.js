@@ -164,6 +164,18 @@ const Login = ({ setUser }) => {
                   Forgot your password?
                 </button>
               </div>
+
+              <div className="text-center mt-4">
+                <span className="text-light-muted dark:text-dark-textSecondary">
+                  Don't have an account?{' '}
+                  <Link 
+                    to="/signup"
+                    className="text-dark-accent hover:underline font-medium"
+                  >
+                    Sign up here
+                  </Link>
+                </span>
+              </div>
             </div>
           </form>
         </div>

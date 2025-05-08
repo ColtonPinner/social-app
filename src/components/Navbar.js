@@ -210,10 +210,10 @@ const Navbar = ({ profile }) => {
             </Link>
             
             {profile && (
-              <Link to="/settings" className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
+              <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
                 <img
                   src={profile.avatar_url || 'https://via.placeholder.com/150'}
-                  alt="Settings"
+                  alt="Profile"
                   className="w-8 h-8 rounded-full object-cover border-2 border-green-500"
                 />
                 <span className="text-[10px]"></span>
@@ -315,7 +315,7 @@ const Navbar = ({ profile }) => {
             </button>
             
             {profile && (
-              <Link to={`/profile/${profile.id}`} className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
+              <Link to={`/ProfilePage/${profile.id}`} className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
                 <img
                   src={profile.avatar_url || 'https://via.placeholder.com/150'}
                   alt="Profile"

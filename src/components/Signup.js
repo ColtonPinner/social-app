@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { EnvelopeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, CalendarIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { supabase } from '../supabaseClient';
@@ -13,8 +13,12 @@ const SignUp = ({ setUser }) => {
     email: '',
     password: '',
     phone: '',
-    dob: ''
+    dob: '',
+    username: '',
+    bio: '',
   });
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const navigate = useNavigate();
@@ -27,6 +31,28 @@ const SignUp = ({ setUser }) => {
   // Handle phone input changes
   const handlePhoneChange = (value) => {
     setFormData({ ...formData, phone: value });
+  };
+
+  // Handle file input change for profile picture
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type and size
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError({ ...error, profileImage: 'Only JPEG, PNG, or WEBP images are allowed' });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setError({ ...error, profileImage: 'Image must be less than 5MB' });
+      return;
+    }
+
+    setProfileImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setError({ ...error, profileImage: null });
   };
 
   // Basic validation
@@ -52,6 +78,13 @@ const SignUp = ({ setUser }) => {
     // DOB check
     if (!formData.dob) {
       newErrors.dob = 'Date of birth is required.';
+    }
+
+    // Username check
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required.';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters.';
     }
 
     return newErrors;
@@ -82,15 +115,38 @@ const SignUp = ({ setUser }) => {
 
       if (signUpError) throw signUpError;
 
+      // Upload profile picture if available
+      let avatarUrl = null;
+      if (profileImage && user) {
+        const fileExt = profileImage.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars') // Make sure this bucket exists in your Supabase project
+          .upload(filePath, profileImage);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        avatarUrl = data.publicUrl;
+      }
+
       // Insert into 'profiles' table
       if (user) {
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: user.id,
+            username: formData.username,
             email: formData.email,
             phone: formData.phone,
-            dob: formData.dob
+            dob: formData.dob,
+            bio: formData.bio || null,
+            avatar_url: avatarUrl
           });
 
         if (profileError) throw profileError;
@@ -131,6 +187,106 @@ const SignUp = ({ setUser }) => {
               border border-light-border dark:border-dark-border
               p-6 md:p-8 rounded-2xl space-y-6 w-full"
             >
+              {/* Profile Picture Upload */}
+              <div>
+                <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-2">
+                  Profile Picture
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative h-24 w-24 rounded-full overflow-hidden 
+                    bg-light-secondary dark:bg-dark-tertiary
+                    border border-light-border dark:border-dark-border">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Profile Preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full w-full text-light-muted dark:text-dark-textSecondary">
+                        <UserIcon className="h-8 w-8" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="cursor-pointer px-3 py-2 rounded-lg
+                      bg-light-secondary dark:bg-dark-tertiary
+                      text-light-text dark:text-dark-text text-sm
+                      border border-light-border dark:border-dark-border
+                      hover:bg-light-secondary/70 dark:hover:bg-dark-tertiary/70
+                      transition-colors">
+                      Choose File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                    {error.profileImage && (
+                      <p className="mt-1 text-sm text-dark-error">{error.profileImage}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Username */}
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-light-text dark:text-dark-text">
+                  Username
+                </label>
+                <div className="relative mt-2">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <UserIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
+                  <input
+                    type="text"
+                    name="username"
+                    id="username"
+                    required
+                    className="block w-full rounded-lg py-1.5 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="Choose a username"
+                  />
+                </div>
+                {error.username && (
+                  <p className="mt-1 text-sm text-dark-error">{error.username}</p>
+                )}
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label htmlFor="bio" className="block text-sm font-medium text-light-text dark:text-dark-text">
+                  Bio <span className="text-light-muted dark:text-dark-textSecondary text-xs">(optional)</span>
+                </label>
+                <div className="relative mt-2">
+                  <div className="pointer-events-none absolute top-2 left-3">
+                    <InformationCircleIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary" />
+                  </div>
+                  <textarea
+                    name="bio"
+                    id="bio"
+                    rows="3"
+                    className="block w-full rounded-lg py-2 pl-10
+                      bg-light-secondary dark:bg-dark-tertiary 
+                      text-light-text dark:text-dark-text
+                      border border-light-border dark:border-dark-border
+                      focus:ring-2 focus:ring-dark-accent focus:outline-none 
+                      placeholder-light-muted dark:placeholder-dark-textSecondary
+                      resize-none"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    placeholder="Tell us about yourself"
+                  />
+                </div>
+              </div>
+
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-light-text dark:text-dark-text">
