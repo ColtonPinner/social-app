@@ -4,6 +4,23 @@ import Tweet from './Tweet';
 import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 const Feed = ({ user }) => {
+  console.log("Feed received user:", user);
+
+  // Add a useEffect to check and fetch user if needed
+  useEffect(() => {
+    // If user isn't provided, you can fetch it here
+    if (!user) {
+      const fetchUser = async () => {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          console.log("Fetched auth user:", authUser);
+          // You could set this to a local state to pass to Tweet
+        }
+      };
+      fetchUser();
+    }
+  }, [user]);
+
   const [tweets, setTweets] = useState([]);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -235,13 +252,12 @@ const Feed = ({ user }) => {
           <div className="divide-y divide-light-border dark:divide-dark-border">
             {tweets.length > 0 ? (
               tweets.map(tweet => (
-                <div key={tweet.id} className="py-4 w-full">
-                  <Tweet 
-                    tweet={tweet} 
-                    onDelete={tweet.user?.id === user?.id ? handleDeletePost : null}
-                    currentUser={user} 
-                  />
-                </div>
+                <Tweet 
+                  key={tweet.id} 
+                  tweet={tweet} 
+                  currentUser={user} // Make sure 'user' is defined in Feed.js
+                  onDelete={handleDeletePost}
+                />
               ))
             ) : (
               <div className="py-6 text-center">
