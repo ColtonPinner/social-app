@@ -3,29 +3,35 @@ import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
 import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
-const Feed = ({ user }) => {
-  console.log("Feed received user:", user);
-
-  // Add a useEffect to check and fetch user if needed
-  useEffect(() => {
-    // If user isn't provided, you can fetch it here
-    if (!user) {
-      const fetchUser = async () => {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          console.log("Fetched auth user:", authUser);
-          // You could set this to a local state to pass to Tweet
-        }
-      };
-      fetchUser();
-    }
-  }, [user]);
-
+const Feed = () => {
   const [tweets, setTweets] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [newTweet, setNewTweet] = useState('');
-  const [image, setImage] = useState(null);
+
+  // Load the current user on component mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get additional profile data if needed
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        // Combine auth data with profile data
+        setCurrentUser({
+          ...user,
+          ...profile
+        });
+      }
+    };
+    
+    fetchUser();
+  }, []);
 
   const fetchAllTweets = useCallback(async () => {
     try {
@@ -118,64 +124,6 @@ const Feed = ({ user }) => {
     }
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setImage(file);
-    }
-  };
-
-  const handlePostTweet = async () => {
-    if (!newTweet && !image) return;
-
-    try {
-      let imageUrl = null;
-      if (image) {
-        const fileExt = image.name.split('.').pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const filePath = `tweets/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('tweets')
-          .upload(filePath, image);
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-          .from('tweets')
-          .getPublicUrl(filePath);
-
-        if (publicUrlError) throw publicUrlError;
-
-        imageUrl = publicUrlData.publicUrl;
-      }
-
-      const { error: postError } = await supabase
-        .from('posts')
-        .insert({
-          user_id: user.id,
-          content: newTweet,
-          image_url: imageUrl,
-        });
-
-      if (postError) throw postError;
-
-      // Reset form
-      setNewTweet('');
-      setImage(null);
-      
-      // Immediately fetch new tweets
-      await fetchAllTweets();
-      
-      // Force a page refresh
-      window.location.reload();
-
-    } catch (err) {
-      console.error('Error posting tweet:', err);
-      setError('Error posting tweet');
-    }
-  };
-
   const handleDeletePost = async (postId) => {
     try {
       const { error } = await supabase
@@ -206,43 +154,6 @@ const Feed = ({ user }) => {
 
   return (
     <div className="max-w-7xl mx-auto pt-4 pb-24 px-2 md:px-8">
-      {/* New Tweet Form */}
-      {user && (
-        <div className="mb-6 px-2 md:px-0">
-          <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 
-            border border-light-border dark:border-dark-border
-            rounded-2xl p-4">
-            <textarea
-              className="w-full p-3 rounded-lg resize-none
-                bg-light-secondary dark:bg-dark-tertiary 
-                text-light-text dark:text-dark-text
-                border border-light-border dark:border-dark-border
-                focus:ring-2 focus:ring-dark-accent focus:outline-none 
-                placeholder-light-muted dark:placeholder-dark-textSecondary"
-              rows="3"
-              placeholder="What's happening?"
-              value={newTweet}
-              onChange={(e) => setNewTweet(e.target.value)}
-            />
-            <div className="mt-3 flex items-center justify-between">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="text-sm text-light-text dark:text-dark-text"
-              />
-              <button
-                onClick={handlePostTweet}
-                className="px-6 py-2 bg-dark-accent hover:bg-dark-accentHover text-white rounded-full
-                  transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Tweet
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Tweets Container */}
       <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 
         md:border md:border-light-border md:dark:border-dark-border
@@ -255,7 +166,7 @@ const Feed = ({ user }) => {
                 <Tweet 
                   key={tweet.id} 
                   tweet={tweet} 
-                  currentUser={user} // Make sure 'user' is defined in Feed.js
+                  currentUser={currentUser} 
                   onDelete={handleDeletePost}
                 />
               ))

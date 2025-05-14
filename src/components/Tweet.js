@@ -4,7 +4,8 @@ import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon } from '@heroicons/
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { supabase } from '../supabaseClient';
 
-const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
+// Add defaultProps to handle missing currentUser
+const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   // 1. All useState/useRef calls
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
@@ -81,12 +82,15 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
 
     const fetchLikeStatus = async () => {
       try {
+        // Convert to string to match format if needed
+        const contentId = tweet.id;
+
         const { data, error } = await supabase
           .from('likes')
           .select('id')
           .eq('user_id', currentUser.id)
-          .eq('content_type', 'post')
-          .eq('content_id', tweet.id)
+          // Remove content_type since it doesn't exist in your schema
+          .eq('content_id', contentId)
           .maybeSingle();
 
         setIsLiked(!!data && !error);
@@ -94,7 +98,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
         const { count, error: countError } = await supabase
           .from('likes')
           .select('id', { count: 'exact', head: true })
-          .eq('content_type', 'post')
+          // Remove content_type since it doesn't exist in your schema
           .eq('content_id', tweet.id);
 
         if (!countError) setLikesCount(count || 0);
@@ -114,33 +118,46 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
 
   // 4. Now you can do your early returns
   const isValidUser = () => {
-    return Boolean(currentUser) && (
-      Boolean(currentUser.id) || 
-      Boolean(currentUser.uid) || 
-      Boolean(currentUser.user_id)
+    if (!currentUser) return false;
+
+    return Boolean(
+      typeof currentUser === 'object' && (
+        Boolean(currentUser.id) || 
+        Boolean(currentUser.uid) || 
+        Boolean(currentUser.user_id)
+      )
     );
   };
 
   // 5. Regular functions that don't use hooks
   const handleLike = async () => {
-    if (!isValidUser()) {
+    if (!currentUser) {
       alert('Please sign in to like posts');
       return;
     }
 
+    // Double check that we have a valid user with an ID before proceeding
     const userId = currentUser.id || currentUser.uid || currentUser.user_id;
+    if (!userId) {
+      alert('User profile incomplete. Please try signing out and in again.');
+      console.error('Missing user ID', { currentUser });
+      return;
+    }
 
     if (likeLoading) return;
     setLikeLoading(true);
 
     try {
+      // Convert tweet.id to string to match UUID format if needed
+      const contentId = tweet.id;
+      
       if (isLiked) {
         const { error } = await supabase
           .from('likes')
           .delete()
           .eq('user_id', userId)
-          .eq('content_type', 'post')
-          .eq('content_id', tweet.id);
+          // Remove content_type since it doesn't exist in your schema
+          .eq('content_id', contentId);
 
         if (error) {
           console.error('Unlike error:', error);
@@ -154,8 +171,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
           .from('likes')
           .insert({
             user_id: userId,
-            content_type: 'post',
-            content_id: tweet.id,
+            // Remove content_type field
+            content_id: contentId,
             created_at: new Date().toISOString()
           });
 
@@ -300,8 +317,11 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser }) => {
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                console.log("Like button clicked", { currentUser });
-                handleLike();
+                if (isValidUser()) {
+                  handleLike();
+                } else {
+                  alert('Please sign in to like posts');
+                }
               }}
               className="flex items-center space-x-1.5 group py-1 px-2 rounded-md hover:bg-light-secondary dark:hover:bg-dark-secondary relative z-10"
             >
