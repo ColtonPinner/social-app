@@ -21,9 +21,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   const commentButtonRef = useRef(null);
 
   // 2. Move ALL useEffect and useCallback hooks here, before any early returns
-  // Fetch comments
+  // Fetch comments - modify this function to load comments even when not logged in
   const fetchComments = useCallback(async () => {
-    if (!showCommentModal || !currentUser) return;
+    if (!showCommentModal) return;  // Remove the currentUser check to allow viewing comments when not logged in
     setIsLoadingComments(true);
 
     try {
@@ -67,14 +67,14 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     } finally {
       setIsLoadingComments(false);
     }
-  }, [showCommentModal, tweet.id]);
+  }, [showCommentModal, tweet.id]); // Remove currentUser from dependencies
 
-  // Load comments when modal opens
+  // Load comments when modal opens - remove currentUser requirement
   useEffect(() => {
-    if (showCommentModal && currentUser) {
+    if (showCommentModal) {
       fetchComments();
     }
-  }, [fetchComments, showCommentModal, currentUser]);
+  }, [fetchComments, showCommentModal]); // Remove currentUser from dependencies
 
   // Check if user has liked the tweet
   useEffect(() => {
@@ -241,22 +241,28 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     }
   };
 
+  // Better position calculation
   const openFloatingCommentBox = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!isValidUser()) {
-      alert('Please sign in to comment');
-      return;
-    }
+    // Allow viewing comments even when not logged in
+    // Only require login for posting comments
 
     if (commentButtonRef.current) {
       const buttonRect = commentButtonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      
+      // Calculate position to ensure it stays on screen
+      const leftPosition = Math.min(
+        Math.max(10, buttonRect.left - 150), // Don't go off left edge
+        viewportWidth - 360 // Don't go off right edge (350px modal + 10px margin)
+      );
 
       setCommentBoxPosition({
         top: buttonRect.bottom + scrollTop,
-        left: Math.max(10, buttonRect.left - 200 + buttonRect.width / 2),
+        left: leftPosition,
       });
     }
 
@@ -375,13 +381,15 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           }}
         >
           <div 
-            className="fixed z-50 bg-light-primary dark:bg-dark-primary shadow-lg rounded-lg border border-light-border dark:border-dark-border overflow-hidden"
+            className="fixed z-50 bg-light-primary dark:bg-dark-primary shadow-xl rounded-lg border border-light-border dark:border-dark-border overflow-hidden"
             style={{
               top: commentBoxPosition.top + 'px',
               left: commentBoxPosition.left + 'px',
               width: '350px',
               maxHeight: '500px',
-              transform: 'translateY(10px)'
+              transform: 'translateY(10px)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              maxWidth: 'calc(100vw - 20px)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -433,22 +441,22 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
             
             <div className="overflow-y-auto" style={{ maxHeight: '300px' }}>
               {isLoadingComments ? (
-                <div className="py-4 text-center text-light-muted dark:text-dark-textSecondary">
-                  <div className="animate-spin h-5 w-5 border-2 border-light-border dark:border-dark-border border-t-dark-accent rounded-full mx-auto mb-2"></div>
-                  Loading...
+                <div className="py-6 text-center text-light-muted dark:text-dark-textSecondary">
+                  <div className="animate-spin h-6 w-6 border-2 border-light-border dark:border-dark-border border-t-dark-accent rounded-full mx-auto mb-2"></div>
+                  <p>Loading comments...</p>
                 </div>
               ) : comments.length > 0 ? (
                 <ul className="divide-y divide-light-border dark:divide-dark-border">
                   {comments.map(comment => (
-                    <li key={comment.id} className="p-3">
-                      <div className="flex items-start space-x-2">
+                    <li key={comment.id} className="p-3 hover:bg-light-secondary/30 dark:hover:bg-dark-secondary/30">
+                      <div className="flex space-x-2">
                         <Link 
                           to={`/profile/${comment.user_id}`} 
                           className="flex-shrink-0"
                         >
                           <img 
                             src={comment.user?.avatar_url || 'https://via.placeholder.com/32'} 
-                            alt={comment.user?.username}
+                            alt={comment.user?.username || 'User'}
                             className="w-6 h-6 rounded-full object-cover border border-light-border dark:border-dark-border"
                           />
                         </Link>
@@ -456,15 +464,19 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
                           <div className="flex items-center">
                             <Link 
                               to={`/profile/${comment.user_id}`}
-                              className="font-semibold text-xs hover:underline text-light-text dark:text-dark-text mr-2"
+                              className="font-medium text-xs hover:underline text-light-text dark:text-dark-text"
                             >
-                              {comment.user?.username || "Anonymous"}
+                              {comment.user?.username || 'Anonymous User'}
                             </Link>
+                            <span className="mx-1 text-xs text-light-muted dark:text-dark-textSecondary">•</span>
                             <span className="text-xs text-light-muted dark:text-dark-textSecondary">
-                              {new Date(comment.created_at).toLocaleDateString()}
+                              {new Date(comment.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric'
+                              })}
                             </span>
                           </div>
-                          <p className="mt-1 text-sm text-light-text dark:text-dark-text break-words">
+                          <p className="text-sm text-light-text dark:text-dark-text mt-1 break-words whitespace-pre-wrap">
                             {comment.content}
                           </p>
                         </div>
@@ -473,8 +485,13 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
                   ))}
                 </ul>
               ) : (
-                <div className="py-4 px-3 text-center text-light-muted dark:text-dark-textSecondary text-sm">
-                  No comments yet. Be the first to comment!
+                <div className="py-8 px-3 text-center text-light-muted dark:text-dark-textSecondary">
+                  <p className="text-sm mb-2">No comments yet</p>
+                  {currentUser ? (
+                    <p className="text-xs">Be the first to share your thoughts!</p>
+                  ) : (
+                    <p className="text-xs">Sign in to comment on this post</p>
+                  )}
                 </div>
               )}
             </div>
