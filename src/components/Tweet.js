@@ -20,6 +20,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   const [commentBoxPosition, setCommentBoxPosition] = useState({ top: 0, left: 0 });
   const commentButtonRef = useRef(null);
 
+  const [commentCount, setCommentCount] = useState(0);
+
   // 2. Move ALL useEffect and useCallback hooks here, before any early returns
   // Fetch comments - modify this function to load comments even when not logged in
   const fetchComments = useCallback(async () => {
@@ -68,6 +70,29 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       setIsLoadingComments(false);
     }
   }, [showCommentModal, tweet.id]); // Remove currentUser from dependencies
+
+  // Add a new function to fetch just the comment count
+  const fetchCommentCount = useCallback(async () => {
+    try {
+      const tweetId = typeof tweet.id === 'string' ? parseInt(tweet.id, 10) : tweet.id;
+      
+      const { count, error } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('tweet_id', tweetId);
+      
+      if (!error) {
+        setCommentCount(count || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching comment count:', err);
+    }
+  }, [tweet.id]);
+
+  // Add a new useEffect to fetch the comment count when component mounts
+  useEffect(() => {
+    fetchCommentCount();
+  }, [fetchCommentCount]);
 
   // Load comments when modal opens - remove currentUser requirement
   useEffect(() => {
@@ -241,28 +266,43 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     }
   };
 
-  // Better position calculation
+  // Better position calculation for side positioning
   const openFloatingCommentBox = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
-    // Allow viewing comments even when not logged in
-    // Only require login for posting comments
-
     if (commentButtonRef.current) {
       const buttonRect = commentButtonRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      
-      // Calculate position to ensure it stays on screen
-      const leftPosition = Math.min(
-        Math.max(10, buttonRect.left - 150), // Don't go off left edge
-        viewportWidth - 360 // Don't go off right edge (350px modal + 10px margin)
-      );
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+      // Desired width for the comment card
+      const boxWidth = Math.min(viewportWidth - 40, 350);
+      const estimatedBoxHeight = 400;
+
+      // Position to the right of the button by default
+      let left = buttonRect.right + scrollLeft + 16;
+      let top = buttonRect.top + scrollTop - 16;
+
+      // If not enough space on the right, show on the left
+      if (left + boxWidth > viewportWidth - 10) {
+        left = buttonRect.left + scrollLeft - boxWidth - 16;
+      }
+      // If still not enough space, clamp to viewport
+      if (left < 10) left = 10;
+
+      // Clamp top to viewport
+      if (top + estimatedBoxHeight > viewportHeight + scrollTop - 10) {
+        top = viewportHeight + scrollTop - estimatedBoxHeight - 10;
+      }
+      if (top < 10) top = 10;
 
       setCommentBoxPosition({
-        top: buttonRect.bottom + scrollTop,
-        left: leftPosition,
+        top,
+        left,
+        boxWidth
       });
     }
 
@@ -349,7 +389,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
             >
               <ChatBubbleLeftIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary group-hover:text-blue-500" />
               <span className="text-xs text-light-muted dark:text-dark-textSecondary group-hover:text-blue-500">
-                {comments.length || 0}
+                {commentCount}
               </span>
             </button>
             
@@ -374,28 +414,26 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       
       {showCommentModal && (
         <div 
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 bg-black/20 dark:bg-black/40 flex items-center justify-center"
           onClick={(e) => {
             e.stopPropagation();
             setShowCommentModal(false);
           }}
         >
           <div 
-            className="fixed z-50 bg-light-primary dark:bg-dark-primary shadow-xl rounded-lg border border-light-border dark:border-dark-border overflow-hidden"
+            className="bg-light-primary dark:bg-dark-primary shadow-xl rounded-lg border border-light-border dark:border-dark-border overflow-hidden"
             style={{
-              top: commentBoxPosition.top + 'px',
-              left: commentBoxPosition.left + 'px',
-              width: '350px',
-              maxHeight: '500px',
-              transform: 'translateY(10px)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-              maxWidth: 'calc(100vw - 20px)'
+              width: '100%',
+              maxWidth: 400,
+              maxHeight: 500,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-3 border-b border-light-border dark:border-dark-border">
               <h3 className="font-semibold text-light-text dark:text-dark-text">
-                {comments.length > 0 ? `Comments (${comments.length})` : 'Add Comment'}
+                {comments.length > 0 ? `Comments (${comments.length})` : 
+                 commentCount > 0 ? `Comments (${commentCount})` : 'Add Comment'}
               </h3>
               <button
                 onClick={() => setShowCommentModal(false)}
