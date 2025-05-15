@@ -412,28 +412,26 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         </div>
       </div>
       
+      {/* Comment Card as an Extension (Side Panel) */}
       {showCommentModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/20 dark:bg-black/40 flex items-center justify-center"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCommentModal(false);
-          }}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/40"
+          onClick={() => setShowCommentModal(false)}
         >
-          <div 
+          <div
             className="bg-light-primary dark:bg-dark-primary shadow-xl rounded-lg border border-light-border dark:border-dark-border overflow-hidden"
             style={{
+              minWidth: 380,
+              maxWidth: 500,
               width: '100%',
-              maxWidth: 400,
-              maxHeight: 500,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              maxHeight: '80vh',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-3 border-b border-light-border dark:border-dark-border">
               <h3 className="font-semibold text-light-text dark:text-dark-text">
                 {comments.length > 0 ? `Comments (${comments.length})` : 
-                 commentCount > 0 ? `Comments (${commentCount})` : 'Add Comment'}
+                  commentCount > 0 ? `Comments (${commentCount})` : 'Add Comment'}
               </h3>
               <button
                 onClick={() => setShowCommentModal(false)}

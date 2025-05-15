@@ -6,14 +6,14 @@ import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outlin
 const Feed = () => {
   const [tweets, setTweets] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [followingIds, setFollowingIds] = useState([]);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load the current user on component mount
+  // Load the current user and following list on component mount
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndFollowing = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (user) {
         // Get additional profile data if needed
         const { data: profile } = await supabase
@@ -21,44 +21,67 @@ const Feed = () => {
           .select('*')
           .eq('id', user.id)
           .single();
-          
-        // Combine auth data with profile data
+
         setCurrentUser({
           ...user,
           ...profile
         });
+
+        // Fetch following user IDs
+        const { data: followingData, error: followingError } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (!followingError && followingData) {
+          setFollowingIds(followingData.map(f => f.following_id));
+        } else {
+          setFollowingIds([]);
+        }
       }
     };
-    
-    fetchUser();
+    fetchUserAndFollowing();
   }, []);
 
   const fetchAllTweets = useCallback(async () => {
     try {
       setRefreshing(true);
+
+      // Only fetch posts from users you follow (and yourself)
+      let userIds = followingIds;
+      if (currentUser && currentUser.id) {
+        userIds = [...followingIds, currentUser.id];
+      }
+      if (userIds.length === 0) {
+        setTweets([]);
+        setRefreshing(false);
+        return;
+      }
+
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select('*')
+        .in('user_id', userIds)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
-      
+
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, avatar_url, full_name');
-        
+
       if (profilesError) throw profilesError;
-      
+
       const profilesById = profilesData.reduce((acc, profile) => {
         acc[profile.id] = profile;
         return acc;
       }, {});
-      
+
       const enrichedPosts = postsData.map(post => ({
         ...post,
         user: profilesById[post.user_id] || null
       }));
-      
+
       setTweets(enrichedPosts);
     } catch (err) {
       setError(err.message);
@@ -66,10 +89,15 @@ const Feed = () => {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [followingIds, currentUser]);
 
   useEffect(() => {
-    fetchAllTweets();
+    if (currentUser) {
+      fetchAllTweets();
+    }
+  }, [fetchAllTweets, currentUser, followingIds]);
+
+  useEffect(() => {
     const refreshInterval = setInterval(() => {
       fetchAllTweets();
     }, 30000); // Refresh every 30 seconds

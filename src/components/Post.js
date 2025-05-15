@@ -48,12 +48,8 @@ const Post = ({ user, addTweet }) => {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
     // Ensure user.id and fileName do not have leading/trailing slashes
     const filePath = `${user.id}/${fileName}`.replace(/\/{2,}/g, '/');
+    await supabase.storage.from('media').upload(filePath, file, { upsert: true });
 
-    const { error: uploadError } = await supabase.storage
-      .from('media') // <-- use your actual bucket name here
-      .upload(filePath, file);
-
-    if (uploadError) throw uploadError;
     return filePath;
   };
 
@@ -70,44 +66,33 @@ const Post = ({ user, addTweet }) => {
       let imageUrl = null;
       if (media) {
         try {
-          console.log("Uploading file...");
           const filePath = await handleFileUpload(media);
-          console.log("File uploaded to path:", filePath);
-          
           const { data } = await supabase.storage
             .from('media')
-            .getPublicUrl(filePath);
-            
-          console.log("Got public URL:", data);
+            .getPublicUrl(filePath); // filePath should match exactly what you uploaded
           imageUrl = data.publicUrl;
+          console.log('File path:', filePath);
+          console.log('Public URL:', data.publicUrl);
         } catch (uploadErr) {
-          console.error("File upload error:", uploadErr);
           throw uploadErr;
         }
       }
-      
-      console.log("Attempting to create post with:", {
-        text: content,
-        user_id: user.id,
-        image_url: imageUrl
-      });
-      
+
+      // Get the authenticated user from Supabase session
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('posts')
         .insert({
           text: content,
-          user_id: user.id,
+          user_id: authUser.id, 
           image_url: imageUrl
         })
         .select()
         .single();
 
-      if (error) {
-        console.error("Supabase insert error:", error);
-        throw error;
-      }
-      
-      console.log("Post created successfully:", data);
+      if (error) throw error;
 
       addTweet(data);
       setContent('');
