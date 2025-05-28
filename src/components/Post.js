@@ -5,43 +5,57 @@ import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 const Post = ({ user, addTweet }) => {
   const [content, setContent] = useState('');
-  const [media, setMedia] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [mediaFiles, setMediaFiles] = useState([]);  // Change to array for multiple files
+  const [previews, setPreviews] = useState([]);  // Change to array for multiple previews
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(''), 8000); // 8000ms = 8 seconds
+      const timer = setTimeout(() => setError(''), 8000);
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (files) => {
     if (!user?.id) throw new Error('User not found');
+    
+    // Array to store public URLs of uploaded images
+    const uploadedUrls = [];
+    
+    // Process each file
+    for (const file of files) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`File ${file.name} is not a supported image type (JPEG, PNG, or WEBP)`);
+      }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error('Only JPEG, PNG, or WEBP images are allowed');
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+      uploadedUrls.push(data.publicUrl);
     }
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('media') // Ensure this matches your bucket name
-      .upload(filePath, file, { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage.from('media').getPublicUrl(filePath);
-    return data.publicUrl;
+    
+    return uploadedUrls;
   };
 
   const handlePost = async () => {
-    if (!content.trim() && !media) {
-      setError('Content or image is required.');
+    if (!content.trim() && mediaFiles.length === 0) {
+      setError('Content or at least one image is required.');
+      return;
+    }
+
+    // Limit the number of images (optional)
+    if (mediaFiles.length > 5) {
+      setError('Maximum 5 images allowed per post.');
       return;
     }
 
@@ -49,11 +63,11 @@ const Post = ({ user, addTweet }) => {
     setError('');
 
     try {
-      let imageUrl = null;
+      let imageUrls = [];
 
-      if (media) {
-        imageUrl = await handleFileUpload(media);
-        if (!imageUrl) {
+      if (mediaFiles.length > 0) {
+        imageUrls = await handleFileUpload(mediaFiles);
+        if (!imageUrls || imageUrls.length === 0) {
           throw new Error('Image upload failed.');
         }
       }
@@ -68,9 +82,9 @@ const Post = ({ user, addTweet }) => {
       }
 
       const postData = {
-        text: content || null, // Allow empty text if there's an image
+        text: content || null,
         user_id: authUser.id,
-        image_url: imageUrl,
+        image_url: imageUrls.length > 0 ? imageUrls[0] : null, // Only use the first image URL
       };
 
       const { data: newPost, error: insertPostError } = await supabase
@@ -85,8 +99,8 @@ const Post = ({ user, addTweet }) => {
 
       addTweet(newPost);
       setContent('');
-      setMedia(null);
-      setPreview(null);
+      setMediaFiles([]);
+      setPreviews([]);
       console.log('Post successful');
     } catch (err) {
       console.error('Error in handlePost:', err);
@@ -97,16 +111,43 @@ const Post = ({ user, addTweet }) => {
   };
 
   const handleMediaChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setMedia(file);
-      setPreview(URL.createObjectURL(file));
+    const files = Array.from(event.target.files);
+    
+    // Limit number of files (optional)
+    if (mediaFiles.length + files.length > 5) {
+      setError('Maximum 5 images allowed per post.');
+      return;
+    }
+    
+    if (files && files.length > 0) {
+      // Add new files to existing files
+      setMediaFiles(prevFiles => [...prevFiles, ...files]);
+      
+      // Generate previews for new files
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setPreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
     }
   };
 
-  const clearMedia = () => {
-    setMedia(null);
-    setPreview(null);
+  const removeMedia = (index) => {
+    // Create new arrays without the item at the specified index
+    const updatedFiles = [...mediaFiles];
+    const updatedPreviews = [...previews];
+    
+    // Remove the file and its preview
+    updatedFiles.splice(index, 1);
+    updatedPreviews.splice(index, 1);
+    
+    // Update state
+    setMediaFiles(updatedFiles);
+    setPreviews(updatedPreviews);
+  };
+
+  const clearAllMedia = () => {
+    // Release all object URLs to avoid memory leaks
+    previews.forEach(preview => URL.revokeObjectURL(preview));
+    setMediaFiles([]);
+    setPreviews([]);
   };
 
   return (
@@ -145,35 +186,68 @@ const Post = ({ user, addTweet }) => {
               </div>
             )}
 
-            {preview && (
-              <div className="relative mt-2">
-                <img
-                  src={preview}
-                  alt="Upload preview"
-                  className="rounded-lg w-full object-cover max-h-[300px] md:max-h-[400px]"
-                />
-                <button
-                  type="button"
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 
-                    text-white p-1.5 rounded-full transition-colors"
-                  onClick={clearMedia}
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
+            {previews.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {/* Image count indicator */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-light-muted dark:text-dark-textSecondary">
+                    {previews.length} {previews.length === 1 ? 'image' : 'images'} attached
+                  </span>
+                  
+                  <button
+                    type="button"
+                    className="text-sm text-dark-accent hover:underline"
+                    onClick={clearAllMedia}
+                  >
+                    Clear all
+                  </button>
+                </div>
+                
+                {/* Image grid */}
+                <div className={`grid gap-2 ${
+                  previews.length === 1 ? 'grid-cols-1' : 
+                  previews.length === 2 ? 'grid-cols-2' : 
+                  'grid-cols-3'
+                }`}>
+                  {previews.map((preview, index) => (
+                    <div key={index} className="relative group aspect-square">
+                      <img
+                        src={preview}
+                        alt={`Upload preview ${index + 1}`}
+                        className="rounded-lg w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 
+                          text-white p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                        onClick={() => removeMedia(index)}
+                        aria-label={`Remove image ${index + 1}`}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             <div className="flex items-center justify-between pt-2">
-              <label className="cursor-pointer flex items-center justify-center h-10 w-10 
-                rounded-full hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors">
-                <PhotoIcon className="h-6 w-6 text-light-text dark:text-dark-text" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleMediaChange}
-                />
-              </label>
+              <div className="flex items-center space-x-2">
+                <label className="cursor-pointer flex items-center justify-center h-10 w-10 
+                  rounded-full hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors">
+                  <PhotoIcon className="h-6 w-6 text-light-text dark:text-dark-text" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleMediaChange}
+                    multiple
+                  />
+                </label>
+                <span className="text-xs text-light-muted dark:text-dark-textSecondary">
+                  {mediaFiles.length}/5
+                </span>
+              </div>
 
               <button
                 type="button"

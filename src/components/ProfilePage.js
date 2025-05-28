@@ -693,22 +693,9 @@ const ProfilePage = ({ currentUser, setUser }) => {
                                 className="rounded-xl max-w-full max-h-60 sm:max-h-80 mt-2 border border-light-border dark:border-dark-border shadow"
                               />
                             )}
-                            {/* Likes and Comments */}
-                            <div className="flex items-center gap-4 sm:gap-6 mt-3 text-light-muted dark:text-dark-textSecondary text-xs sm:text-sm">
-                              <div className="flex items-center gap-1">
-                                <span role="img" aria-label="likes" className="text-base sm:text-lg">❤️</span>
-                                <span>{post.likes_count ?? post.likes?.length ?? 0}</span>
-                                <span className="ml-1 hidden xs:inline">Likes</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span role="img" aria-label="comments" className="text-base sm:text-lg">💬</span>
-                                <span>{post.comments_count ?? post.comments?.length ?? 0}</span>
-                                <span className="ml-1 hidden xs:inline">Comments</span>
-                              </div>
-                            </div>
                           </div>
                         </li>
-                      ))}
+                      ))} 
                     </ul>
                   ) : (
                     <div className="p-8 text-center flex flex-col items-center">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { Image } from "@heroui/react";
 import { supabase } from '../supabaseClient';
@@ -24,6 +24,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // Add state for user profile data
   const [userProfile, setUserProfile] = useState(null);
+
+  // New state for image carousel
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Fetch user profile data for the tweet author
   useEffect(() => {
@@ -359,29 +362,48 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   const displayUser = getUserDisplayData();
 
+  // Helper function to get image URLs for the carousel
+  const getImageUrls = (tweet) => {
+    // Try to extract image URLs from various possible formats
+    
+    // Check for multiple images stored as JSON in content field
+    if (tweet.content) {
+      try {
+        const parsed = JSON.parse(tweet.content);
+        if (parsed?.additionalImages && Array.isArray(parsed.additionalImages)) {
+          return [tweet.image_url, ...parsed.additionalImages].filter(Boolean);
+        }
+      } catch (e) {
+        // Not JSON or invalid JSON, ignore
+      }
+    }
+    
+    // If we have a single image_url, return it as an array
+    return tweet.image_url ? [tweet.image_url] : [];
+  };
+
   // 4. The main render
   return (
     <div className={`w-full py-3 text-light-text dark:text-dark-text ${className} relative`}>
       <div className="flex items-start space-x-3">
         {/* User Avatar with fallback */}
         <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0">
-          {displayUser.avatar_url ? (
-            <img
-              src={displayUser.avatar_url}
-              alt={`${displayUser.username}'s avatar`}
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full object-cover border border-light-border dark:border-dark-border"
-              onError={(e) => {
-                e.target.onerror = null; // Prevent infinite loop
-                e.target.src = `https://ui-avatars.com/api/?name=${displayUser.username}&background=3b82f6&color=fff&size=40`;
-              }}
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-              {displayUser.username.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <Image
+            src={displayUser.avatar_url}
+            alt={`${displayUser.username}'s avatar`}
+            width={40}
+            height={40}
+            className="rounded-full object-cover border border-light-border dark:border-dark-border hover:opacity-90 transition-opacity"
+            isBlurred={false}
+            loading="lazy"
+            radius="full"
+            showSkeleton={true}
+            fallback={
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                {displayUser.username.charAt(0).toUpperCase()}
+              </div>
+            }
+          />
         </Link>
         
         <div className="flex-1 min-w-0">
@@ -405,38 +427,119 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
             {tweet.text || tweet.content || tweet.message || ""}
           </p>
           
-          {tweet.image_url && (
-            <div className="mt-3 mb-3">
-              {tweet.image_url.match(/\.(mp4|webm)$/) ? (
-                <video
-                  controls
-                  className="w-full h-auto max-h-[500px] object-cover rounded-lg"
-                >
-                  <source src={tweet.image_url} type="video/mp4" />
-                  Your browser does not support video playback.
-                </video>
-              ) : (
-                <div className="relative rounded-lg overflow-hidden">
-                  {/* Regular img tag instead of Image component for better fallback handling */}
-                  <img
-                    src={tweet.image_url}
-                    alt="Tweet media"
-                    className="w-full h-auto max-h-[500px] object-cover rounded-lg border border-light-border dark:border-dark-border shadow-md"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(tweet.image_url, '_blank');
-                    }}
-                    onError={(e) => {
-                      console.error('Image failed to load:', tweet.image_url);
-                      e.target.src = 'https://via.placeholder.com/500?text=Image+not+available';
-                    }}
-                  />
-                  
-                  {/* Debug info - remove in production */}
-                </div>
-              )}
+          {(() => {
+  const imageUrls = getImageUrls(tweet);
+  
+  if (imageUrls.length === 0) return null;
+  
+  const currentUrl = imageUrls[currentImageIndex];
+  
+  return (
+    <div className="mt-3 mb-3">
+      {currentUrl.match(/\.(mp4|webm)$/) ? (
+        // Video handling stays the same
+        <video
+          controls
+          className="w-full h-auto max-h-[500px] object-cover rounded-lg"
+        >
+          <source src={currentUrl} type="video/mp4" />
+          Your browser does not support video playback.
+        </video>
+      ) : (
+        imageUrls.length === 1 ? (
+          // Single image - simple display without carousel elements
+          <div className="rounded-lg overflow-hidden">
+            <img
+              src={currentUrl}
+              alt="Tweet media"
+              className="max-h-[500px] w-auto max-w-full mx-auto object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(currentUrl, '_blank');
+              }}
+              onError={(e) => {
+                console.error('Image failed to load:', currentUrl);
+                e.target.src = 'https://via.placeholder.com/500?text=Image+not+available';
+              }}
+            />
+          </div>
+        ) : (
+          // Multiple images - full carousel with controls
+          <div className="relative rounded-lg overflow-hidden">
+            <div className="relative aspect-video bg-light-secondary dark:bg-dark-tertiary flex justify-center">
+              <img
+                src={currentUrl}
+                alt={`Tweet media ${currentImageIndex + 1} of ${imageUrls.length}`}
+                className="max-h-[500px] max-w-full object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(currentUrl, '_blank');
+                }}
+                onError={(e) => {
+                  console.error('Image failed to load:', currentUrl);
+                  e.target.src = 'https://via.placeholder.com/500?text=Image+not+available';
+                }}
+              />
             </div>
-          )}
+            
+            {/* Navigation controls */}
+            <button
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
+                bg-black/40 text-white hover:bg-black/60 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => 
+                  prev === 0 ? imageUrls.length - 1 : prev - 1
+                );
+              }}
+              aria-label="Previous image"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full 
+                bg-black/40 text-white hover:bg-black/60 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => 
+                  prev === imageUrls.length - 1 ? 0 : prev + 1
+                );
+              }}
+              aria-label="Next image"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
+            
+            {/* Image counter/indicators */}
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {imageUrls.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(idx);
+                  }}
+                  className={`h-2 rounded-full transition-all ${
+                    idx === currentImageIndex 
+                      ? 'w-6 bg-white' 
+                      : 'w-2 bg-white/60 hover:bg-white/80'
+                  }`}
+                  aria-label={`Go to image ${idx + 1}`}
+                />
+              ))}
+            </div>
+            
+            {/* Image counter text */}
+            <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+              {currentImageIndex + 1} / {imageUrls.length}
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  );
+})()}
           
           <div className="flex items-center mt-3 space-x-4">
             <button

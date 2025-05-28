@@ -5,7 +5,9 @@ import {
   Link as LinkIcon,
   Spinner,
   Camera,
-  DotsThreeVertical
+  DotsThreeVertical,
+  Heart as HeartIcon,
+  HeartSolid as HeartSolidIcon
 } from '@phosphor-icons/react';
 import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
@@ -695,3 +697,258 @@ const Profile = ({ currentUser }) => {
 };
 
 export default Profile;
+
+// Inside your Tweet.js component
+// Add or update these functions
+
+// 1. Add state for like management
+const [isLiked, setIsLiked] = useState(false);
+const [likesCount, setLikesCount] = useState(0);
+const [likeLoading, setLikeLoading] = useState(false);
+
+// 2. Check if post is liked on component mount
+useEffect(() => {
+  if (!currentUser || !tweet) return;
+  
+  const checkLikeStatus = async () => {
+    try {
+      // Check if this post is liked by the current user
+      const { data, error } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('post_id', tweet.id)
+        .maybeSingle();
+        
+      if (!error) {
+        setIsLiked(!!data);
+      }
+      
+      // Get total likes count
+      const { count, error: countError } = await supabase
+        .from('post_likes')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', tweet.id);
+        
+      if (!countError) {
+        setLikesCount(count || 0);
+      }
+    } catch (err) {
+      console.error('Error checking like status:', err);
+    }
+  };
+  
+  checkLikeStatus();
+}, [tweet?.id, currentUser?.id]);
+
+// 3. Handle like/unlike action
+const handleLike = async () => {
+  if (!currentUser) {
+    alert('Please sign in to like posts');
+    return;
+  }
+  
+  if (likeLoading) return;
+  setLikeLoading(true);
+  
+  try {
+    if (isLiked) {
+      // Unlike the post
+      await supabase
+        .from('post_likes')
+        .delete()
+        .eq('user_id', currentUser.id)
+        .eq('post_id', tweet.id);
+        
+      setIsLiked(false);
+      setLikesCount(prev => Math.max(0, prev - 1));
+    } else {
+      // Like the post
+      await supabase
+        .from('post_likes')
+        .insert({
+          user_id: currentUser.id,
+          post_id: tweet.id,
+          created_at: new Date().toISOString()
+        });
+        
+      setIsLiked(true);
+      setLikesCount(prev => prev + 1);
+      
+      // Optional: Send notification to post owner if it's not the current user
+      if (tweet.user_id !== currentUser.id) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: tweet.user_id,
+            sender_id: currentUser.id,
+            type: 'like',
+            content: `${currentUser.username} liked your post`,
+            post_id: tweet.id
+          });
+      }
+    }
+    
+    // Call the callback function to update parent component
+    if (onLike) onLike();
+  } catch (err) {
+    console.error('Error updating like:', err);
+  } finally {
+    setLikeLoading(false);
+  }
+};
+
+// Inside your Tweet.js component
+// Add or update these functions
+
+// 1. Add state for comment management
+const [showCommentModal, setShowCommentModal] = useState(false);
+const [comment, setComment] = useState('');
+const [comments, setComments] = useState([]);
+const [isLoadingComments, setIsLoadingComments] = useState(false);
+const [submittingComment, setSubmittingComment] = useState(false);
+const [commentCount, setCommentCount] = useState(0);
+
+// 2. Fetch comment count when component mounts
+useEffect(() => {
+  if (!tweet) return;
+  
+  const fetchCommentCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', tweet.id);
+        
+      if (!error) {
+        setCommentCount(count || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching comment count:', err);
+    }
+  };
+  
+  fetchCommentCount();
+}, [tweet?.id]);
+
+// 3. Fetch comments when modal is opened
+useEffect(() => {
+  if (!showCommentModal || !tweet) return;
+  
+  const fetchComments = async () => {
+    setIsLoadingComments(true);
+    
+    try {
+      // Get comments with user info
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user:user_id (id, username, avatar_url, full_name)
+        `)
+        .eq('post_id', tweet.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setComments(data || []);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+      setComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+  
+  fetchComments();
+}, [showCommentModal, tweet?.id]);
+
+// 4. Handle comment submission
+const handleCommentSubmit = async () => {
+  if (!currentUser || !comment.trim()) return;
+  
+  setSubmittingComment(true);
+  
+  try {
+    // Insert the new comment
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: tweet.id,
+        user_id: currentUser.id,
+        content: comment.trim(),
+        created_at: new Date().toISOString()
+      })
+      .single();
+      
+    if (error) throw error;
+    
+    setComment('');
+    
+    // Optimistically update the comments state
+    setComments(prev => [
+      {
+        id: data.id,
+        content: comment.trim(),
+        created_at: new Date().toISOString(),
+        user: {
+          id: currentUser.id,
+          username: currentUser.username,
+          avatar_url: currentUser.avatar_url
+        }
+      },
+      ...prev
+    ]);
+    
+    // Optionally, you can refresh the comment count on the parent component
+    if (onComment) onComment();
+  } catch (err) {
+    console.error('Error submitting comment:', err);
+  } finally {
+    setSubmittingComment(false);
+  }
+};
+
+// 5. Handle comment delete
+const handleCommentDelete = async (commentId) => {
+  if (!currentUser) return;
+  
+  try {
+    // Delete the comment
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('user_id', currentUser.id);
+      
+    if (error) throw error;
+    
+    // Optimistically update the comments state
+    setComments(prev => prev.filter(c => c.id !== commentId));
+    
+    // Optionally, you can refresh the comment count on the parent component
+    if (onComment) onComment();
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+  }
+};
+
+// In your Tweet component's return statement
+{/* Like button */}
+<button
+  type="button"
+  onClick={handleLike}
+  disabled={likeLoading}
+  className="flex items-center space-x-1.5 group py-1 px-2 rounded-md hover:bg-light-secondary dark:hover:bg-dark-secondary"
+>
+  {isLiked ? (
+    <HeartSolidIcon className="h-5 w-5 text-red-500" />
+  ) : (
+    <HeartIcon className="h-5 w-5 text-light-muted dark:text-dark-textSecondary group-hover:text-red-500" />
+  )}
+  <span className={`text-xs ${isLiked ? 'text-red-500' : 'text-light-muted dark:text-dark-textSecondary group-hover:text-red-500'}`}>
+    {likesCount}
+  </span>
+</button>
