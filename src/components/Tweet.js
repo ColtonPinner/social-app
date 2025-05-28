@@ -407,20 +407,28 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         </Link>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center mb-1">
-            <Link 
-              to={`/profile/${tweet.user_id}`}
-              className="font-semibold text-sm hover:underline truncate text-light-text dark:text-dark-text"
-            >
-              {displayUser.full_name || displayUser.username}
-            </Link>
-            {displayUser.full_name && (
-              <>
-                <span className="mx-1 text-light-muted dark:text-dark-textSecondary">@{displayUser.username}</span>
-              </>
-            )}
-            <span className="inline-block mx-1 text-light-muted dark:text-dark-textSecondary">•</span>
-            <span className="text-xs text-light-muted dark:text-dark-textSecondary">{formattedDate}</span>
+          {/* User info area with date on right */}
+          <div className="flex justify-between items-start mb-2">
+            {/* Left side: User info */}
+            <div className="flex flex-col">
+              {/* Line 1: Full name */}
+              <Link 
+                to={`/profile/${tweet.user_id}`}
+                className="font-semibold text-sm hover:underline text-light-text dark:text-dark-text"
+              >
+                {displayUser.full_name || displayUser.username}
+              </Link>
+              
+              {/* Line 2: Username */}
+              <span className="text-xs text-light-muted dark:text-dark-textSecondary">
+                @{displayUser.username}
+              </span>
+            </div>
+            
+            {/* Right side: Date */}
+            <span className="text-xs text-light-muted dark:text-dark-textSecondary shrink-0 ml-2">
+              {formattedDate}
+            </span>
           </div>
           
           <p className="text-[16px] text-light-text dark:text-dark-text mb-2 whitespace-pre-wrap break-words">
