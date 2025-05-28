@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   House,
   Bell,
-  ChatDots,
   MagnifyingGlass,
   X
 } from '@phosphor-icons/react';
@@ -201,14 +200,6 @@ const Navbar = ({ profile }) => {
               )}
             </div>
 
-            <Link 
-              to="/messages" 
-              className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              aria-label="Messages"
-            >
-              <ChatDots size={24} weight="fill" />
-            </Link>
-            
             {profile && (
               <Link to={`/profile/${profile.id}`} className="flex flex-col items-center justify-center text-gray-700 dark:text-gray-200 px-2 py-1 hover:text-black dark:hover:text-white transition-colors active:scale-95">
                 <img
@@ -286,13 +277,6 @@ const Navbar = ({ profile }) => {
           <div className="flex justify-around items-center w-full px-4">
             <Link to="/tweets" className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors">
               <House size={24} weight="fill" />
-            </Link>
-            
-            <Link 
-              to="/messages" 
-              className="flex items-center justify-center text-light-text dark:text-dark-text hover:text-light-muted dark:hover:text-dark-textSecondary transition-colors"
-            >
-              <ChatDots size={24} weight="fill" />
             </Link>
             
             <button 

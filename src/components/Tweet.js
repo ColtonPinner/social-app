@@ -168,6 +168,15 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     fetchLikeStatus();
   }, [currentUser, tweet?.id]);
 
+  // Add this before your return statement to test connection
+  useEffect(() => {
+    const testConnection = async () => {
+      const { data, error } = await supabase.from('comments').select('count').limit(1);
+      console.log('Supabase connection test:', { data, error });
+    };
+    testConnection();
+  }, []);
+
   // 2. NOW WE CAN DO EARLY RETURNS AFTER ALL HOOKS
   // Display a skeleton loader if the main tweet data isn't available yet
   if (!tweet) {
@@ -263,7 +272,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   const handleComment = async (e) => {
     e.preventDefault();
-
+    console.log('Comment submitted:', comment);
+    console.log('Current user:', currentUser);
+    
     if (!isValidUser()) {
       alert('Please sign in to comment');
       return;
@@ -275,8 +286,12 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setSubmittingComment(true);
 
     try {
-      // Remove parseInt since tweet.id is already a UUID
-      const tweetId = tweet.id;
+      // Get the tweet ID in the correct format
+      const tweetId = typeof tweet.id === 'string' && tweet.id.includes('-') 
+        ? parseInt(tweet.id.split('-')[0].replace(/[^0-9]/g, ''), 10) || tweet.id  // Extract numeric part if UUID
+        : tweet.id;  // Otherwise use as-is
+
+      console.log('Using tweet_id:', tweetId);
 
       const { data, error } = await supabase
         .from('comments')
@@ -308,6 +323,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       setCommentCount(prev => prev + 1);
     } catch (error) {
       console.error('Error posting comment:', error);
+      alert('Unable to post comment. Please try again.');
     } finally {
       setSubmittingComment(false);
     }
@@ -364,22 +380,57 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // Helper function to get image URLs for the carousel
   const getImageUrls = (tweet) => {
-    // Try to extract image URLs from various possible formats
+    // Initialize array to hold all images
+    let images = [];
     
-    // Check for multiple images stored as JSON in content field
+    // Add main image_url if it exists
+    if (tweet.image_url) {
+      images.push(tweet.image_url);
+    }
+    
+    // Try parsing additional images from content field
     if (tweet.content) {
       try {
-        const parsed = JSON.parse(tweet.content);
-        if (parsed?.additionalImages && Array.isArray(parsed.additionalImages)) {
-          return [tweet.image_url, ...parsed.additionalImages].filter(Boolean);
+        // First, determine if content is JSON or contains JSON
+        let contentData;
+        try {
+          contentData = JSON.parse(tweet.content);
+        } catch (e) {
+          // Not valid JSON, check if it might be a string containing image URLs
+          const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+          const matches = tweet.content.match(urlRegex);
+          if (matches) {
+            images = [...images, ...matches];
+          }
+          return images;
+        }
+        
+        // Handle different JSON structures
+        if (contentData) {
+          // Case 1: Array of additionalImages
+          if (contentData.additionalImages && Array.isArray(contentData.additionalImages)) {
+            images = [...images, ...contentData.additionalImages.filter(Boolean)];
+          }
+          // Case 2: Array of images
+          else if (contentData.images && Array.isArray(contentData.images)) {
+            images = [...images, ...contentData.images.filter(Boolean)];
+          }
+          // Case 3: Direct array of URLs
+          else if (Array.isArray(contentData)) {
+            images = [...images, ...contentData.filter(Boolean)];
+          }
+          // Case 4: Single image property
+          else if (contentData.image) {
+            images.push(contentData.image);
+          }
         }
       } catch (e) {
-        // Not JSON or invalid JSON, ignore
+        console.error('Error parsing image URLs:', e);
       }
     }
     
-    // If we have a single image_url, return it as an array
-    return tweet.image_url ? [tweet.image_url] : [];
+    // Remove duplicates and empty values
+    return [...new Set(images)].filter(Boolean);
   };
 
   // 4. The main render
@@ -387,23 +438,27 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     <div className={`w-full py-3 text-light-text dark:text-dark-text ${className} relative`}>
       <div className="flex items-start space-x-3">
         {/* User Avatar with fallback */}
-        <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0">
-          <Image
-            src={displayUser.avatar_url}
-            alt={`${displayUser.username}'s avatar`}
-            width={40}
-            height={40}
-            className="rounded-full object-cover border border-light-border dark:border-dark-border hover:opacity-90 transition-opacity"
-            isBlurred={false}
-            loading="lazy"
-            radius="full"
-            showSkeleton={true}
-            fallback={
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                {displayUser.username.charAt(0).toUpperCase()}
-              </div>
-            }
-          />
+        <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0 block">
+          <div className="relative w-10 h-10">
+            <img
+              src={displayUser.avatar_url}
+              alt={`${displayUser.username}'s avatar`}
+              className="w-10 h-10 rounded-full object-cover border border-light-border dark:border-dark-border transition-transform hover:scale-105"
+              onError={(e) => {
+                // Fallback to initials if image fails to load
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }}
+            />
+            
+            {/* Fallback element that's hidden by default */}
+            <div 
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm absolute inset-0"
+              style={{ display: 'none' }}
+            >
+              {displayUser.username.charAt(0).toUpperCase()}
+            </div>
+          </div>
         </Link>
         
         <div className="flex-1 min-w-0">
@@ -437,6 +492,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           
           {(() => {
   const imageUrls = getImageUrls(tweet);
+  
+  // Debug output to verify we have images
+  console.log('Tweet image URLs:', imageUrls);
   
   if (imageUrls.length === 0) return null;
   
@@ -476,7 +534,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           <div className="relative rounded-lg overflow-hidden">
             <div className="relative aspect-video bg-light-secondary dark:bg-dark-tertiary flex justify-center">
               <img
-                src={currentUrl}
+                src={currentUrl || 'https://via.placeholder.com/500?text=No+image'}
                 alt={`Tweet media ${currentImageIndex + 1} of ${imageUrls.length}`}
                 className="max-h-[500px] max-w-full object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md"
                 onClick={(e) => {
@@ -638,22 +696,23 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
               <div className="p-3 border-b border-light-border dark:border-dark-border">
                 <form onSubmit={handleComment}>
                   <div className="flex items-start space-x-2">
-                    <Image
-                      src={currentUser.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.username || 'User'}&background=3b82f6&color=fff&size=32`}
-                      alt={`${currentUser.username}'s avatar`}
-                      width={32}
-                      height={32}
-                      className="rounded-full flex-shrink-0 object-cover border border-light-border dark:border-dark-border"
-                      isBlurred={false}
-                      loading="lazy"
-                      radius="full"
-                      showSkeleton={true}
-                      fallback={
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
-                          {(currentUser.username || 'U').charAt(0).toUpperCase()}
-                        </div>
-                      }
-                    />
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      <img
+                        src={currentUser.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.username || 'User'}&background=3b82f6&color=fff&size=32`}
+                        alt={`${currentUser.username}'s avatar`}
+                        className="w-8 h-8 rounded-full object-cover border border-light-border dark:border-dark-border"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div 
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs absolute inset-0"
+                        style={{ display: 'none' }}
+                      >
+                        {(currentUser.username || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    </div>
                     <div className="flex-1">
                       <textarea
                         value={comment}
@@ -697,22 +756,23 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
                             to={`/profile/${comment.user_id}`} 
                             className="flex-shrink-0"
                           >
-                            <Image
-                              src={commentAvatarUrl}
-                              alt={`${commentUser.username || 'User'}'s avatar`}
-                              width={28}
-                              height={28}
-                              className="rounded-full object-cover border border-light-border dark:border-dark-border hover:opacity-90 transition-opacity"
-                              isBlurred={false}
-                              loading="lazy"
-                              radius="full"
-                              showSkeleton={true}
-                              fallback={
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-semibold text-xs">
-                                  {(commentUser.username || 'U').charAt(0).toUpperCase()}
-                                </div>
-                              }
-                            />
+                            <div className="relative w-7 h-7">
+                              <img
+                                src={commentAvatarUrl}
+                                alt={`${commentUser.username || 'User'}'s avatar`}
+                                className="w-7 h-7 rounded-full object-cover border border-light-border dark:border-dark-border"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextElementSibling.style.display = 'flex';
+                                }}
+                              />
+                              <div 
+                                className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-semibold text-xs absolute inset-0"
+                                style={{ display: 'none' }}
+                              >
+                                {(commentUser.username || 'U').charAt(0).toUpperCase()}
+                              </div>
+                            </div>
                           </Link>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center">
