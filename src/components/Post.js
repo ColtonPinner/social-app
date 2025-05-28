@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { PhotoIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 const Post = ({ user, addTweet }) => {
@@ -9,53 +9,39 @@ const Post = ({ user, addTweet }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [suggestions] = useState([
-    "What's happening in your world? 🌍",
-    "Share something interesting! ✨",
-    "Got any exciting news? 📢",
-    "What's inspiring you today? 💫",
-    "Share your thoughts with others! 💭",
-    "What's making you smile today? 😊",
-    "What's your latest adventure? 🚀",
-    "Any creative ideas to share? 💡",
-  ]);
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(''), 3000);
+      const timer = setTimeout(() => setError(''), 8000); // 8000ms = 8 seconds
       return () => clearTimeout(timer);
     }
   }, [error]);
 
-  const getRandomSuggestion = () => {
-    const randomIndex = Math.floor(Math.random() * suggestions.length);
-    return suggestions[randomIndex];
-  };
-
-  const handleSuggestion = () => {
-    setContent(getRandomSuggestion().replace(/\s*[🌍✨📢💫💭😊🚀💡]\s*$/, ''));
-  };
-
   const handleFileUpload = async (file) => {
     if (!user?.id) throw new Error('User not found');
+
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       throw new Error('Only JPEG, PNG, or WEBP images are allowed');
     }
-    if (file.size > 5 * 1024 * 1024) throw new Error('File too large (max 5MB)');
 
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-    // Ensure user.id and fileName do not have leading/trailing slashes
-    const filePath = `${user.id}/${fileName}`.replace(/\/{2,}/g, '/');
-    await supabase.storage.from('media').upload(filePath, file, { upsert: true });
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+    const filePath = `${user.id}/${fileName}`;
 
-    return filePath;
+    const { error: uploadError } = await supabase.storage
+      .from('media') // Ensure this matches your bucket name
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const handlePost = async () => {
-    if (content.trim() === '') {
-      setError('Content cannot be empty.');
+    if (!content.trim() && !media) {
+      setError('Content or image is required.');
       return;
     }
 
@@ -64,42 +50,47 @@ const Post = ({ user, addTweet }) => {
 
     try {
       let imageUrl = null;
+
       if (media) {
-        try {
-          const filePath = await handleFileUpload(media);
-          const { data } = await supabase.storage
-            .from('media')
-            .getPublicUrl(filePath); // filePath should match exactly what you uploaded
-          imageUrl = data.publicUrl;
-          console.log('File path:', filePath);
-          console.log('Public URL:', data.publicUrl);
-        } catch (uploadErr) {
-          throw uploadErr;
+        imageUrl = await handleFileUpload(media);
+        if (!imageUrl) {
+          throw new Error('Image upload failed.');
         }
       }
 
-      // Get the authenticated user from Supabase session
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('Not authenticated');
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
+      if (authError || !authUser) {
+        throw new Error('Not authenticated');
+      }
+
+      const postData = {
+        text: content || null, // Allow empty text if there's an image
+        user_id: authUser.id,
+        image_url: imageUrl,
+      };
+
+      const { data: newPost, error: insertPostError } = await supabase
         .from('posts')
-        .insert({
-          text: content,
-          user_id: authUser.id, 
-          image_url: imageUrl
-        })
+        .insert(postData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertPostError) {
+        throw insertPostError;
+      }
 
-      addTweet(data);
+      addTweet(newPost);
       setContent('');
       setMedia(null);
       setPreview(null);
+      console.log('Post successful');
     } catch (err) {
-      setError(err.message);
+      console.error('Error in handlePost:', err);
+      setError(err.message || 'Something went wrong posting.');
     } finally {
       setLoading(false);
     }
@@ -135,33 +126,19 @@ const Post = ({ user, addTweet }) => {
                   focus:ring-2 focus:ring-dark-accent focus:outline-none 
                   placeholder-light-muted dark:placeholder-dark-textSecondary
                   transition-all duration-200"
-                placeholder={getRandomSuggestion()}
+                placeholder="What's happening?"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 disabled={loading}
               />
-              <button
-                onClick={handleSuggestion}
-                className="absolute top-3 right-3 p-1.5 rounded-full
-                  text-light-muted dark:text-dark-textSecondary
-                  hover:text-light-text dark:hover:text-dark-text
-                  hover:bg-light-secondary dark:hover:bg-dark-tertiary
-                  transition-all duration-200"
-                title="Get AI suggestion"
-                type="button"
-              >
-                <SparklesIcon className="h-5 w-5" />
-              </button>
             </div>
 
             {error && (
-              <div className="rounded-lg bg-dark-error/10 text-dark-error 
-                border border-dark-error/20 p-3 text-sm 
-                flex items-center justify-between">
+              <div className="rounded-lg bg-red-100 text-red-800 border border-red-200 p-3 text-sm flex items-center justify-between">
                 <span>{error}</span>
-                <button 
+                <button
                   onClick={() => setError('')}
-                  className="p-1 hover:bg-dark-error/10 rounded-full transition-colors"
+                  className="p-1 hover:bg-red-200 rounded-full transition-colors"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -175,8 +152,8 @@ const Post = ({ user, addTweet }) => {
                   alt="Upload preview"
                   className="rounded-lg w-full object-cover max-h-[300px] md:max-h-[400px]"
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 
                     text-white p-1.5 rounded-full transition-colors"
                   onClick={clearMedia}

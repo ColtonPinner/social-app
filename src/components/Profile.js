@@ -300,6 +300,29 @@ const Profile = ({ currentUser }) => {
     }
   };
 
+  // The handleTweetUpdate function is already correctly implemented
+  const handleTweetUpdate = async (tweetId) => {
+    // Refresh only the affected tweet
+    try {
+      const { data, error } = await supabase
+        .from('tweets')
+        .select('*, user:user_id(*), likes:tweet_likes(profile_id)')
+        .eq('id', tweetId)
+        .single();
+
+      if (error) throw error;
+
+      // Update the specific tweet in state
+      setTweets(prevTweets => 
+        prevTweets.map(tweet => 
+          tweet.id === tweetId ? data : tweet
+        )
+      );
+    } catch (error) {
+      console.error('Error updating tweet:', error);
+    }
+  };
+
   // Loading state check
   if (loading) {
     return (
@@ -645,6 +668,11 @@ const Profile = ({ currentUser }) => {
                     key={tweet.id} 
                     tweet={tweet}
                     currentUser={currentUser}
+                    onLike={() => handleTweetUpdate(tweet.id)}
+                    onComment={() => handleTweetUpdate(tweet.id)}
+                    onDelete={() => {
+                      setTweets(prevTweets => prevTweets.filter(t => t.id !== tweet.id));
+                    }}
                     className="p-4 hover:bg-light-secondary/50 dark:hover:bg-dark-tertiary/50 transition-colors"
                   />
                 ))}

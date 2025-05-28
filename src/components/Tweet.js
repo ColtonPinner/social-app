@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { Image } from "@heroui/react";
 import { supabase } from '../supabaseClient';
 
-// Add defaultProps to handle missing currentUser
 const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
-  // 1. All useState/useRef calls
+  // 1. ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
@@ -22,14 +22,43 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   const [commentCount, setCommentCount] = useState(0);
 
-  // 2. Move ALL useEffect and useCallback hooks here, before any early returns
+  // Add state for user profile data
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Fetch user profile data for the tweet author
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!tweet?.user_id) return;
+
+      try {
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, full_name')
+          .eq('id', tweet.user_id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+
+        setUserProfile(profileData);
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+      }
+    };
+
+    fetchUserProfile();
+  }, [tweet?.user_id]);
+
   // Fetch comments - modify this function to load comments even when not logged in
   const fetchComments = useCallback(async () => {
-    if (!showCommentModal) return;  // Remove the currentUser check to allow viewing comments when not logged in
+    if (!showCommentModal || !tweet) return;
     setIsLoadingComments(true);
 
     try {
-      const tweetId = typeof tweet.id === 'string' ? parseInt(tweet.id, 10) : tweet.id;
+      // Remove parseInt since tweet.id is already a UUID
+      const tweetId = tweet.id;
 
       const { data: commentsData, error } = await supabase
         .from('comments')
@@ -69,12 +98,14 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     } finally {
       setIsLoadingComments(false);
     }
-  }, [showCommentModal, tweet.id]); // Remove currentUser from dependencies
+  }, [showCommentModal, tweet?.id]);
 
   // Add a new function to fetch just the comment count
   const fetchCommentCount = useCallback(async () => {
+    if (!tweet) return;
     try {
-      const tweetId = typeof tweet.id === 'string' ? parseInt(tweet.id, 10) : tweet.id;
+      // Remove parseInt since tweet.id is already a UUID
+      const tweetId = tweet.id;
       
       const { count, error } = await supabase
         .from('comments')
@@ -87,7 +118,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     } catch (err) {
       console.error('Error fetching comment count:', err);
     }
-  }, [tweet.id]);
+  }, [tweet?.id]);
 
   // Add a new useEffect to fetch the comment count when component mounts
   useEffect(() => {
@@ -99,31 +130,30 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     if (showCommentModal) {
       fetchComments();
     }
-  }, [fetchComments, showCommentModal]); // Remove currentUser from dependencies
+  }, [fetchComments, showCommentModal]);
 
   // Check if user has liked the tweet
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !tweet) return;
 
     const fetchLikeStatus = async () => {
       try {
-        // Convert to string to match format if needed
         const contentId = tweet.id;
 
+        // Changed from 'likes' to 'post_likes'
         const { data, error } = await supabase
-          .from('likes')
+          .from('post_likes')
           .select('id')
           .eq('user_id', currentUser.id)
-          // Remove content_type since it doesn't exist in your schema
           .eq('content_id', contentId)
           .maybeSingle();
 
         setIsLiked(!!data && !error);
 
+        // Changed from 'likes' to 'post_likes'
         const { count, error: countError } = await supabase
-          .from('likes')
+          .from('post_likes')
           .select('id', { count: 'exact', head: true })
-          // Remove content_type since it doesn't exist in your schema
           .eq('content_id', tweet.id);
 
         if (!countError) setLikesCount(count || 0);
@@ -133,18 +163,33 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     };
 
     fetchLikeStatus();
-  }, [currentUser, tweet.id]);
+  }, [currentUser, tweet?.id]);
 
-  // 3. Local variables that don't use hooks
+  // 2. NOW WE CAN DO EARLY RETURNS AFTER ALL HOOKS
+  // Display a skeleton loader if the main tweet data isn't available yet
+  if (!tweet) {
+    return (
+      <div className={`w-full py-3 text-light-text dark:text-dark-text ${className}`}>
+        <div className="animate-pulse flex items-start space-x-3 p-3">
+          <div className="w-10 h-10 rounded-full bg-light-secondary dark:bg-dark-secondary flex-shrink-0"></div>
+          <div className="flex-1 space-y-3">
+            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-3/4"></div>
+            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-full"></div>
+            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Local variables and helper functions
   const formattedDate = new Date(tweet.created_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
   });
 
-  // 4. Now you can do your early returns
   const isValidUser = () => {
     if (!currentUser) return false;
-
     return Boolean(
       typeof currentUser === 'object' && (
         Boolean(currentUser.id) || 
@@ -154,14 +199,12 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     );
   };
 
-  // 5. Regular functions that don't use hooks
   const handleLike = async () => {
     if (!currentUser) {
       alert('Please sign in to like posts');
       return;
     }
 
-    // Double check that we have a valid user with an ID before proceeding
     const userId = currentUser.id || currentUser.uid || currentUser.user_id;
     if (!userId) {
       alert('User profile incomplete. Please try signing out and in again.');
@@ -173,15 +216,14 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setLikeLoading(true);
 
     try {
-      // Convert tweet.id to string to match UUID format if needed
       const contentId = tweet.id;
       
       if (isLiked) {
+        // DELETE operation - using post_likes
         const { error } = await supabase
-          .from('likes')
+          .from('post_likes')
           .delete()
           .eq('user_id', userId)
-          // Remove content_type since it doesn't exist in your schema
           .eq('content_id', contentId);
 
         if (error) {
@@ -192,11 +234,11 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
+        // INSERT operation - also using post_likes (was using 'likes' before)
         const { error } = await supabase
-          .from('likes')
+          .from('post_likes')
           .insert({
             user_id: userId,
-            // Remove content_type field
             content_id: contentId,
             created_at: new Date().toISOString()
           });
@@ -230,7 +272,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setSubmittingComment(true);
 
     try {
-      const tweetId = typeof tweet.id === 'string' ? parseInt(tweet.id, 10) : tweet.id;
+      // Remove parseInt since tweet.id is already a UUID
+      const tweetId = tweet.id;
 
       const { data, error } = await supabase
         .from('comments')
@@ -259,6 +302,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
       setComments(prev => [newComment, ...prev]);
       setComment('');
+      setCommentCount(prev => prev + 1);
     } catch (error) {
       console.error('Error posting comment:', error);
     } finally {
@@ -266,7 +310,6 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     }
   };
 
-  // Better position calculation for side positioning
   const openFloatingCommentBox = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -278,22 +321,17 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-      // Desired width for the comment card
       const boxWidth = Math.min(viewportWidth - 40, 350);
       const estimatedBoxHeight = 400;
 
-      // Position to the right of the button by default
       let left = buttonRect.right + scrollLeft + 16;
       let top = buttonRect.top + scrollTop - 16;
 
-      // If not enough space on the right, show on the left
       if (left + boxWidth > viewportWidth - 10) {
         left = buttonRect.left + scrollLeft - boxWidth - 16;
       }
-      // If still not enough space, clamp to viewport
       if (left < 10) left = 10;
 
-      // Clamp top to viewport
       if (top + estimatedBoxHeight > viewportHeight + scrollTop - 10) {
         top = viewportHeight + scrollTop - estimatedBoxHeight - 10;
       }
@@ -309,16 +347,41 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setShowCommentModal(true);
   };
 
-  // 6. The final return
+  // Get the display data for the user
+  const getUserDisplayData = () => {
+    // Priority: tweet.user > userProfile > fallback
+    return {
+      username: tweet.user?.username || userProfile?.username || 'Anonymous',
+      avatar_url: tweet.user?.avatar_url || userProfile?.avatar_url || `https://ui-avatars.com/api/?name=${tweet.user?.username || userProfile?.username || 'Anonymous'}&background=3b82f6&color=fff&size=40`,
+      full_name: tweet.user?.full_name || userProfile?.full_name || null
+    };
+  };
+
+  const displayUser = getUserDisplayData();
+
+  // 4. The main render
   return (
     <div className={`w-full py-3 text-light-text dark:text-dark-text ${className} relative`}>
       <div className="flex items-start space-x-3">
+        {/* User Avatar with fallback */}
         <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0">
-          <img 
-            src={tweet.user?.avatar_url || 'https://via.placeholder.com/40'} 
-            alt={tweet.user?.username}
-            className="w-10 h-10 rounded-full object-cover border border-light-border dark:border-dark-border"
-          />
+          {displayUser.avatar_url ? (
+            <img
+              src={displayUser.avatar_url}
+              alt={`${displayUser.username}'s avatar`}
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-cover border border-light-border dark:border-dark-border"
+              onError={(e) => {
+                e.target.onerror = null; // Prevent infinite loop
+                e.target.src = `https://ui-avatars.com/api/?name=${displayUser.username}&background=3b82f6&color=fff&size=40`;
+              }}
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+              {displayUser.username.charAt(0).toUpperCase()}
+            </div>
+          )}
         </Link>
         
         <div className="flex-1 min-w-0">
@@ -327,8 +390,13 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
               to={`/profile/${tweet.user_id}`}
               className="font-semibold text-sm hover:underline truncate text-light-text dark:text-dark-text"
             >
-              {tweet.user?.username || "Anonymous"}
+              {displayUser.full_name || displayUser.username}
             </Link>
+            {displayUser.full_name && (
+              <>
+                <span className="mx-1 text-light-muted dark:text-dark-textSecondary">@{displayUser.username}</span>
+              </>
+            )}
             <span className="inline-block mx-1 text-light-muted dark:text-dark-textSecondary">•</span>
             <span className="text-xs text-light-muted dark:text-dark-textSecondary">{formattedDate}</span>
           </div>
@@ -338,21 +406,34 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           </p>
           
           {tweet.image_url && (
-            <div className="mt-2 mb-2 rounded-md overflow-hidden border border-light-border dark:border-dark-border">
+            <div className="mt-3 mb-3">
               {tweet.image_url.match(/\.(mp4|webm)$/) ? (
                 <video
                   controls
-                  className="w-full h-auto rounded-md max-h-[450px] object-cover bg-light-secondary dark:bg-dark-secondary"
+                  className="w-full h-auto max-h-[500px] object-cover rounded-lg"
                 >
                   <source src={tweet.image_url} type="video/mp4" />
                   Your browser does not support video playback.
                 </video>
               ) : (
-                <img
-                  src={tweet.image_url}
-                  alt="Tweet media"
-                  className="w-full h-auto rounded-md max-h-[450px] object-cover"
-                />
+                <div className="relative rounded-lg overflow-hidden">
+                  {/* Regular img tag instead of Image component for better fallback handling */}
+                  <img
+                    src={tweet.image_url}
+                    alt="Tweet media"
+                    className="w-full h-auto max-h-[500px] object-cover rounded-lg border border-light-border dark:border-dark-border shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(tweet.image_url, '_blank');
+                    }}
+                    onError={(e) => {
+                      console.error('Image failed to load:', tweet.image_url);
+                      e.target.src = 'https://via.placeholder.com/500?text=Image+not+available';
+                    }}
+                  />
+                  
+                  {/* Debug info - remove in production */}
+                </div>
               )}
             </div>
           )}
@@ -412,7 +493,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         </div>
       </div>
       
-      {/* Comment Card as an Extension (Side Panel) */}
+      {/* Comment Modal */}
       {showCommentModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 dark:bg-black/40"
@@ -446,10 +527,21 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
               <div className="p-3 border-b border-light-border dark:border-dark-border">
                 <form onSubmit={handleComment}>
                   <div className="flex items-start space-x-2">
-                    <img 
-                      src={currentUser.avatar_url || 'https://via.placeholder.com/32'} 
-                      alt={currentUser.username}
-                      className="w-6 h-6 rounded-full flex-shrink-0 object-cover border border-light-border dark:border-dark-border"
+                    <Image
+                      src={currentUser.avatar_url || `https://ui-avatars.com/api/?name=${currentUser.username || 'User'}&background=3b82f6&color=fff&size=32`}
+                      alt={`${currentUser.username}'s avatar`}
+                      width={32}
+                      height={32}
+                      className="rounded-full flex-shrink-0 object-cover border border-light-border dark:border-dark-border"
+                      isBlurred={false}
+                      loading="lazy"
+                      radius="full"
+                      showSkeleton={true}
+                      fallback={
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
+                          {(currentUser.username || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      }
                     />
                     <div className="flex-1">
                       <textarea
@@ -483,42 +575,58 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
                 </div>
               ) : comments.length > 0 ? (
                 <ul className="divide-y divide-light-border dark:divide-dark-border">
-                  {comments.map(comment => (
-                    <li key={comment.id} className="p-3 hover:bg-light-secondary/30 dark:hover:bg-dark-secondary/30">
-                      <div className="flex space-x-2">
-                        <Link 
-                          to={`/profile/${comment.user_id}`} 
-                          className="flex-shrink-0"
-                        >
-                          <img 
-                            src={comment.user?.avatar_url || 'https://via.placeholder.com/32'} 
-                            alt={comment.user?.username || 'User'}
-                            className="w-6 h-6 rounded-full object-cover border border-light-border dark:border-dark-border"
-                          />
-                        </Link>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center">
-                            <Link 
-                              to={`/profile/${comment.user_id}`}
-                              className="font-medium text-xs hover:underline text-light-text dark:text-dark-text"
-                            >
-                              {comment.user?.username || 'Anonymous User'}
-                            </Link>
-                            <span className="mx-1 text-xs text-light-muted dark:text-dark-textSecondary">•</span>
-                            <span className="text-xs text-light-muted dark:text-dark-textSecondary">
-                              {new Date(comment.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
+                  {comments.map(comment => {
+                    const commentUser = comment.user || {};
+                    const commentAvatarUrl = commentUser.avatar_url || `https://ui-avatars.com/api/?name=${commentUser.username || 'User'}&background=6b7280&color=fff&size=32`;
+                    
+                    return (
+                      <li key={comment.id} className="p-3 hover:bg-light-secondary/30 dark:hover:bg-dark-secondary/30">
+                        <div className="flex space-x-2">
+                          <Link 
+                            to={`/profile/${comment.user_id}`} 
+                            className="flex-shrink-0"
+                          >
+                            <Image
+                              src={commentAvatarUrl}
+                              alt={`${commentUser.username || 'User'}'s avatar`}
+                              width={28}
+                              height={28}
+                              className="rounded-full object-cover border border-light-border dark:border-dark-border hover:opacity-90 transition-opacity"
+                              isBlurred={false}
+                              loading="lazy"
+                              radius="full"
+                              showSkeleton={true}
+                              fallback={
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-semibold text-xs">
+                                  {(commentUser.username || 'U').charAt(0).toUpperCase()}
+                                </div>
+                              }
+                            />
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center">
+                              <Link 
+                                to={`/profile/${comment.user_id}`}
+                                className="font-medium text-xs hover:underline text-light-text dark:text-dark-text"
+                              >
+                                {commentUser.username || 'Anonymous User'}
+                              </Link>
+                              <span className="mx-1 text-xs text-light-muted dark:text-dark-textSecondary">•</span>
+                              <span className="text-xs text-light-muted dark:text-dark-textSecondary">
+                                {new Date(comment.created_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-light-text dark:text-dark-text mt-1 break-words whitespace-pre-wrap">
+                              {comment.content}
+                            </p>
                           </div>
-                          <p className="text-sm text-light-text dark:text-dark-text mt-1 break-words whitespace-pre-wrap">
-                            {comment.content}
-                          </p>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="py-8 px-3 text-center text-light-muted dark:text-dark-textSecondary">
