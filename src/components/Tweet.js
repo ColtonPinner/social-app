@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import { Image } from "@heroui/react";
 import { supabase } from '../supabaseClient';
 
 const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
@@ -27,6 +26,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // New state for image carousel
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Add this new state near your other state variables (around line 20)
+  const [showEnlargedImage, setShowEnlargedImage] = useState(false);
 
   // Fetch user profile data for the tweet author
   useEffect(() => {
@@ -60,8 +62,15 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setIsLoadingComments(true);
 
     try {
-      // Remove parseInt since tweet.id is already a UUID
-      const tweetId = tweet.id;
+      // Use same ID conversion logic as in handleComment
+      let tweetId;
+      
+      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
+        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
+        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
+      } else {
+        tweetId = parseInt(tweet.id);
+      }
 
       const { data: commentsData, error } = await supabase
         .from('comments')
@@ -106,15 +115,23 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   // Add a new function to fetch just the comment count
   const fetchCommentCount = useCallback(async () => {
     if (!tweet) return;
+
     try {
-      // Remove parseInt since tweet.id is already a UUID
-      const tweetId = tweet.id;
+      // Convert the tweet ID using the same logic
+      let tweetId;
       
+      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
+        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
+        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
+      } else {
+        tweetId = parseInt(tweet.id);
+      }
+
       const { count, error } = await supabase
         .from('comments')
         .select('*', { count: 'exact', head: true })
         .eq('tweet_id', tweetId);
-      
+
       if (!error) {
         setCommentCount(count || 0);
       }
@@ -171,28 +188,111 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   // Add this before your return statement to test connection
   useEffect(() => {
     const testConnection = async () => {
-      const { data, error } = await supabase.from('comments').select('count').limit(1);
+      const { data, error } = await supabase.from('comments').select('*').limit(1);
       console.log('Supabase connection test:', { data, error });
     };
     testConnection();
   }, []);
 
-  // 2. NOW WE CAN DO EARLY RETURNS AFTER ALL HOOKS
-  // Display a skeleton loader if the main tweet data isn't available yet
-  if (!tweet) {
-    return (
-      <div className={`w-full py-3 text-light-text dark:text-dark-text ${className}`}>
-        <div className="animate-pulse flex items-start space-x-3 p-3">
-          <div className="w-10 h-10 rounded-full bg-light-secondary dark:bg-dark-secondary flex-shrink-0"></div>
-          <div className="flex-1 space-y-3">
-            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-3/4"></div>
-            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-full"></div>
-            <div className="h-4 bg-light-secondary dark:bg-dark-secondary rounded w-5/6"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Add this right before your return statement (for testing only)
+  const testImageUrls = [
+    "https://picsum.photos/800/600",
+    "https://picsum.photos/800/601",
+    "https://picsum.photos/800/602"
+  ];
+  console.log("Test image URLs:", testImageUrls);
+
+  // Add the debug useEffect hook HERE, along with all other hooks
+  useEffect(() => {
+    if (tweet?.content) {
+      console.log('Tweet Content Type:', typeof tweet.content);
+      console.log('Raw Tweet Content:', tweet.content);
+      
+      try {
+        // Try to parse as JSON
+        const parsed = JSON.parse(tweet.content);
+        console.log('Parsed Tweet Content:', parsed);
+        
+        if (parsed.additionalImages) {
+          console.log('Additional Images:', parsed.additionalImages);
+        }
+        if (parsed.images) {
+          console.log('Images Array:', parsed.images);
+        }
+      } catch (e) {
+        console.log('Content is not valid JSON');
+      }
+    }
+    
+    // Log all image URLs found - This will need to reference getImageUrls which is defined later
+    // So we'll need to define getImageUrls before the hooks or move this code to after all hooks
+  }, [tweet]); // Note that the dependency on getImageUrls is missing because it's defined later
+
+  // 2. THEN define helper functions like getImageUrls
+  const getImageUrls = (tweet) => {
+    // Initialize array to hold all images
+    let images = [];
+    
+    // Add main image_url if it exists
+    if (tweet.image_url) {
+      images.push(tweet.image_url);
+    }
+    
+    // Try parsing additional images from content field
+    if (tweet.content) {
+      try {
+        // First, determine if content is JSON or contains JSON
+        let contentData;
+        try {
+          contentData = JSON.parse(tweet.content);
+          
+          // Handle different JSON structures
+          if (contentData) {
+            // Case 1: Array of additionalImages
+            if (contentData.additionalImages && Array.isArray(contentData.additionalImages)) {
+              images = [...images, ...contentData.additionalImages.filter(Boolean)];
+            }
+            // Case 2: Array of images
+            else if (contentData.images && Array.isArray(contentData.images)) {
+              images = [...images, ...contentData.images.filter(Boolean)];
+            }
+            // Case 3: Direct array of URLs
+            else if (Array.isArray(contentData)) {
+              images = [...images, ...contentData.filter(Boolean)];
+            }
+            // Case 4: Single image property
+            else if (contentData.image) {
+              images.push(contentData.image);
+            }
+          }
+        } catch (e) {
+          // Not valid JSON, check if it might be a string containing image URLs
+          const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+          const matches = tweet.content.match(urlRegex);
+          if (matches) {
+            images = [...images, ...matches];
+          }
+          // Don't return here, continue processing
+        }
+      } catch (e) {
+        console.error('Error parsing image URLs:', e);
+      }
+    }
+    
+    // Add debugging to see what images are found
+    console.log('Found images:', images);
+    
+    // Remove duplicates and empty values
+    return [...new Set(images)].filter(Boolean);
+  };
+
+  // Add the part that calls getImageUrls after it's defined
+  useEffect(() => {
+    if (tweet) {
+      const allImages = getImageUrls(tweet);
+      console.log('All Images Found:', allImages);
+    }
+  }, [tweet]);
 
   // 3. Local variables and helper functions
   const formattedDate = new Date(tweet.created_at).toLocaleDateString('en-US', {
@@ -272,9 +372,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   const handleComment = async (e) => {
     e.preventDefault();
-    console.log('Comment submitted:', comment);
-    console.log('Current user:', currentUser);
-    
+
     if (!isValidUser()) {
       alert('Please sign in to comment');
       return;
@@ -286,18 +384,31 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setSubmittingComment(true);
 
     try {
-      // Get the tweet ID in the correct format
-      const tweetId = typeof tweet.id === 'string' && tweet.id.includes('-') 
-        ? parseInt(tweet.id.split('-')[0].replace(/[^0-9]/g, ''), 10) || tweet.id  // Extract numeric part if UUID
-        : tweet.id;  // Otherwise use as-is
+      // Convert the tweet ID to a number that the database can accept
+      // We'll extract a numeric value from the UUID string to use as the BIGINT
+      let tweetId;
+      
+      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
+        // This is a UUID - extract its numeric representation
+        // Remove dashes and convert to a decimal number using last 12 chars
+        // (Using full UUID would exceed JavaScript's safe integer limit)
+        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
+        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
+      } else {
+        // Already a number or numeric string
+        tweetId = parseInt(tweet.id);
+      }
 
-      console.log('Using tweet_id:', tweetId);
+      // Ensure we have a valid number
+      if (isNaN(tweetId)) {
+        throw new Error('Could not generate a valid numeric ID from tweet identifier');
+      }
 
       const { data, error } = await supabase
         .from('comments')
         .insert({
           user_id: userId,
-          tweet_id: tweetId,
+          tweet_id: tweetId,  // Now sending a number as BIGINT
           content: comment.trim(),
           created_at: new Date().toISOString()
         })
@@ -378,64 +489,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   const displayUser = getUserDisplayData();
 
-  // Helper function to get image URLs for the carousel
-  const getImageUrls = (tweet) => {
-    // Initialize array to hold all images
-    let images = [];
-    
-    // Add main image_url if it exists
-    if (tweet.image_url) {
-      images.push(tweet.image_url);
-    }
-    
-    // Try parsing additional images from content field
-    if (tweet.content) {
-      try {
-        // First, determine if content is JSON or contains JSON
-        let contentData;
-        try {
-          contentData = JSON.parse(tweet.content);
-        } catch (e) {
-          // Not valid JSON, check if it might be a string containing image URLs
-          const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
-          const matches = tweet.content.match(urlRegex);
-          if (matches) {
-            images = [...images, ...matches];
-          }
-          return images;
-        }
-        
-        // Handle different JSON structures
-        if (contentData) {
-          // Case 1: Array of additionalImages
-          if (contentData.additionalImages && Array.isArray(contentData.additionalImages)) {
-            images = [...images, ...contentData.additionalImages.filter(Boolean)];
-          }
-          // Case 2: Array of images
-          else if (contentData.images && Array.isArray(contentData.images)) {
-            images = [...images, ...contentData.images.filter(Boolean)];
-          }
-          // Case 3: Direct array of URLs
-          else if (Array.isArray(contentData)) {
-            images = [...images, ...contentData.filter(Boolean)];
-          }
-          // Case 4: Single image property
-          else if (contentData.image) {
-            images.push(contentData.image);
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing image URLs:', e);
-      }
-    }
-    
-    // Remove duplicates and empty values
-    return [...new Set(images)].filter(Boolean);
-  };
-
   // 4. The main render
   return (
-    <div className={`w-full py-3 text-light-text dark:text-dark-text ${className} relative`}>
+    <div className={`w-full mx-auto py-3 text-light-text dark:text-dark-text ${className} relative px-0 sm:px-3 md:px-4`}>
       <div className="flex items-start space-x-3">
         {/* User Avatar with fallback */}
         <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0 block">
@@ -493,8 +549,11 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           {(() => {
   const imageUrls = getImageUrls(tweet);
   
-  // Debug output to verify we have images
+  // Enhanced debug output
   console.log('Tweet image URLs:', imageUrls);
+  console.log('Image URLs count:', imageUrls.length);
+  console.log('Current image index:', currentImageIndex);
+  console.log('Current image URL:', imageUrls[currentImageIndex]);
   
   if (imageUrls.length === 0) return null;
   
@@ -514,14 +573,14 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       ) : (
         imageUrls.length === 1 ? (
           // Single image - simple display without carousel elements
-          <div className="rounded-lg overflow-hidden">
+          <div className="rounded-lg overflow-hidden w-full">
             <img
               src={currentUrl}
               alt="Tweet media"
-              className="max-h-[500px] w-auto max-w-full mx-auto object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md"
+              className="max-h-[500px] w-full sm:w-auto max-w-full mx-auto object-contain sm:object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(currentUrl, '_blank');
+                setShowEnlargedImage(true);
               }}
               onError={(e) => {
                 console.error('Image failed to load:', currentUrl);
@@ -531,15 +590,15 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           </div>
         ) : (
           // Multiple images - full carousel with controls
-          <div className="relative rounded-lg overflow-hidden">
-            <div className="relative aspect-video bg-light-secondary dark:bg-dark-tertiary flex justify-center">
+          <div className="relative rounded-lg overflow-hidden w-full">
+            <div className="relative aspect-video bg-light-secondary dark:bg-dark-tertiary flex justify-center w-full">
               <img
                 src={currentUrl || 'https://via.placeholder.com/500?text=No+image'}
                 alt={`Tweet media ${currentImageIndex + 1} of ${imageUrls.length}`}
-                className="max-h-[500px] max-w-full object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md"
+                className="max-h-[500px] w-full sm:w-auto max-w-full object-contain sm:object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.open(currentUrl, '_blank');
+                  setShowEnlargedImage(true);
                 }}
                 onError={(e) => {
                   console.error('Image failed to load:', currentUrl);
@@ -824,8 +883,83 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
           </div>
         </div>
       )}
+      
+      {/* Enlarged Image Modal */}
+      {showEnlargedImage && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center"
+          onClick={() => setShowEnlargedImage(false)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col">
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 text-white bg-black/40 rounded-full p-2 hover:bg-black/60 transition-colors z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEnlargedImage(false);
+              }}
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+            
+            {/* Navigation buttons */}
+            {getImageUrls(tweet).length > 1 && (
+              <>
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full 
+                    bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(prev => 
+                      prev === 0 ? getImageUrls(tweet).length - 1 : prev - 1
+                    );
+                  }}
+                >
+                  <ChevronLeftIcon className="h-8 w-8" />
+                </button>
+                
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full 
+                    bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(prev => 
+                      prev === getImageUrls(tweet).length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                >
+                  <ChevronRightIcon className="h-8 w-8" />
+                </button>
+              </>
+            )}
+            
+            {/* Enlarged image */}
+            <img
+              src={getImageUrls(tweet)[currentImageIndex]}
+              alt="Enlarged view"
+              className="max-w-full max-h-[95vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            {/* Image counter */}
+            {getImageUrls(tweet).length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                {currentImageIndex + 1} / {getImageUrls(tweet).length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// For uploading multiple images, use this format:
+// const tweetContent = JSON.stringify({
+//   additionalImages: [
+//     "https://example.com/image1.jpg", 
+//     "https://example.com/image2.jpg"
+//   ]
+// });
 
 export default Tweet;
