@@ -48,6 +48,8 @@ const ProfilePage = ({ currentUser, setUser }) => {
   // Media state
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
+  const [coverImagePreview, setCoverImagePreview] = useState(null);
   
   // Follow state
   const [followers, setFollowers] = useState([]);
@@ -124,6 +126,10 @@ const ProfilePage = ({ currentUser, setUser }) => {
     
     if (data.avatar_url) {
       setImagePreview(data.avatar_url);
+    }
+    
+    if (data.cover_image_url) {
+      setCoverImagePreview(data.cover_image_url);
     }
   };
 
@@ -248,6 +254,30 @@ const ProfilePage = ({ currentUser, setUser }) => {
     setError('');
   };
 
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a JPEG, PNG or GIF image');
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+    
+    setCoverImage(file);
+    setCoverImagePreview(URL.createObjectURL(file));
+    setError('');
+  };
+
+  // Modify the handleSave function to handle the missing column
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -264,8 +294,9 @@ const ProfilePage = ({ currentUser, setUser }) => {
       }
 
       let avatar_url = formData.avatar_url;
+      let cover_image_url = profile.cover_image_url || null;
       
-      // Handle image upload if there's a new image
+      // Handle avatar image upload if there's a new image
       if (profileImage) {
         // Create a unique file path
         const fileExt = profileImage.name.split('.').pop();
@@ -274,7 +305,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
         // Upload to Supabase Storage
         const { error: uploadError } = await supabase
           .storage
-          .from('avatars') // <-- your actual bucket name
+          .from('avatars')
           .upload(filePath, profileImage, {
             cacheControl: '3600',
             upsert: true
@@ -285,13 +316,50 @@ const ProfilePage = ({ currentUser, setUser }) => {
         // Get the public URL
         const { data } = supabase
           .storage
-          .from('avatars') // <-- your actual bucket name
+          .from('avatars')
           .getPublicUrl(filePath);
           
         avatar_url = data.publicUrl;
       }
+      
+      // Handle cover image upload if there's a new one
+      if (coverImage) {
+        try {
+          const fileExt = coverImage.name.split('.').pop();
+          // Make sure the folder structure starts with the user's ID for RLS to work
+          const filePath = `${currentUser.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+          
+          console.log('Uploading cover image with path:', filePath);
+          
+          const { error: uploadError, data: uploadData } = await supabase
+            .storage
+            .from('covers')
+            .upload(filePath, coverImage, {
+              cacheControl: '3600',
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error('Cover image upload error:', uploadError);
+            throw new Error(`Failed to upload cover image: ${uploadError.message}`);
+          }
+          
+          const { data: urlData } = supabase
+            .storage
+            .from('covers')
+            .getPublicUrl(filePath);
+            
+          cover_image_url = urlData.publicUrl;
+          console.log('Cover image uploaded successfully:', cover_image_url);
+        } catch (err) {
+          setError(`Cover image upload failed: ${err.message}`);
+          setSaving(false);
+          return;
+        }
+      }
 
-      const updatedData = {
+      // First update the basic profile data without the cover_image_url
+      const basicProfileData = {
         username: formData.username,
         full_name: formData.full_name,
         phone: formData.phone,
@@ -304,10 +372,38 @@ const ProfilePage = ({ currentUser, setUser }) => {
 
       const { error } = await supabase
         .from('profiles')
-        .update(updatedData)
+        .update(basicProfileData)
         .eq('id', id);
 
       if (error) throw error;
+
+      // If we have a cover image URL, try updating it separately
+      if (cover_image_url) {
+        try {
+          const { error: coverError } = await supabase
+            .from('profiles')
+            .update({ cover_image_url })
+            .eq('id', id);
+            
+          if (coverError) {
+            console.log('Cover image URL update failed:', coverError);
+            // Store in cover_pictures table as fallback
+            const { error: picError } = await supabase
+              .from('cover_pictures')
+              .insert({
+                user_id: id,
+                picture_url: cover_image_url
+              });
+              
+            if (!picError) {
+              console.log('Saved to cover_pictures table instead');
+            }
+          }
+        } catch (coverErr) {
+          console.error('Failed to update cover image:', coverErr);
+          // Don't fail the whole operation because of the cover image
+        }
+      }
 
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
@@ -316,6 +412,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
       await fetchProfile();
       setActiveTab('view');
       setProfileImage(null);
+      setCoverImage(null); // Reset cover image state
     } catch (error) {
       console.error('Error updating profile:', error);
       setError(`Failed to update profile: ${error.message}`);
@@ -448,7 +545,15 @@ const ProfilePage = ({ currentUser, setUser }) => {
           {/* Profile Header with Tabs */}
           <div className="relative">
             {/* Cover Image */}
-            <div className="h-48 bg-gradient-to-r from-purple-500 to-pink-500" />
+            <div className="h-48 bg-gradient-to-r from-purple-500 to-pink-500 relative overflow-hidden">
+              {(coverImagePreview || profile.cover_image_url) && (
+                <img
+                  src={coverImagePreview || profile.cover_image_url}
+                  alt="Cover"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
+            </div>
             
             <div className="px-4 md:px-6">
               <div className="relative -mt-20 mb-4 flex justify-between items-end">
@@ -729,6 +834,41 @@ const ProfilePage = ({ currentUser, setUser }) => {
           {activeTab === 'edit' && isOwnProfile && (
             <div className="p-4 md:p-6">
               <div className="space-y-6">
+                {/* Cover Image Section */}
+                <div className="relative mb-8">
+                  <div className="h-48 w-full rounded-t-lg overflow-hidden bg-gradient-to-r from-purple-500 to-pink-500">
+                    {coverImagePreview && (
+                      <img
+                        src={coverImagePreview}
+                        alt="Cover"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    <label className="absolute bottom-4 right-4 cursor-pointer flex items-center justify-center h-10 w-10 
+                      rounded-full bg-light-secondary/80 dark:bg-dark-tertiary/80 hover:opacity-80 transition-opacity backdrop-blur-sm">
+                      <Camera className="h-6 w-6 text-light-text dark:text-dark-text" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleCoverImageChange}
+                      />
+                    </label>
+                    {coverImage && (
+                      <button 
+                        onClick={() => {
+                          setCoverImage(null);
+                          setCoverImagePreview(profile.cover_image_url || null);
+                        }}
+                        className="absolute bottom-4 left-4 px-3 py-1.5 text-sm bg-light-secondary/80 dark:bg-dark-tertiary/80 
+                          text-light-text dark:text-dark-text rounded-full hover:opacity-90 transition-opacity backdrop-blur-sm"
+                      >
+                        Remove cover
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Profile Image Section */}
                 <div className="flex items-center space-x-4">
                   <label className="cursor-pointer flex items-center justify-center h-10 w-10 
@@ -902,6 +1042,8 @@ const ProfilePage = ({ currentUser, setUser }) => {
                       setActiveTab('view');
                       setProfileImage(null);
                       setImagePreview(profile.avatar_url || null);
+                      setCoverImage(null); // Add this line
+                      setCoverImagePreview(profile.cover_image_url || null); // Add this line
                       setError('');
                       setSuccess('');
                     }}
