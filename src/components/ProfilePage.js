@@ -750,10 +750,10 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     {isOwnProfile && (
                       <button
                         onClick={() => setShowPostModal(true)}
-                        className="px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
+                        className="px-4 py-2 rounded-full bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-bold"
                         type="button"
                       >
-                        New Post
+                        Post
                       </button>
                     )}
                   </div>
