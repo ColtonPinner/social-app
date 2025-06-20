@@ -16,6 +16,13 @@ const Footer = () => {
         >
           © {new Date().getFullYear()} basic. All rights reserved.
         </div>
+         <div className="text-xs md:text-sm 
+          text-light-muted dark:text-dark-textSecondary 
+          text-center md:text-left mb-2 md:mb-0"
+        >
+          Made with ❤️ by the basic team in Florida
+        </div>
+
         <div className="flex flex-wrap justify-center md:justify-end space-x-4 md:space-x-6">
           <Link 
             to="/privacy" 

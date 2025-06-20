@@ -3,8 +3,8 @@ import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
 import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
-const Feed = ({ tweets: initialTweets }) => {
-  const [tweets, setTweets] = useState(initialTweets || []);
+const Feed = () => {
+  const [tweetsState, setTweets] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingIds, setFollowingIds] = useState([]);
   const [error, setError] = useState(null);
@@ -253,8 +253,8 @@ const Feed = ({ tweets: initialTweets }) => {
       >
         <div className="px-4">
           <div className="divide-y divide-light-border dark:divide-dark-border">
-            {tweets.length > 0 ? (
-              tweets.map(tweet => (
+            {tweetsState.length > 0 ? (
+              tweetsState.map(tweet => (
                 <Tweet 
                   key={tweet.id} 
                   tweet={tweet} 
@@ -291,9 +291,3 @@ const Feed = ({ tweets: initialTweets }) => {
 };
 
 export default Feed;
-
-{tweets.map((post) => (
-  <div key={post.id}>
-    {/* render post content */}
-  </div>
-))}
