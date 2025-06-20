@@ -132,9 +132,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         .select('*', { count: 'exact', head: true })
         .eq('tweet_id', tweetId);
 
-      if (!error) {
-        setCommentCount(count || 0);
-      }
+      if (!error) setCommentCount(count || 0);
     } catch (err) {
       console.error('Error fetching comment count:', err);
     }

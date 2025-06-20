@@ -3,12 +3,14 @@ import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
 import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
-const Feed = () => {
-  const [tweets, setTweets] = useState([]);
+const Feed = ({ tweets: initialTweets }) => {
+  const [tweets, setTweets] = useState(initialTweets || []);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingIds, setFollowingIds] = useState([]);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [lightboxImg, setLightboxImg] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Load the current user and following list on component mount
   useEffect(() => {
@@ -141,9 +143,16 @@ const Feed = () => {
           
         if (userError) console.error("User fetch error:", userError);
         
+        const { data: images } = await supabase
+          .from('post_images')
+          .select('url')
+          .eq('post_id', postId);
+        // images is an array of { url }
+        
         return {
           ...data,
-          user: userData || null
+          user: userData || null,
+          images: images.map(img => img.url) || []
         };
       }
     } catch (err) {
@@ -165,6 +174,61 @@ const Feed = () => {
     } catch (err) {
       console.error('Error deleting post:', err);
       setError('Error deleting post');
+    }
+  };
+
+  const handleUploadImages = async (files, postId) => {
+    const imageUrls = [];
+    for (const file of files) {
+      const { data, error } = await supabase.storage
+        .from('post-images')
+        .upload(`posts/${postId}/${file.name}`, file);
+      if (!error) {
+        const { publicUrl } = supabase.storage.from('post-images').getPublicUrl(`posts/${postId}/${file.name}`).data;
+        imageUrls.push(publicUrl);
+      }
+    }
+    return imageUrls;
+  };
+
+  const handleCreatePost = async (postText, files) => {
+    try {
+      setRefreshing(true);
+      setError(null);
+
+      // Insert the post into the database
+      const { data: postData, error: postError } = await supabase.from('posts').insert({
+        user_id: currentUser.id,
+        text: postText,
+        images: imageUrls
+      });
+
+      if (postError) throw postError;
+
+      // If there are images, upload them and update the post
+      let imageUrls = [];
+      if (files && files.length > 0) {
+        imageUrls = await handleUploadImages(files, postData[0].id);
+
+        // Update the post with the image URLs
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ images: imageUrls })
+          .eq('id', postData[0].id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Fetch the newly created post with user data
+      const newPost = await fetchPostWithUserData(postData[0].id);
+      if (newPost) {
+        setTweets(prev => [newPost, ...prev]);
+      }
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('Error creating post');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -196,6 +260,8 @@ const Feed = () => {
                   tweet={tweet} 
                   currentUser={currentUser} 
                   onDelete={handleDeletePost}
+                  setLightboxImg={setLightboxImg}
+                  setLightboxOpen={setLightboxOpen}
                 />
               ))
             ) : (
@@ -208,8 +274,26 @@ const Feed = () => {
           </div>
         </div>
       </div>
+
+      {/* Lightbox for images */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <img
+            src={lightboxImg}
+            alt="Enlarged post"
+            className="max-w-full max-h-full"
+            onClick={() => setLightboxOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
 export default Feed;
+
+{tweets.map((post) => (
+  <div key={post.id}>
+    {/* render post content */}
+  </div>
+))}
