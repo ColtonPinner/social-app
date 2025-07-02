@@ -30,6 +30,8 @@ const ProfilePage = ({ currentUser, setUser }) => {
   const [saving, setSaving] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState('followers'); // or 'following'
 
   // Profile data
   const [profile, setProfile] = useState(null);
@@ -421,6 +423,31 @@ const ProfilePage = ({ currentUser, setUser }) => {
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
   };
 
+  // Fetch followers (users who follow you)
+  const fetchFollowers = async (userId) => {
+    const { data, error } = await supabase
+      .from('follows')
+      .select('follower_id, profiles:follower_id(id, username, full_name, avatar_url)')
+      .eq('following_id', userId);
+    if (!error) setFollowers(data.map(f => f.profiles));
+  };
+
+  // Fetch following (users you follow)
+  const fetchFollowing = async (userId) => {
+    const { data, error } = await supabase
+      .from('follows')
+      .select('following_id, profiles:following_id(id, username, full_name, avatar_url)')
+      .eq('follower_id', userId);
+    if (!error) setFollowing(data.map(f => f.profiles));
+  };
+
+  // Fetch on mount or when user changes
+  useEffect(() => {
+    if (!profile?.id) return;
+    fetchFollowers(profile.id);
+    fetchFollowing(profile.id);
+  }, [profile?.id]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -678,7 +705,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                               <img
                                 src={profile.avatar_url || DEFAULT_AVATAR}
                                 alt={profile.username}
-                                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border border-light-border dark:border-dark-border"
+                                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-light-border dark:border-dark-border object-cover"
                               />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1 w-full">
@@ -1100,6 +1127,40 @@ const ProfilePage = ({ currentUser, setUser }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+        {/* Follow Modal */}
+        {showFollowModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white dark:bg-dark-primary rounded-xl shadow-xl w-full max-w-md mx-2 p-6 relative">
+              <button
+                onClick={() => setShowFollowModal(false)}
+                className="absolute top-3 right-3 text-gray-400 hover:text-dark-accent"
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <h3 className="text-lg font-bold mb-4">
+                {followModalType === 'followers' ? 'Followers' : 'Following'}
+              </h3>
+              <div className="max-h-96 overflow-y-auto">
+                {(followModalType === 'followers' ? followers : following).length > 0 ? (
+                  <ul>
+                    {(followModalType === 'followers' ? followers : following).map(user => (
+                      <li key={user.id} className="flex items-center gap-3 py-2">
+                        <img src={user.avatar_url || '/default-avatar.png'} alt={user.username} className="w-10 h-10 rounded-full" />
+                        <div>
+                          <div className="font-medium">{user.full_name || user.username}</div>
+                          <div className="text-sm text-gray-500">@{user.username}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-center text-gray-400">No users found.</p>
+                )}
+              </div>
             </div>
           </div>
         )}
