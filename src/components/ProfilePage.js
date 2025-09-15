@@ -86,7 +86,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
       try {
         await fetchProfile();
         await fetchPosts();
-        await Promise.all([fetchFollowData(), checkIfFollowing()]);
+        await Promise.all([fetchFollowData(), checkIfFollowing()]); // ✅ Already fetching follow data here
       } catch {
         setError('Error loading profile data');
       } finally {
@@ -155,18 +155,65 @@ const ProfilePage = ({ currentUser, setUser }) => {
   // Fetch follow data
   const fetchFollowData = async () => {
     if (!id) return;
+    console.log('Fetching follow data for user ID:', id); // Debug log
+    
     try {
-      const [{ data: followersData }, { data: followingData }] = await Promise.all([
-        supabase.from('follows').select('follower_id').eq('following_id', id),
-        supabase.from('follows').select('following_id').eq('follower_id', id)
+      const [{ data: followersData, error: followersError }, { data: followingData, error: followingError }] = await Promise.all([
+        supabase
+          .from('follows')
+          .select(`
+            follower_id,
+            profiles:follower_id(
+              id,
+              username,
+              full_name,
+              avatar_url,
+              bio
+            )
+          `)
+          .eq('following_id', id),
+        supabase
+          .from('follows')
+          .select(`
+            following_id,
+            profiles:following_id(
+              id,
+              username,
+              full_name,
+              avatar_url,
+              bio
+            )
+          `)
+          .eq('follower_id', id)
       ]);
-      setFollowers(followersData || []);
-      setFollowing(followingData || []);
+
+      // Debug logs
+      console.log('Followers data:', followersData);
+      console.log('Followers error:', followersError);
+      console.log('Following data:', followingData);
+      console.log('Following error:', followingError);
+
+      if (followersError) console.error('Followers fetch error:', followersError);
+      if (followingError) console.error('Following fetch error:', followingError);
+
+      // Extract the profile data from the nested structure
+      const followersProfiles = followersData?.map(f => f.profiles).filter(Boolean) || [];
+      const followingProfiles = followingData?.map(f => f.profiles).filter(Boolean) || [];
+      
+      console.log('Processed followers:', followersProfiles);
+      console.log('Processed following:', followingProfiles);
+
+      setFollowers(followersProfiles);
+      setFollowing(followingProfiles);
       setFollowerCount(followersData?.length || 0);
       setFollowingCount(followingData?.length || 0);
-    } catch {
+      
+    } catch (error) {
+      console.error('Error fetching follow data:', error);
       setFollowers([]);
       setFollowing([]);
+      setFollowerCount(0);
+      setFollowingCount(0);
     }
   };
 
@@ -423,31 +470,6 @@ const ProfilePage = ({ currentUser, setUser }) => {
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
   };
 
-  // Fetch followers (users who follow you)
-  const fetchFollowers = async (userId) => {
-    const { data, error } = await supabase
-      .from('follows')
-      .select('follower_id, profiles:follower_id(id, username, full_name, avatar_url)')
-      .eq('following_id', userId);
-    if (!error) setFollowers(data.map(f => f.profiles));
-  };
-
-  // Fetch following (users you follow)
-  const fetchFollowing = async (userId) => {
-    const { data, error } = await supabase
-      .from('follows')
-      .select('following_id, profiles:following_id(id, username, full_name, avatar_url)')
-      .eq('follower_id', userId);
-    if (!error) setFollowing(data.map(f => f.profiles));
-  };
-
-  // Fetch on mount or when user changes
-  useEffect(() => {
-    if (!profile?.id) return;
-    fetchFollowers(profile.id);
-    fetchFollowing(profile.id);
-  }, [profile?.id]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -619,24 +641,38 @@ const ProfilePage = ({ currentUser, setUser }) => {
                       @{profile.username}
                     </p>
                   </div>
-                  {/* Follow Stats */}
+                  {/* Follow Stats - Replace your existing follow stats section with this */}
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowModalType('following');
+                        setShowFollowModal(true);
+                      }}
+                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
+                    >
                       <span className="font-semibold text-light-text dark:text-dark-text">
                         {followingCount}
                       </span>
                       <span className="text-light-muted dark:text-dark-textSecondary">
                         Following
                       </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowModalType('followers');
+                        setShowFollowModal(true);
+                      }}
+                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
+                    >
                       <span className="font-semibold text-light-text dark:text-dark-text">
                         {followerCount}
                       </span>
                       <span className="text-light-muted dark:text-dark-textSecondary">
                         Followers
                       </span>
-                    </div>
+                    </button>
                   </div>
                   {/* Bio */}
                   {profile.bio && (
@@ -1133,32 +1169,69 @@ const ProfilePage = ({ currentUser, setUser }) => {
         {/* Follow Modal */}
         {showFollowModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white dark:bg-dark-primary rounded-xl shadow-xl w-full max-w-md mx-2 p-6 relative">
+            <div className="bg-light-primary dark:bg-dark-primary rounded-xl shadow-xl w-full max-w-lg mx-2 p-6 relative">
               <button
                 onClick={() => setShowFollowModal(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-dark-accent"
+                className="absolute top-3 right-3 text-light-muted dark:text-dark-textSecondary hover:text-dark-accent"
                 aria-label="Close"
               >
-                ×
+                <XMarkIcon className="h-6 w-6" />
               </button>
-              <h3 className="text-lg font-bold mb-4">
+              <h3 className="text-lg font-bold mb-4 text-light-text dark:text-dark-text">
                 {followModalType === 'followers' ? 'Followers' : 'Following'}
               </h3>
               <div className="max-h-96 overflow-y-auto">
                 {(followModalType === 'followers' ? followers : following).length > 0 ? (
-                  <ul>
+                  <div className="space-y-3">
                     {(followModalType === 'followers' ? followers : following).map(user => (
-                      <li key={user.id} className="flex items-center gap-3 py-2">
-                        <img src={user.avatar_url || '/default-avatar.png'} alt={user.username} className="w-10 h-10 rounded-full" />
-                        <div>
-                          <div className="font-medium">{user.full_name || user.username}</div>
-                          <div className="text-sm text-gray-500">@{user.username}</div>
+                      <div 
+                        key={user.id} 
+                        className="bg-light-secondary dark:bg-dark-tertiary rounded-lg p-4 hover:bg-light-border dark:hover:bg-dark-border transition-colors border border-light-border dark:border-dark-border"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <img 
+                              src={user.avatar_url || DEFAULT_AVATAR} 
+                              alt={user.username} 
+                              className="w-12 h-12 rounded-full object-cover border-2 border-light-border dark:border-dark-border" 
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-light-text dark:text-dark-text truncate">
+                                {user.full_name || user.username}
+                              </h4>
+                              <p className="text-sm text-light-muted dark:text-dark-textSecondary truncate">
+                                @{user.username}
+                              </p>
+                              {user.bio && (
+                                <p className="text-xs text-light-muted dark:text-dark-textSecondary mt-1 line-clamp-2">
+                                  {user.bio}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0 ml-3">
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => navigate(`/profile/${user.id}`)}
+                                className="px-3 py-1.5 rounded-full bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
+                              >
+                                View Profile
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 ) : (
-                  <p className="text-center text-gray-400">No users found.</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-light-border dark:bg-dark-border flex items-center justify-center">
+                      <User className="h-8 w-8 text-light-muted dark:text-dark-textSecondary" />
+                    </div>
+                    <p className="text-light-muted dark:text-dark-textSecondary">
+                      {followModalType === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

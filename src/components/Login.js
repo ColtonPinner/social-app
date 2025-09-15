@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient';
 import { ReactComponent as LogoLight } from '../assets/basic-logo-light.svg';
@@ -66,10 +66,33 @@ const Login = ({ setUser }) => {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/tweets`
+        }
+      });
+
+      if (error) throw error;
+      
+      // Note: With OAuth, the user will be redirected, so we don't set user here
+      // The redirect will handle the authentication state
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-light-primary dark:bg-dark-primary">
       {/* Logo in upper left */}
-      <div className="p-8">
+  <div className="mt-16 p-8 flex justify-center">
         <div className="dark:hidden">
           <LogoLight className="h-12 w-auto text-light-text" />
         </div>
@@ -177,6 +200,38 @@ const Login = ({ setUser }) => {
               )}
 
               <div className="space-y-4">
+                {/* Sign in with Apple button */}
+                <button
+                  type="button"
+                  onClick={handleAppleSignIn}
+                  disabled={loading}
+                  className="flex w-full justify-center items-center space-x-3 rounded-lg 
+                    bg-black dark:bg-white
+                    hover:bg-gray-800 dark:hover:bg-gray-100
+                    px-3 py-2.5 text-sm font-semibold
+                    text-white dark:text-black
+                    transition-all duration-200 
+                    hover:scale-[1.02] active:scale-[0.98]
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                  </svg>
+                  <span>{loading ? 'Signing in...' : 'Sign in with Apple'}</span>
+                </button>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-light-border dark:border-dark-border" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-light-primary dark:bg-dark-primary px-2 text-light-muted dark:text-dark-textSecondary">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -189,7 +244,7 @@ const Login = ({ setUser }) => {
                     hover:scale-[1.02] active:scale-[0.98]
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Signing in...' : 'Sign in'}
+                  {loading ? 'Signing in...' : 'Sign in with Email'}
                 </button>
 
                 <button
