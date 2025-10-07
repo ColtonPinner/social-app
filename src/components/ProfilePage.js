@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   User,
@@ -11,9 +11,10 @@ import { supabase } from '../supabaseClient';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Lightbox from 'react-image-lightbox';
 import 'react-image-lightbox/style.css';
+import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
 const DEFAULT_COVER =
   'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
@@ -78,6 +79,9 @@ const ProfilePage = ({ currentUser, setUser }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImg, setLightboxImg] = useState('');
 
+  // Auto-refresh settings
+  const { settings } = useGlobalAutoRefreshSettings();
+
   // Load initial data
   useEffect(() => {
     const loadProfile = async () => {
@@ -108,7 +112,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
   }, [isMenuOpen]);
 
   // Fetch profile
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -117,7 +121,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
 
     if (error) {
       console.error('Error fetching profile:', error);
-      return;
+      throw error;
     }
 
     setProfile(data);
@@ -135,10 +139,10 @@ const ProfilePage = ({ currentUser, setUser }) => {
     });
     setImagePreview(data.avatar_url || null);
     setCoverImagePreview(data.cover_image_url || null);
-  };
+  }, [id]);
 
   // Fetch posts
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('posts')
@@ -149,11 +153,12 @@ const ProfilePage = ({ currentUser, setUser }) => {
       setTweets(data || []);
     } catch (error) {
       setTweets([]);
+      throw error;
     }
-  };
+  }, [id]);
 
   // Fetch follow data
-  const fetchFollowData = async () => {
+  const fetchFollowData = useCallback(async () => {
     if (!id) return;
     console.log('Fetching follow data for user ID:', id); // Debug log
     
@@ -193,8 +198,8 @@ const ProfilePage = ({ currentUser, setUser }) => {
       console.log('Following data:', followingData);
       console.log('Following error:', followingError);
 
-      if (followersError) console.error('Followers fetch error:', followersError);
-      if (followingError) console.error('Following fetch error:', followingError);
+      if (followersError) throw followersError;
+      if (followingError) throw followingError;
 
       // Extract the profile data from the nested structure
       const followersProfiles = followersData?.map(f => f.profiles).filter(Boolean) || [];
@@ -214,8 +219,41 @@ const ProfilePage = ({ currentUser, setUser }) => {
       setFollowing([]);
       setFollowerCount(0);
       setFollowingCount(0);
+      throw error;
     }
+  }, [id]);
+
+  // Combined refresh function for auto-refresh
+  const refreshProfileData = useCallback(async () => {
+    if (!id) return;
+    try {
+      setError('');
+      await Promise.all([
+        fetchProfile(),
+        fetchPosts(),
+        fetchFollowData()
+      ]);
+    } catch (err) {
+      console.error('Error refreshing profile data:', err);
+      setError('Error refreshing profile data');
+      throw err;
+    }
+  }, [id, fetchProfile, fetchPosts, fetchFollowData]);
+
+  // Set up auto-refresh with global settings
+  const autoRefreshConfig = {
+    interval: settings.interval,
+    enabled: settings.enabled && settings.profileEnabled && activeTab === 'view',
+    pauseOnVisibilityChange: settings.pauseOnVisibilityChange,
+    pauseOnOffline: settings.pauseOnOffline
   };
+
+  const {
+    isRefreshing: autoRefreshing,
+    lastRefresh,
+    error: autoRefreshError,
+    retryCount
+  } = useAutoRefresh(refreshProfileData, autoRefreshConfig);
 
   // Check if following
   const checkIfFollowing = async () => {
@@ -625,6 +663,30 @@ const ProfilePage = ({ currentUser, setUser }) => {
               )}
             </div>
           </div>
+
+          {/* Auto-refresh status indicator */}
+          {activeTab === 'view' && (
+            <div className="px-4 md:px-6 py-2 bg-light-secondary/30 dark:bg-dark-secondary/30 border-b border-light-border dark:border-dark-border">
+              <div className="flex items-center space-x-2">
+                <ArrowPathIcon 
+                  className={`h-3 w-3 text-light-muted dark:text-dark-textSecondary ${autoRefreshing ? 'animate-spin' : ''}`} 
+                />
+                <span className="text-xs text-light-muted dark:text-dark-textSecondary">
+                  {autoRefreshing ? 'Refreshing profile...' : 
+                   lastRefresh ? `Updated: ${new Date(lastRefresh).toLocaleTimeString()}` :
+                   'Auto-refresh enabled'}
+                </span>
+              </div>
+              
+              {/* Error banner for auto-refresh */}
+              {(error || autoRefreshError) && (
+                <div className="mt-2 text-xs text-red-600 dark:text-red-400">
+                  {error || autoRefreshError}
+                  {retryCount > 0 && ` (Failed attempts: ${retryCount})`}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Profile View Tab */}
           {activeTab === 'view' && (

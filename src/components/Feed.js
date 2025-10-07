@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import Tweet from './Tweet';
 import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
-const Feed = () => {
+const Feed = ({ refreshTrigger }) => {
   const [tweetsState, setTweets] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingIds, setFollowingIds] = useState([]);
@@ -11,6 +12,9 @@ const Feed = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Get global auto-refresh settings
+  const { settings } = useGlobalAutoRefreshSettings();
 
   // Load the current user and following list on component mount
   useEffect(() => {
@@ -48,6 +52,7 @@ const Feed = () => {
   const fetchAllTweets = useCallback(async () => {
     try {
       setRefreshing(true);
+      setError(null);
 
       // Only fetch posts from users you follow (and yourself)
       let userIds = followingIds;
@@ -88,10 +93,27 @@ const Feed = () => {
     } catch (err) {
       setError(err.message);
       console.error('Error fetching tweets:', err);
+      throw err; // Re-throw for auto-refresh hook to handle
     } finally {
       setRefreshing(false);
     }
   }, [followingIds, currentUser]);
+
+  // Set up auto-refresh with global settings
+  const autoRefreshConfig = {
+    interval: settings.interval,
+    enabled: settings.enabled && settings.feedEnabled,
+    pauseOnVisibilityChange: settings.pauseOnVisibilityChange,
+    pauseOnOffline: settings.pauseOnOffline
+  };
+
+  const {
+    isRefreshing: autoRefreshing,
+    lastRefresh,
+    error: autoRefreshError,
+    manualRefresh,
+    retryCount
+  } = useAutoRefresh(fetchAllTweets, autoRefreshConfig);
 
   useEffect(() => {
     if (currentUser) {
@@ -99,11 +121,15 @@ const Feed = () => {
     }
   }, [fetchAllTweets, currentUser, followingIds]);
 
+  // Trigger a manual refresh when an external signal is received (e.g., after posting)
   useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      fetchAllTweets();
-    }, 30000); // Refresh every 30 seconds
-    
+    if (refreshTrigger > 0) {
+      manualRefresh();
+    }
+  }, [refreshTrigger, manualRefresh]);
+
+  // Set up real-time subscriptions for new posts
+  useEffect(() => {
     const channel = supabase
       .channel('public-tweets')
       .on('postgres_changes', 
@@ -119,10 +145,28 @@ const Feed = () => {
       .subscribe();
 
     return () => {
-      clearInterval(refreshInterval);
       supabase.removeChannel(channel);
     };
-  }, [fetchAllTweets]);
+  }, []);
+
+  // Listen for local post creation events to update the feed instantly
+  useEffect(() => {
+    const handleLocalPost = (event) => {
+      const post = event.detail;
+      if (!post || !post.id) return;
+
+      setTweets(prevTweets => {
+        const withoutDuplicate = prevTweets.filter(existing => existing.id !== post.id);
+        return [post, ...withoutDuplicate];
+      });
+    };
+
+    window.addEventListener('feed:new-post', handleLocalPost);
+
+    return () => {
+      window.removeEventListener('feed:new-post', handleLocalPost);
+    };
+  }, []);
 
   const fetchPostWithUserData = async (postId) => {
     try {
@@ -232,13 +276,21 @@ const Feed = () => {
     }
   };
 
-  if (error) return (
+  // Combine errors from both manual refresh and auto-refresh
+  const displayError = error || autoRefreshError;
+
+  if (displayError && !tweetsState.length) return (
     <div className="rounded-md bg-red-50 p-3 md:p-4 mx-2 md:mx-4 my-3 md:mt-4">
       <div className="flex">
         <ExclamationCircleIcon className="h-5 w-5 text-red-400 flex-shrink-0" aria-hidden="true" />
         <div className="ml-3">
           <h3 className="text-xs md:text-sm font-medium text-red-800">Error loading posts</h3>
-          <div className="mt-1 md:mt-2 text-xs md:text-sm text-red-700">{error}</div>
+          <div className="mt-1 md:mt-2 text-xs md:text-sm text-red-700">{displayError}</div>
+          {retryCount > 0 && (
+            <div className="mt-1 text-xs text-red-600">
+              Failed attempts: {retryCount}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -246,6 +298,33 @@ const Feed = () => {
 
   return (
     <div className="max-w-7xl mx-auto pt-4 pb-24 px-2 md:px-8">
+      {/* Auto-refresh status header */}
+      <div className="mb-4 flex items-center justify-start bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-lg p-3">
+        <div className="flex items-center space-x-3">
+          <ArrowPathIcon 
+            className={`h-4 w-4 text-light-muted dark:text-dark-textSecondary ${autoRefreshing ? 'animate-spin' : ''}`} 
+          />
+          <span className="text-sm text-light-muted dark:text-dark-textSecondary">
+            {autoRefreshing ? 'Refreshing...' : 
+             lastRefresh ? `Last updated: ${new Date(lastRefresh).toLocaleTimeString()}` :
+             'Auto-refresh enabled'}
+          </span>
+        </div>
+      </div>
+
+      {/* Error banner (if posts are loaded but there's an error) */}
+      {displayError && tweetsState.length > 0 && (
+        <div className="mb-4 rounded-md bg-yellow-50 p-3">
+          <div className="flex">
+            <ExclamationCircleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" aria-hidden="true" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">Refresh Warning</h3>
+              <div className="mt-1 text-sm text-yellow-700">{displayError}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tweets Container */}
       <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 
         md:border md:border-light-border md:dark:border-dark-border

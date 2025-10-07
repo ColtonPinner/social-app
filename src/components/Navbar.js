@@ -220,7 +220,7 @@ const Navbar = ({ profile }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-52 h-10 pl-9 pr-4 py-2 rounded-lg 
+                className="w-52 h-10 pl-9 pr-4 py-2 rounded-full 
                   bg-light-secondary dark:bg-dark-tertiary 
                   text-light-text dark:text-dark-text
                   border border-light-border dark:border-dark-border
@@ -326,7 +326,7 @@ const Navbar = ({ profile }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-3 rounded-lg
+                className="w-full pl-9 pr-4 py-3 rounded-full
                   bg-light-secondary dark:bg-dark-tertiary 
                   text-light-text dark:text-dark-text
                   border border-light-border dark:border-dark-border

@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
-const Post = ({ user, addTweet }) => {
+const Post = ({ user, addTweet, onPostCreated }) => {
   const [content, setContent] = useState('');
   const [mediaFiles, setMediaFiles] = useState([]);  // Change to array for multiple files
   const [previews, setPreviews] = useState([]);  // Change to array for multiple previews
@@ -97,11 +97,45 @@ const Post = ({ user, addTweet }) => {
         throw insertPostError;
       }
 
-      addTweet(newPost);
+      let enrichedPost = newPost;
+
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url, full_name')
+          .eq('id', newPost.user_id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile for new post:', profileError);
+        }
+
+        const imagesForPost = imageUrls.length > 0
+          ? imageUrls
+          : (newPost.images ?? (newPost.image_url ? [newPost.image_url] : []));
+
+        enrichedPost = {
+          ...newPost,
+          user: profileData || null,
+          images: imagesForPost
+        };
+      } catch (profileErr) {
+        console.error('Error enriching new post data:', profileErr);
+      }
+
+      if (addTweet) {
+        addTweet(enrichedPost);
+      }
+
+      if (onPostCreated) {
+        onPostCreated(enrichedPost);
+      }
+
+      window.dispatchEvent(new CustomEvent('feed:new-post', { detail: enrichedPost }));
       setContent('');
       setMediaFiles([]);
       setPreviews([]);
-      console.log('Post successful');
+  console.log('Post successful');
     } catch (err) {
       console.error('Error in handlePost:', err);
       setError(err.message || 'Something went wrong posting.');

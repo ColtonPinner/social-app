@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
@@ -29,6 +29,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // Add this new state near your other state variables (around line 20)
   const [showEnlargedImage, setShowEnlargedImage] = useState(false);
+  const commentTextareaRef = useRef(null);
+  const [commentCharRemaining, setCommentCharRemaining] = useState(280);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   // Fetch user profile data for the tweet author
   useEffect(() => {
@@ -368,37 +371,40 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     }
   };
 
-  const handleComment = async (e) => {
-    e.preventDefault();
+  const adjustCommentTextareaHeight = useCallback(() => {
+    const textarea = commentTextareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+  }, []);
 
-    if (!isValidUser()) {
+  const submitComment = useCallback(async () => {
+    if (!currentUser) {
       alert('Please sign in to comment');
       return;
     }
 
     const userId = currentUser.id || currentUser.uid || currentUser.user_id;
 
+    if (!userId) {
+      alert('User profile incomplete. Please try signing out and signing back in.');
+      return;
+    }
+
     if (!comment.trim() || submittingComment) return;
     setSubmittingComment(true);
 
     try {
-      // Convert the tweet ID to a number that the database can accept
-      // We'll extract a numeric value from the UUID string to use as the BIGINT
       let tweetId;
       
       if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
-        // This is a UUID - extract its numeric representation
-        // Remove dashes and convert to a decimal number using last 12 chars
-        // (Using full UUID would exceed JavaScript's safe integer limit)
         const numericPart = tweet.id.replace(/-/g, '').slice(-12);
         tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
       } else {
-        // Already a number or numeric string
         tweetId = parseInt(tweet.id);
       }
 
-      // Ensure we have a valid number
-      if (isNaN(tweetId)) {
+      if (Number.isNaN(tweetId)) {
         throw new Error('Could not generate a valid numeric ID from tweet identifier');
       }
 
@@ -406,7 +412,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         .from('comments')
         .insert({
           user_id: userId,
-          tweet_id: tweetId,  // Now sending a number as BIGINT
+          tweet_id: tweetId,
           content: comment.trim(),
           created_at: new Date().toISOString()
         })
@@ -429,12 +435,26 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
       setComments(prev => [newComment, ...prev]);
       setComment('');
+      setCommentCharRemaining(280);
       setCommentCount(prev => prev + 1);
+      adjustCommentTextareaHeight();
     } catch (error) {
       console.error('Error posting comment:', error);
       alert('Unable to post comment. Please try again.');
     } finally {
       setSubmittingComment(false);
+    }
+  }, [currentUser, comment, submittingComment, tweet?.id, adjustCommentTextareaHeight]);
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    await submitComment();
+  };
+
+  const handleCommentKeyDown = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'enter') {
+      event.preventDefault();
+      submitComment();
     }
   };
 

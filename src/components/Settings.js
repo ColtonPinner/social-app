@@ -14,9 +14,11 @@ import {
   UsersIcon,
   UserPlusIcon,
   UserMinusIcon,
-  TrashIcon
+  TrashIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 import Tweet from './Tweet';
+import { useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
 const ProfileSettings = ({ user, setUser }) => {
   const { id } = useParams(); // Get the user ID from the URL
@@ -40,6 +42,9 @@ const ProfileSettings = ({ user, setUser }) => {
   const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
+
+  // Auto-refresh settings hook
+  const { settings, updateSettings, resetSettings } = useGlobalAutoRefreshSettings();
 
   // Fetch user profile data on component mount
   useEffect(() => {
@@ -596,6 +601,168 @@ const ProfileSettings = ({ user, setUser }) => {
                   rows="4"
                   placeholder="Tell us a little about yourself"
                 />
+              </div>
+            </div>
+
+            {/* Auto-Refresh Settings Section */}
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <div className="flex items-center mb-4">
+                <CogIcon className="h-5 w-5 text-gray-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">Auto-Refresh Settings</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Global Auto-Refresh Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Enable Auto-Refresh</label>
+                    <p className="text-xs text-gray-500">Automatically refresh content across the app</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={settings.enabled}
+                      onChange={(e) => updateSettings({ enabled: e.target.checked })}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                  </label>
+                </div>
+
+                {/* Refresh Interval */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Refresh Interval (seconds)
+                  </label>
+                  <select
+                    value={settings.interval / 1000}
+                    onChange={(e) => updateSettings({ interval: parseInt(e.target.value) * 1000 })}
+                    className="block w-full rounded-lg border-0 px-4 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-black"
+                    disabled={!settings.enabled}
+                  >
+                    <option value={10}>10 seconds</option>
+                    <option value={30}>30 seconds</option>
+                    <option value={60}>1 minute</option>
+                    <option value={120}>2 minutes</option>
+                    <option value={300}>5 minutes</option>
+                  </select>
+                </div>
+
+                {/* Component-specific settings */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">Component Settings</h4>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Feed</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={settings.feedEnabled}
+                          onChange={(e) => updateSettings({ feedEnabled: e.target.checked })}
+                          disabled={!settings.enabled}
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Messages</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={settings.messagesEnabled}
+                          onChange={(e) => updateSettings({ messagesEnabled: e.target.checked })}
+                          disabled={!settings.enabled}
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Profile</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={settings.profileEnabled}
+                          onChange={(e) => updateSettings({ profileEnabled: e.target.checked })}
+                          disabled={!settings.enabled}
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Notifications</span>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={settings.notificationsEnabled}
+                          onChange={(e) => updateSettings({ notificationsEnabled: e.target.checked })}
+                          disabled={!settings.enabled}
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Behavior Settings */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">Behavior Settings</h4>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Pause when tab not visible</span>
+                      <p className="text-xs text-gray-500">Save battery and data when app is in background</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={settings.pauseOnVisibilityChange}
+                        onChange={(e) => updateSettings({ pauseOnVisibilityChange: e.target.checked })}
+                        disabled={!settings.enabled}
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-gray-600">Pause when offline</span>
+                      <p className="text-xs text-gray-500">Stop refresh attempts when no internet connection</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={settings.pauseOnOffline}
+                        onChange={(e) => updateSettings({ pauseOnOffline: e.target.checked })}
+                        disabled={!settings.enabled}
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black disabled:opacity-50"></div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Reset Button */}
+                <div className="pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      resetSettings();
+                      setSuccess('Auto-refresh settings reset to default');
+                      setTimeout(() => setSuccess(''), 3000);
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  >
+                    Reset to Default Settings
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -116,17 +116,22 @@ const AppContent = ({ user, profile, setUser }) => {
 
 const HomePage = ({ user }) => {
   const [tweets, setTweets] = useState([]);
+  const [feedRefreshTrigger, setFeedRefreshTrigger] = useState(0);
 
   const addTweet = (tweet) => {
-    setTweets([tweet, ...tweets]);
+    setTweets(prevTweets => [tweet, ...prevTweets]);
+  };
+
+  const handlePostCreated = () => {
+    setFeedRefreshTrigger(prev => prev + 1);
   };
 
   return (
     <div className="container mx-auto px-4">
       <div className="main flex flex-col items-center">
-        <Post user={user} addTweet={addTweet} />
+        <Post user={user} addTweet={addTweet} onPostCreated={handlePostCreated} />
         <div className="feed-container w-full max-w-5xl">
-          <Feed />
+          <Feed refreshTrigger={feedRefreshTrigger} />
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
+import { ArrowPathIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import './Messages.css';
 
 const Messages = ({ user }) => {
@@ -7,23 +9,46 @@ const Messages = ({ user }) => {
   const [content, setContent] = useState('');
   const [receiverEmail, setReceiverEmail] = useState('');
   const [receiver, setReceiver] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Get global auto-refresh settings
+  const { settings } = useGlobalAutoRefreshSettings();
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      setError(null);
+      const { data, error: fetchError } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setMessages(data);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+      setError(err.message);
+      throw err; // Re-throw for auto-refresh hook to handle
+    }
+  }, []);
+
+  // Set up auto-refresh with global settings
+  const autoRefreshConfig = {
+    interval: settings.interval,
+    enabled: settings.enabled && settings.messagesEnabled,
+    pauseOnVisibilityChange: settings.pauseOnVisibilityChange,
+    pauseOnOffline: settings.pauseOnOffline
+  };
+
+  const {
+    isRefreshing: autoRefreshing,
+    lastRefresh,
+    error: autoRefreshError,
+    retryCount
+  } = useAutoRefresh(fetchMessages, autoRefreshConfig);
 
   useEffect(() => {
     fetchMessages();
-  }, []);
-
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching messages:', error);
-    } else {
-      setMessages(data);
-    }
-  };
+  }, [fetchMessages]);
 
   const handleSendMessage = async () => {
     const { data: receiverData, error: receiverError } = await supabase
@@ -51,9 +76,43 @@ const Messages = ({ user }) => {
     }
   };
 
+  // Combine errors from both manual refresh and auto-refresh
+  const displayError = error || autoRefreshError;
+
   return (
     <div className="messages-container">
-      <h2>Messages</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-light-text dark:text-dark-text">Messages</h2>
+        
+        {/* Auto-refresh status */}
+        <div className="flex items-center space-x-2 text-sm text-light-muted dark:text-dark-textSecondary">
+          <ArrowPathIcon className={`h-4 w-4 ${autoRefreshing ? 'animate-spin' : ''}`} />
+          <span className="text-sm text-light-muted dark:text-dark-textSecondary">
+            {autoRefreshing ? 'Refreshing...' : 
+             lastRefresh ? `Updated: ${new Date(lastRefresh).toLocaleTimeString()}` :
+             'Auto-refresh enabled'}
+          </span>
+        </div>
+      </div>
+
+      {/* Error banner */}
+      {displayError && (
+        <div className="mb-4 rounded-md bg-red-50 p-3">
+          <div className="flex">
+            <ExclamationCircleIcon className="h-5 w-5 text-red-400 flex-shrink-0" aria-hidden="true" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading messages</h3>
+              <div className="mt-1 text-sm text-red-700">{displayError}</div>
+              {retryCount > 0 && (
+                <div className="mt-1 text-xs text-red-600">
+                  Failed attempts: {retryCount}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="message-input">
         <input
           type="email"
