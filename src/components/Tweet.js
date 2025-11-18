@@ -583,7 +583,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         // Video handling stays the same
         <video
           controls
-          className="w-full h-auto max-h-[500px] object-cover rounded-lg"
+          className="w-full h-auto max-h-[500px] object-cover rounded-lg postion-center"
         >
           <source src={currentUrl} type="video/mp4" />
           Your browser does not support video playback.
@@ -595,7 +595,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
             <img
               src={currentUrl}
               alt="Tweet media"
-              className="max-h-[500px] w-full sm:w-auto max-w-full mx-auto object-contain sm:object-contain rounded-lg border border-light-border dark:border-dark-border shadow-md cursor-pointer"
+              className="max-h-[auto] w-full object-contain rounded-lg dark:border-dark-border shadow-md cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowEnlargedImage(true);

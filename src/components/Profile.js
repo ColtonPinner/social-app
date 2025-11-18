@@ -40,6 +40,8 @@ const Profile = ({ currentUser }) => {
   // Follow state
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
@@ -123,19 +125,36 @@ const Profile = ({ currentUser }) => {
 
   const fetchFollowData = async () => {
     if (!id) return;
-    
+
     try {
-      const [{ data: followersData }, { data: followingData }] = await Promise.all([
-        supabase.from('follows').select('follower_id').eq('following_id', id),
-        supabase.from('follows').select('following_id').eq('follower_id', id)
+      const [{ data: followersRaw }, { data: followingRaw }] = await Promise.all([
+        supabase
+          .from('follows')
+          .select(`follower_id, profile: follower_id (id, username, avatar_url)`)
+          .eq('following_id', id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('follows')
+          .select(`following_id, profile: following_id (id, username, avatar_url)`)
+          .eq('follower_id', id)
+          .order('created_at', { ascending: false })
       ]);
-      
-      setFollowers(followersData || []);
-      setFollowing(followingData || []);
+
+      const followers = (followersRaw || []).map(r => r.profile).filter(Boolean);
+      const following = (followingRaw || []).map(r => r.profile).filter(Boolean);
+
+      setFollowers(followers);
+      setFollowing(following);
+
+      // counts derived from raw results
+      setFollowersCount((followersRaw || []).length);
+      setFollowingCount((followingRaw || []).length);
     } catch (error) {
       console.error('Error fetching follow data:', error);
       setFollowers([]);
       setFollowing([]);
+      setFollowersCount(0);
+      setFollowingCount(0);
     }
   };
 
@@ -464,7 +483,7 @@ const Profile = ({ currentUser }) => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
                   <span className="font-semibold text-light-text dark:text-dark-text">
-                    {following.length}
+                    {followingCount}
                   </span>
                   <span className="text-light-muted dark:text-dark-textSecondary">
                     Following
@@ -472,7 +491,7 @@ const Profile = ({ currentUser }) => {
                 </div>
                 <div className="flex items-center space-x-1">
                   <span className="font-semibold text-light-text dark:text-dark-text">
-                    {followers.length}
+                    {followersCount}
                   </span>
                   <span className="text-light-muted dark:text-dark-textSecondary">
                     Followers
@@ -589,7 +608,7 @@ const Profile = ({ currentUser }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-1">
+                    <label className="
                       Bio
                     </label>
                     <textarea
