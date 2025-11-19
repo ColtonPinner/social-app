@@ -297,7 +297,7 @@ const Feed = ({ refreshTrigger }) => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto pt-4 pb-24 px-2 md:px-8">
+    <div className="w-full max-w-none md:max-w-7xl mx-auto pt-4 pb-24 px-0 sm:px-4 md:px-8">
       {/* Auto-refresh status header */}
       <div className="mb-4 flex items-center justify-start bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-lg p-3">
         <div className="flex items-center space-x-3">
@@ -326,12 +326,11 @@ const Feed = ({ refreshTrigger }) => {
       )}
 
       {/* Tweets Container */}
-      <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 
-        md:border md:border-light-border md:dark:border-dark-border
-        md:rounded-2xl"
+      <div className="rounded-none sm:rounded-xl bg-light-primary/80 dark:bg-dark-primary/80
+        md:backdrop-blur-lg md:rounded-2xl"
       >
-        <div className="px-4">
-          <div className="divide-y divide-light-border dark:divide-dark-border">
+        <div className="px-0 sm:px-4">
+          <div>
             {tweetsState.length > 0 ? (
               tweetsState.map(tweet => (
                 <Tweet 

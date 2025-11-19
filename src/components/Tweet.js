@@ -509,7 +509,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // 4. The main render
   return (
-    <div className={`w-full mx-auto py-3 text-light-text dark:text-dark-text ${className} relative px-0 sm:px-3 md:px-4`}>
+    <div className={`w-full mx-auto py-3 text-light-text dark:text-dark-text ${className} relative px-0`}>
       <div className="flex items-start space-x-3">
         {/* User Avatar with fallback */}
         <Link to={`/profile/${tweet.user_id}`} className="flex-shrink-0 block">

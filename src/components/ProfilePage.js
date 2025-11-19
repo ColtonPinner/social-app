@@ -478,7 +478,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
 
   return (
     <div className="min-h-screen pt-24 md:pt-28">
-      <div className="w-full px-0 md:px-4">
+      <div className="w-full px-2 md:px-4">
         {/* Enlarged image modal */}
         {enlargedImage && (
           <div
@@ -494,7 +494,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
             />
           </div>
         )}
-  <div className="w-full backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 border border-light-border dark:border-dark-border rounded-2xl overflow-hidden">
+  <div className="w-full backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 rounded-2xl overflow-hidden">
           {/* Profile Header with Tabs */}
           <div className="relative">
             {/* Cover Image */}
@@ -518,18 +518,18 @@ const ProfilePage = ({ currentUser, setUser }) => {
             </div>
 
             <div className="px-4 md:px-6">
-              <div className="relative -mt-20 mb-4 flex justify-between items-end">
+              <div className="relative -mt-20 mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <img
                   src={imagePreview || profile.avatar_url || DEFAULT_AVATAR}
                   alt={profile.username}
-                  className="w-32 h-32 rounded-full border-4 border-light-primary dark:border-dark-primary object-cover cursor-zoom-in"
+                  className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full border-4 border-light-primary dark:border-dark-primary object-cover cursor-zoom-in self-start"
                   onClick={() =>
                     setEnlargedImage(
                       imagePreview || profile.avatar_url || DEFAULT_AVATAR
                     )
                   }
                 />
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 w-full md:w-auto justify-start md:justify-end">
                   {isOwnProfile ? (
                     <div className="relative" data-menu>
                       <button
@@ -565,7 +565,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     <button
                       onClick={handleFollow}
                       disabled={isFollowLoading}
-                      className={`group relative px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`group relative w-full md:w-auto px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
                         isFollowing
                           ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text border border-light-border dark:border-dark-border hover:bg-dark-error hover:text-light-primary hover:border-transparent'
                           : 'bg-dark-accent text-light-primary hover:bg-dark-accent/90'
@@ -654,7 +654,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     </p>
                   </div>
                   {/* Follow Stats - Replace your existing follow stats section with this */}
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     <button
                       type="button"
                       onClick={() => {
@@ -741,8 +741,9 @@ const ProfilePage = ({ currentUser, setUser }) => {
                   </div>
                 </div>
                 <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 md:rounded-2xl">
-                  <div className="px-4 md:px-6">
-                    <div className="divide-y divide-light-border dark:divide-dark-border">
+
+                  <div className="px-0 sm:px-4 md:px-6">
+                    <div>
                       {tweets?.length > 0 ? (
                         tweets.map((post) => (
                           <Tweet
