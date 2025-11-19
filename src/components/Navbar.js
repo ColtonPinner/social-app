@@ -8,11 +8,11 @@ import {
 } from '@phosphor-icons/react';
 import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
+import useNotifications from '../hooks/useNotifications';
+import { useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
 const Navbar = ({ profile }) => {
-  const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -21,42 +21,21 @@ const Navbar = ({ profile }) => {
   const searchInputRef = useRef(null);
   const notificationRef = useRef(null);
   const searchResultsRef = useRef(null);
+  const { settings } = useGlobalAutoRefreshSettings();
+  const notificationsEnabled = Boolean(settings?.enabled && settings?.notificationsEnabled);
+
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    error: notificationsError,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications(profile?.id, {
+    enabled: notificationsEnabled
+  });
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!profile) return;
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching notifications:', error);
-      } else {
-        setNotifications(data);
-        setUnreadCount(data.filter((notification) => !notification.is_read).length);
-      }
-    };
-
-    fetchNotifications();
-
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${profile?.id}`,
-        },
-        () => {
-          fetchNotifications();
-        }
-      )
-      .subscribe();
-
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setShowNotifications(false);
@@ -70,16 +49,17 @@ const Navbar = ({ profile }) => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     setShowNotifications(false);
     setShowSearchResults(false);
     setShowMobileSearch(false);
-
-    return () => {
-      supabase.removeChannel(channel);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [profile, location.pathname]);
+  }, [location.pathname]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -98,22 +78,6 @@ const Navbar = ({ profile }) => {
     setShowNotifications(!showNotifications);
     setShowSearchResults(false);
     setShowMobileSearch(false);
-  };
-
-  const markAsRead = async (notificationId) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
-
-    if (!error) {
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, is_read: true } : notif
-        )
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
   };
 
   const handleSearchChange = (event) => {
@@ -181,8 +145,24 @@ const Navbar = ({ profile }) => {
                   backdrop-blur-lg bg-white/80 dark:bg-black/80 
                   rounded-lg shadow-lg z-10 border border-white/20 dark:border-white/10"
                 >
-                  <h3 className="p-3 font-semibold border-b border-gray-200 dark:border-gray-700">Notifications</h3>
-                  {notifications.length > 0 ? (
+                  <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="font-semibold">Notifications</h3>
+                    <button
+                      className="text-xs text-blue-600 dark:text-blue-400 disabled:opacity-40"
+                      onClick={markAllAsRead}
+                      disabled={unreadCount === 0 || notificationsLoading}
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                  {notificationsError && notificationsEnabled && (
+                    <p className="p-3 text-sm text-red-500">{notificationsError}</p>
+                  )}
+                  {!notificationsEnabled ? (
+                    <p className="p-4 text-center text-gray-500 dark:text-gray-400">Notifications are disabled. Enable them in Settings.</p>
+                  ) : notificationsLoading ? (
+                    <p className="p-4 text-center text-gray-500 dark:text-gray-400">Loading...</p>
+                  ) : notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
@@ -385,17 +365,39 @@ const Navbar = ({ profile }) => {
         >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h3 className="text-lg font-medium">Notifications</h3>
-            <button 
-              className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" 
-              onClick={handleToggleNotifications}
-              aria-label="Close notifications"
-            >
-              <X size={24} weight="bold" />
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                className="text-sm text-blue-600 dark:text-blue-400 disabled:opacity-40"
+                onClick={markAllAsRead}
+                disabled={unreadCount === 0 || notificationsLoading}
+              >
+                Mark all
+              </button>
+              <button 
+                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" 
+                onClick={handleToggleNotifications}
+                aria-label="Close notifications"
+              >
+                <X size={24} weight="bold" />
+              </button>
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto">
-            {notifications.length > 0 ? (
+            {notificationsError && notificationsEnabled && (
+              <p className="p-4 text-sm text-red-500">{notificationsError}</p>
+            )}
+            {!notificationsEnabled ? (
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                <Bell className="text-gray-300 dark:text-gray-600 h-10 w-10 mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">Notifications are disabled</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Enable them in Settings to stay updated.</p>
+              </div>
+            ) : notificationsLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+              </div>
+            ) : notifications.length > 0 ? (
               notifications.map((notification) => (
                 <div
                   key={notification.id}

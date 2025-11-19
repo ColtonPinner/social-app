@@ -312,6 +312,49 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     );
   };
 
+  const notifyPostAuthor = useCallback(async (type, metadata = {}, customMessage) => {
+    try {
+      if (!currentUser || !tweet?.user_id) return;
+
+      const actorId = currentUser.id || currentUser.uid || currentUser.user_id;
+      if (!actorId || actorId === tweet.user_id) return;
+
+      const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : null;
+      const actorName = currentUser.username || currentUser.full_name || emailPrefix || 'Someone';
+
+      const metadataPayload = Object.entries({ post_id: tweet.id, ...metadata }).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      let message = customMessage;
+      if (!message) {
+        switch (type) {
+          case 'like':
+            message = `${actorName} liked your post`;
+            break;
+          case 'comment':
+            message = `${actorName} commented on your post`;
+            break;
+          default:
+            message = `${actorName} interacted with your post`;
+        }
+      }
+
+      await supabase.from('notifications').insert({
+        user_id: tweet.user_id,
+        sender_id: actorId,
+        type,
+        message,
+        metadata: metadataPayload
+      });
+    } catch (err) {
+      console.error('Failed to send notification:', err);
+    }
+  }, [currentUser, tweet?.user_id, tweet?.id]);
+
   const handleLike = async () => {
     if (!currentUser) {
       alert('Please sign in to like posts');
@@ -363,6 +406,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
         setIsLiked(true);
         setLikesCount(prev => prev + 1);
+        notifyPostAuthor('like');
       }
     } catch (error) {
       console.error('Like operation failed:', error);
@@ -391,7 +435,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       return;
     }
 
-    if (!comment.trim() || submittingComment) return;
+    const trimmedComment = comment.trim();
+    if (!trimmedComment || submittingComment) return;
     setSubmittingComment(true);
 
     try {
@@ -413,7 +458,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         .insert({
           user_id: userId,
           tweet_id: tweetId,
-          content: comment.trim(),
+          content: trimmedComment,
           created_at: new Date().toISOString()
         })
         .select()
@@ -433,6 +478,11 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         }
       };
 
+      notifyPostAuthor('comment', {
+        comment_id: data?.id,
+        comment_preview: trimmedComment.slice(0, 140)
+      });
+
       setComments(prev => [newComment, ...prev]);
       setComment('');
       setCommentCharRemaining(280);
@@ -444,7 +494,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     } finally {
       setSubmittingComment(false);
     }
-  }, [currentUser, comment, submittingComment, tweet?.id, adjustCommentTextareaHeight]);
+  }, [currentUser, comment, submittingComment, tweet?.id, adjustCommentTextareaHeight, notifyPostAuthor]);
 
   const handleComment = async (e) => {
     e.preventDefault();

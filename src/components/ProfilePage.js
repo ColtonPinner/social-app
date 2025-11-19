@@ -4,8 +4,7 @@ import {
   User,
   Link as LinkIcon,
   Spinner,
-  Camera,
-  DotsThreeVertical
+  Camera
 } from '@phosphor-icons/react';
 import { supabase } from '../supabaseClient';
 import DatePicker from 'react-datepicker';
@@ -26,7 +25,6 @@ const ProfilePage = ({ currentUser, setUser }) => {
   // UI state
   const [activeTab, setActiveTab] = useState('view');
   const [loading, setLoading] = useState(true);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -72,17 +70,6 @@ const ProfilePage = ({ currentUser, setUser }) => {
 
   // Auto-refresh settings
   const { settings } = useGlobalAutoRefreshSettings();
-
-  // Click outside handler for menu
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMenuOpen && !event.target.closest('[data-menu]')) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMenuOpen]);
 
   // Fetch profile
   const fetchProfile = useCallback(async () => {
@@ -409,11 +396,16 @@ const ProfilePage = ({ currentUser, setUser }) => {
         setIsFollowing(true);
         setFollowerCount((prev) => prev + 1);
         if (id !== currentUser.id) {
+          const followerName = currentUser.username || currentUser.full_name || 'Someone';
           await supabase.from('notifications').insert({
             user_id: id,
             sender_id: currentUser.id,
             type: 'follow',
-            content: `${currentUser.username} started following you`
+            message: `${followerName} started following you`,
+            content: `${followerName} started following you`,
+            metadata: {
+              follower_id: currentUser.id
+            }
           });
         }
       }
@@ -477,52 +469,54 @@ const ProfilePage = ({ currentUser, setUser }) => {
   const isOwnProfile = currentUser?.id === profile.id;
 
   return (
-    <div className="min-h-screen pt-24 md:pt-28">
-      <div className="w-full px-2 md:px-4">
-        {/* Enlarged image modal */}
-        {enlargedImage && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            onClick={() => setEnlargedImage(null)}
-            style={{ cursor: 'zoom-out' }}
-          >
-            <img
-              src={enlargedImage}
-              alt="Enlarged"
-              className="max-w-full max-h-full rounded-xl shadow-2xl border-4 border-white"
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
-        )}
-  <div className="w-full backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 rounded-2xl overflow-hidden">
-          {/* Profile Header with Tabs */}
-          <div className="relative">
-            {/* Cover Image */}
-            <div className="h-48 bg-gradient-to-r from-purple-500 to-pink-500 relative overflow-hidden">
-              <img
-                src={
-                  coverImagePreview ||
+    <div className="min-h-screen">
+      {/* Enlarged image modal */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setEnlargedImage(null)}
+          style={{ cursor: 'zoom-out' }}
+        >
+          <img
+            src={enlargedImage}
+            alt="Enlarged"
+            className="max-w-full max-h-full rounded-xl shadow-2xl border-4 border-white"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <div className="relative">
+        {/* Full-width cover */}
+        <div className="relative h-52 md:h-64 lg:h-72 w-screen left-1/2 -translate-x-1/2 overflow-hidden">
+          <img
+            src={
+              coverImagePreview ||
+              profile.cover_image_url ||
+              DEFAULT_COVER
+            }
+            alt="Cover"
+            className="w-full h-full object-cover cursor-zoom-in"
+            onClick={() =>
+              setEnlargedImage(
+                coverImagePreview ||
                   profile.cover_image_url ||
                   DEFAULT_COVER
-                }
-                alt="Cover"
-                className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
-                onClick={() =>
-                  setEnlargedImage(
-                    coverImagePreview ||
-                      profile.cover_image_url ||
-                      DEFAULT_COVER
-                  )
-                }
-              />
-            </div>
+              )
+            }
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10 pointer-events-none" />
+        </div>
 
-            <div className="px-4 md:px-6">
+        <div className="relative w-full px-2 md:px-4 -mt-16 md:-mt-20">
+          <div className="max-w-5xl mx-auto space-y-6">
+            {/* Profile Header */}
+            <div className="px-2 md:px-4">
               <div className="relative -mt-20 mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <img
                   src={imagePreview || profile.avatar_url || DEFAULT_AVATAR}
                   alt={profile.username}
-                  className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full border-4 border-light-primary dark:border-dark-primary object-cover cursor-zoom-in self-start"
+                  className="w-36 h-36 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full border-4 border-light-primary dark:border-dark-primary object-cover cursor-zoom-in self-start"
                   onClick={() =>
                     setEnlargedImage(
                       imagePreview || profile.avatar_url || DEFAULT_AVATAR
@@ -530,38 +524,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                   }
                 />
                 <div className="flex items-center space-x-3 w-full md:w-auto justify-start md:justify-end">
-                  {isOwnProfile ? (
-                    <div className="relative" data-menu>
-                      <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors"
-                      >
-                        <DotsThreeVertical className="h-5 w-5 text-light-text dark:text-dark-text" />
-                      </button>
-                      {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-light-primary dark:bg-dark-primary border border-light-border dark:border-dark-border divide-y divide-light-border dark:divide-dark-border z-10">
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              setActiveTab('edit');
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-light-text dark:text-dark-text hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors rounded-t-lg"
-                          >
-                            Edit Profile
-                          </button>
-                          <button
-                            onClick={() => {
-                              setIsMenuOpen(false);
-                              handleSignOut();
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-dark-error hover:bg-light-secondary dark:hover:bg-dark-tertiary transition-colors rounded-b-lg"
-                          >
-                            Logout
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
+                  {isOwnProfile ? null : (
                     <button
                       onClick={handleFollow}
                       disabled={isFollowLoading}
@@ -590,204 +553,38 @@ const ProfilePage = ({ currentUser, setUser }) => {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Tab Navigation */}
-          <div className="px-4 md:px-6 border-b border-light-border dark:border-dark-border">
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setActiveTab('view')}
-                className={`py-4 px-2 font-medium text-sm transition-colors ${
-                  activeTab === 'view'
-                    ? 'text-dark-accent border-b-2 border-dark-accent'
-                    : 'text-light-text dark:text-dark-text hover:text-dark-accent'
-                }`}
-              >
-                Profile
-              </button>
-              {isOwnProfile && (
+            {/* Tab Navigation */}
+            <div className="px-2 md:px-4 border-b border-light-border dark:border-dark-border">
+              <div className="flex space-x-4">
                 <button
-                  onClick={() => setActiveTab('edit')}
+                  onClick={() => setActiveTab('view')}
                   className={`py-4 px-2 font-medium text-sm transition-colors ${
-                    activeTab === 'edit'
+                    activeTab === 'view'
                       ? 'text-dark-accent border-b-2 border-dark-accent'
                       : 'text-light-text dark:text-dark-text hover:text-dark-accent'
                   }`}
                 >
-                  Edit Profile
+                  Profile
                 </button>
-              )}
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setActiveTab('edit')}
+                    className={`py-4 px-2 font-medium text-sm transition-colors ${
+                      activeTab === 'edit'
+                        ? 'text-dark-accent border-b-2 border-dark-accent'
+                        : 'text-light-text dark:text-dark-text hover:text-dark-accent'
+                    }`}
+                  >
+                    Edit Profile
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Auto-refresh status indicator */}
-          {activeTab === 'view' && (
-            <div className="px-4 md:px-6 py-2 bg-light-secondary/30 dark:bg-dark-secondary/30 border-b border-light-border dark:border-dark-border">
-              <div className="flex items-center space-x-2">
-                <ArrowPathIcon 
-                  className={`h-3 w-3 text-light-muted dark:text-dark-textSecondary ${autoRefreshing ? 'animate-spin' : ''}`} 
-                />
-                <span className="text-xs text-light-muted dark:text-dark-textSecondary">
-                  {autoRefreshing ? 'Refreshing profile...' : 
-                   lastRefresh ? `Updated: ${new Date(lastRefresh).toLocaleTimeString()}` :
-                   'Auto-refresh enabled'}
-                </span>
-              </div>
-              
-             
-            </div>
-          )}
-
-          {/* Profile View Tab */}
-          {activeTab === 'view' && (
-            <>
-              {/* Profile Info Section */}
-              <div className="px-4 md:px-6 py-4">
-                <div className="space-y-4">
-                  {/* Name and Username */}
-                  <div>
-                    <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">
-                      {profile.full_name || profile.username}
-                    </h1>
-                    <p className="text-light-muted dark:text-dark-textSecondary">
-                      @{profile.username}
-                    </p>
-                  </div>
-                  {/* Follow Stats - Replace your existing follow stats section with this */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFollowModalType('following');
-                        setShowFollowModal(true);
-                      }}
-                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
-                    >
-                      <span className="font-semibold text-light-text dark:text-dark-text">
-                        {followingCount}
-                      </span>
-                      <span className="text-light-muted dark:text-dark-textSecondary">
-                        Following
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFollowModalType('followers');
-                        setShowFollowModal(true);
-                      }}
-                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
-                    >
-                      <span className="font-semibold text-light-text dark:text-dark-text">
-                        {followerCount}
-                      </span>
-                      <span className="text-light-muted dark:text-dark-textSecondary">
-                        Followers
-                      </span>
-                    </button>
-                  </div>
-                  {/* Bio */}
-                  {profile.bio && (
-                    <p className="text-light-text dark:text-dark-text">{profile.bio}</p>
-                  )}
-                  {/* Website */}
-                  {profile.website && (
-                    <a
-                      href={
-                        profile.website.startsWith('http')
-                          ? profile.website
-                          : `https://${profile.website}`
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 text-dark-accent hover:underline"
-                    >
-                      <LinkIcon className="h-4 w-4" />
-                      <span>
-                        {(() => {
-                          try {
-                            const url = profile.website.startsWith('http')
-                              ? profile.website
-                              : `https://${profile.website}`;
-                            return new URL(url).hostname;
-                          } catch {
-                            return profile.website;
-                          }
-                        })()}
-                      </span>
-                    </a>
-                  )}
-                </div>
-              </div>
-              {/* Posts Section */}
-              <div>
-                <div className="px-4 md:px-6">
-                  <div className="flex items-center justify-between py-3">
-                    <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
-                      Posts{' '}
-                      <span className="text-sm font-normal text-light-muted dark:text-dark-textSecondary">
-                        ({tweets.length})
-                      </span>
-                    </h2>
-                    {isOwnProfile && (
-                      <button
-                        onClick={() => setShowPostModal(true)}
-                        className="px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
-                        type="button"
-                      >
-                        New Post
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 md:rounded-2xl">
-
-                  <div className="px-0 sm:px-4 md:px-6">
-                    <div>
-                      {tweets?.length > 0 ? (
-                        tweets.map((post) => (
-                          <Tweet
-                            key={post.id}
-                            tweet={{
-                              ...post,
-                              user: post.user || {
-                                id: profile.id,
-                                username: profile.username,
-                                full_name: profile.full_name,
-                                avatar_url: profile.avatar_url || DEFAULT_AVATAR
-                              }
-                            }}
-                            currentUser={currentUser}
-                            onDelete={handleDeletePost}
-                          />
-                        ))
-                      ) : (
-                        <div className="py-6 text-center">
-                          <p className="text-light-muted dark:text-dark-textSecondary">
-                            {isOwnProfile
-                              ? "You haven't posted anything yet"
-                              : `${profile.username} hasn't posted anything yet`}
-                          </p>
-                          {isOwnProfile && (
-                            <Link
-                              to="/compose"
-                              className="mt-4 inline-flex px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
-                            >
-                              Create Your First Post
-                            </Link>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Edit Profile Tab */}
-          {activeTab === 'edit' && isOwnProfile && (
-            <div className="p-4 md:p-6">
+            {/* Edit Profile Tab */}
+            {activeTab === 'edit' && isOwnProfile && (
+              <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 rounded-2xl shadow-xl p-4 md:p-6">
               <div className="space-y-6">
                 {/* Cover Image Section */}
                 <div className="relative mb-8">
@@ -998,11 +795,170 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     Sign Out
                   </button>
                 </div>
+                </div>
               </div>
+            )}
+          </div>
+
+          {activeTab === 'view' && (
+            <div className="space-y-6">
+              {/* Auto-refresh status indicator */}
+              <div className="mt-4 px-4 md:px-6 py-3 rounded-2xl border border-light-border dark:border-dark-border bg-light-primary/70 dark:bg-dark-primary/70 backdrop-blur">
+                <div className="flex items-center space-x-2">
+                  <ArrowPathIcon
+                    className={`h-3 w-3 text-light-muted dark:text-dark-textSecondary ${autoRefreshing ? 'animate-spin' : ''}`}
+                  />
+                  <span className="text-xs text-light-muted dark:text-dark-textSecondary">
+                    {autoRefreshing
+                      ? 'Refreshing profile...'
+                      : lastRefresh
+                        ? `Updated: ${new Date(lastRefresh).toLocaleTimeString()}`
+                        : 'Auto-refresh enabled'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Profile Info Section */}
+              <section className="px-2 md:px-4">
+                <div className="space-y-4 py-4">
+                  {/* Name and Username */}
+                  <div>
+                    <h1 className="text-2xl font-bold text-light-text dark:text-dark-text">
+                      {profile.full_name || profile.username}
+                    </h1>
+                    <p className="text-light-muted dark:text-dark-textSecondary">
+                      @{profile.username}
+                    </p>
+                  </div>
+                  {/* Follow Stats */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowModalType('following');
+                        setShowFollowModal(true);
+                      }}
+                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
+                    >
+                      <span className="font-semibold text-light-text dark:text-dark-text">
+                        {followingCount}
+                      </span>
+                      <span className="text-light-muted dark:text-dark-textSecondary">
+                        Following
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFollowModalType('followers');
+                        setShowFollowModal(true);
+                      }}
+                      className="flex items-center space-x-1 hover:text-dark-accent transition-colors cursor-pointer"
+                    >
+                      <span className="font-semibold text-light-text dark:text-dark-text">
+                        {followerCount}
+                      </span>
+                      <span className="text-light-muted dark:text-dark-textSecondary">
+                        Followers
+                      </span>
+                    </button>
+                  </div>
+                  {/* Bio */}
+                  {profile.bio && (
+                    <p className="text-light-text dark:text-dark-text">{profile.bio}</p>
+                  )}
+                  {/* Website */}
+                  {profile.website && (
+                    <a
+                      href={
+                        profile.website.startsWith('http')
+                          ? profile.website
+                          : `https://${profile.website}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 text-dark-accent hover:underline"
+                    >
+                      <LinkIcon className="h-4 w-4" />
+                      <span>
+                        {(() => {
+                          try {
+                            const url = profile.website.startsWith('http')
+                              ? profile.website
+                              : `https://${profile.website}`;
+                            return new URL(url).hostname;
+                          } catch {
+                            return profile.website;
+                          }
+                        })()}
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </section>
+
+              {/* Posts Section */}
+              <section className="px-2 md:px-4">
+                <div className="flex items-center justify-between py-3">
+                  <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
+                    Posts{' '}
+                    <span className="text-sm font-normal text-light-muted dark:text-dark-textSecondary">
+                      ({tweets.length})
+                    </span>
+                  </h2>
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => setShowPostModal(true)}
+                      className="px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
+                      type="button"
+                    >
+                      New Post
+                    </button>
+                  )}
+                </div>
+                <div className="px-0 sm:px-2 md:px-0">
+                  <div>
+                    {tweets?.length > 0 ? (
+                      tweets.map((post) => (
+                        <Tweet
+                          key={post.id}
+                          tweet={{
+                            ...post,
+                            user: post.user || {
+                              id: profile.id,
+                              username: profile.username,
+                              full_name: profile.full_name,
+                              avatar_url: profile.avatar_url || DEFAULT_AVATAR
+                            }
+                          }}
+                          currentUser={currentUser}
+                          onDelete={handleDeletePost}
+                        />
+                      ))
+                    ) : (
+                      <div className="py-6 text-center">
+                        <p className="text-light-muted dark:text-dark-textSecondary">
+                          {isOwnProfile
+                            ? "You haven't posted anything yet"
+                            : `${profile.username} hasn't posted anything yet`}
+                        </p>
+                        {isOwnProfile && (
+                          <Link
+                            to="/compose"
+                            className="mt-4 inline-flex px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
+                          >
+                            Create Your First Post
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
             </div>
           )}
         </div>
-        {/* New Post Modal */}
+      {/* New Post Modal */}
         {showPostModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-light-primary dark:bg-dark-primary rounded-xl shadow-xl w-full max-w-md mx-2 p-6 relative">
