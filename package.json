@@ -1,90 +1,42 @@
 {
   "name": "social-app",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "main": "App.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "lint": "eslint ."
+  },
   "dependencies": {
-    "@capacitor/cli": "^7.1.0",
-    "@capacitor/core": "^7.1.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@fortawesome/fontawesome-svg-core": "^6.7.2",
-    "@fortawesome/free-solid-svg-icons": "^6.7.2",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "@headlessui/react": "^2.2.0",
-    "@heroicons/react": "^2.2.0",
-    "@heroui/react": "^2.7.8",
-    "@mui/joy": "^5.0.0-beta.48",
-    "@mui/lab": "^5.0.0-alpha.173",
-    "@mui/material": "^6.4.2",
-    "@mui/x-date-pickers": "^5.0.0",
-    "@phosphor-icons/react": "^2.1.7",
-    "@react-native-community/cli": "^18.0.0",
+    "@expo/vector-icons": "^14.0.4",
+    "@react-native-async-storage/async-storage": "^1.23.2",
+    "@react-navigation/bottom-tabs": "^7.1.2",
     "@react-navigation/native": "^7.0.15",
     "@react-navigation/native-stack": "^7.2.1",
     "@supabase/supabase-js": "^2.44.4",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@vercel/analytics": "^1.5.0",
     "date-fns": "^3.6.0",
     "expo": "^52.0.39",
-    "framer-motion": "^12.15.0",
-    "libphonenumber-js": "^1.11.7",
-    "next": "^14.2.5",
-    "next.js": "^1.0.3",
-    "phosphor-react": "^1.4.1",
-    "primeicons": "^7.0.0",
-    "primereact": "^10.8.0",
-    "react": "^18.3.1",
-    "react-datepicker": "^7.3.0",
-    "react-dom": "^18.3.1",
-    "react-image-file-resizer": "^0.4.8",
-    "react-image-lightbox": "^5.1.4",
-    "react-input-mask": "^2.0.4",
-    "react-modal": "^3.16.3",
-    "react-native": "^0.78.0",
-    "react-native-lightbox": "^0.8.1",
-    "react-native-safe-area-context": "^5.3.0",
-    "react-native-screens": "^4.9.2",
-    "react-phone-input-2": "^2.15.1",
-    "react-router": "^6.24.1",
-    "react-router-dom": "^6.24.1",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
-    "workbox-cli": "^7.3.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "expo-file-system": "~18.0.4",
+    "expo-image-picker": "~16.0.3",
+    "expo-linear-gradient": "~13.0.2",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-native": "0.78.0",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-reanimated": "~3.16.4",
+    "react-native-safe-area-context": "5.3.0",
+    "react-native-screens": "4.9.2",
+    "react-native-toast-message": "^2.2.0",
+    "react-native-url-polyfill": "^3.0.0"
   },
   "devDependencies": {
-    "@swc/cli": "^0.7.7",
-    "@swc/core": "^1.11.31",
-    "@swc/helpers": "^0.5.17",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.0",
-    "eslint-plugin-jest": "^28.6.0",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.0"
+    "@babel/core": "^7.24.9",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "babel-preset-expo": "^11.0.8",
+    "eslint": "^8.57.0"
   }
 }

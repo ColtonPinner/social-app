@@ -11,94 +11,79 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import Tweet from './Tweet';
-import { XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
-const DEFAULT_COVER =
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-const DEFAULT_AVATAR = 'https://via.placeholder.com/150';
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80';
+const DEFAULT_COVER = 'https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1600&q=80';
 
 const ProfilePage = ({ currentUser, setUser }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { settings } = useGlobalAutoRefreshSettings();
 
-  // UI state
-  const [activeTab, setActiveTab] = useState('view');
+  const [profile, setProfile] = useState(null);
+  const [tweets, setTweets] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [showPostModal, setShowPostModal] = useState(false);
-  const [showFollowModal, setShowFollowModal] = useState(false);
-  const [followModalType, setFollowModalType] = useState('followers'); // or 'following'
-
-  // Profile data
-  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
-    phone: '',
-    dob: null,
-    bio: '',
     website: '',
+    phone: '',
+    bio: '',
     avatar_url: '',
+    dob: null,
     newPostText: ''
   });
-
-  // Media state
-  const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [coverImagePreview, setCoverImagePreview] = useState(null);
-
-  // Follow state
-  const [followers, setFollowers] = useState([]);
-  const [following, setFollowing] = useState([]);
+  const [activeTab, setActiveTab] = useState('view');
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
-
-  // Content state
-  const [tweets, setTweets] = useState([]);
-
-  // Feedback state
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // Enlarged image modal state
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState(null);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState('followers');
 
-
-  // Auto-refresh settings
-  const { settings } = useGlobalAutoRefreshSettings();
-
-  // Fetch profile
   const fetchProfile = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
-      .single();
+    if (!id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
-      throw error;
+      if (error) throw error;
+
+      setProfile(data);
+      setFormData((prev) => ({
+        ...prev,
+        username: data.username || '',
+        full_name: data.full_name || '',
+        website: data.website || '',
+        phone: data.phone || '',
+        bio: data.bio || '',
+        avatar_url: data.avatar_url || '',
+        dob: data.dob ? new Date(data.dob) : null
+      }));
+      setImagePreview(data.avatar_url || null);
+      setCoverImagePreview(data.cover_image_url || null);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile');
+      throw err;
     }
-
-    setProfile(data);
-    setFormData({
-      username: data.username || '',
-      full_name: data.full_name || '',
-      phone: data.phone
-        ? parsePhoneNumberFromString(data.phone, 'US')?.formatNational() || data.phone
-        : '',
-      dob: data.dob ? new Date(data.dob) : null,
-      bio: data.bio || '',
-      website: data.website || '',
-      avatar_url: data.avatar_url || '',
-      newPostText: ''
-    });
-    setImagePreview(data.avatar_url || null);
-    setCoverImagePreview(data.cover_image_url || null);
   }, [id]);
 
   // Fetch posts
@@ -216,7 +201,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
   } = useAutoRefresh(refreshProfileData, autoRefreshConfig);
 
   // Check if following
-  const checkIfFollowing = async () => {
+  const checkIfFollowing = useCallback(async () => {
     if (!currentUser || !id || currentUser.id === id) return;
     try {
       const { data } = await supabase
@@ -229,7 +214,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
     } catch {
       setIsFollowing(false);
     }
-  };
+  }, [currentUser, id]);
 
   // Load initial data
   useEffect(() => {
@@ -248,7 +233,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
       }
     };
     loadProfile();
-  }, [id]);
+  }, [id, fetchProfile, fetchPosts, fetchFollowData, checkIfFollowing]);
 
   // Handlers
   const handleInputChange = (e) => {
@@ -528,7 +513,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     <button
                       onClick={handleFollow}
                       disabled={isFollowLoading}
-                      className={`group relative w-full md:w-auto px-4 py-2 rounded-full text-sm font-medium flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`group relative w-full md:w-auto px-2.5 py-1.5 md:px-4 md:py-2 rounded-full text-[11px] md:text-sm font-semibold tracking-wide flex items-center justify-center gap-1.5 md:gap-2 overflow-hidden transition-all duration-300 hover:scale-[1.01] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                         isFollowing
                           ? 'bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text border border-light-border dark:border-dark-border hover:bg-dark-error hover:text-light-primary hover:border-transparent'
                           : 'bg-dark-accent text-light-primary hover:bg-dark-accent/90'
@@ -555,11 +540,11 @@ const ProfilePage = ({ currentUser, setUser }) => {
             </div>
 
             {/* Tab Navigation */}
-            <div className="px-2 md:px-4 border-b border-light-border dark:border-dark-border">
-              <div className="flex space-x-4">
+            <div className="px-2 md:px-4">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => setActiveTab('view')}
-                  className={`py-4 px-2 font-medium text-sm transition-colors ${
+                  className={`py-2.5 px-2 font-medium text-xs md:text-sm transition-colors ${
                     activeTab === 'view'
                       ? 'text-dark-accent border-b-2 border-dark-accent'
                       : 'text-light-text dark:text-dark-text hover:text-dark-accent'
@@ -570,7 +555,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                 {isOwnProfile && (
                   <button
                     onClick={() => setActiveTab('edit')}
-                    className={`py-4 px-2 font-medium text-sm transition-colors ${
+                    className={`py-2.5 px-2 font-medium text-xs md:text-sm transition-colors ${
                       activeTab === 'edit'
                         ? 'text-dark-accent border-b-2 border-dark-accent'
                         : 'text-light-text dark:text-dark-text hover:text-dark-accent'
