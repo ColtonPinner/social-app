@@ -11,9 +11,8 @@ import { supabase } from '../supabaseClient';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import Tweet from './Tweet';
 import { XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import Lightbox from 'react-image-lightbox';
-import 'react-image-lightbox/style.css';
 import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
 
 const DEFAULT_COVER =
@@ -70,35 +69,9 @@ const ProfilePage = ({ currentUser, setUser }) => {
   // Enlarged image modal state
   const [enlargedImage, setEnlargedImage] = useState(null);
 
-  // 1. Add state for likes and comments
-  const [likes, setLikes] = useState({});
-  const [comments, setComments] = useState({});
-  const [commentInputs, setCommentInputs] = useState({});
-
-  // Lightbox state
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxImg, setLightboxImg] = useState('');
 
   // Auto-refresh settings
   const { settings } = useGlobalAutoRefreshSettings();
-
-  // Load initial data
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!id) return;
-      setLoading(true);
-      try {
-        await fetchProfile();
-        await fetchPosts();
-        await Promise.all([fetchFollowData(), checkIfFollowing()]); // ✅ Already fetching follow data here
-      } catch {
-        setError('Error loading profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProfile();
-  }, [id]);
 
   // Click outside handler for menu
   useEffect(() => {
@@ -270,6 +243,25 @@ const ProfilePage = ({ currentUser, setUser }) => {
       setIsFollowing(false);
     }
   };
+
+  // Load initial data
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        await fetchProfile();
+        await fetchPosts();
+        await Promise.all([fetchFollowData(), checkIfFollowing()]);
+      } catch (err) {
+        console.error('Error loading profile data:', err);
+        setError('Error loading profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, [id]);
 
   // Handlers
   const handleInputChange = (e) => {
@@ -443,6 +435,20 @@ const ProfilePage = ({ currentUser, setUser }) => {
     }
   };
 
+  const handleDeletePost = async (postId) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+      if (error) throw error;
+      setTweets((prev) => prev.filter((tweet) => tweet.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Failed to delete post');
+    }
+  };
+
   // Custom date input for DatePicker
   const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
     <input
@@ -458,56 +464,6 @@ const ProfilePage = ({ currentUser, setUser }) => {
     />
   ));
 
-  // 2. Fetch likes and comments for posts after fetching posts
-  useEffect(() => {
-    if (!tweets.length) return;
-    const fetchLikesAndComments = async () => {
-      // Fetch likes
-      const { data: likesData } = await supabase
-        .from('likes')
-        .select('post_id')
-        .in('post_id', tweets.map((t) => t.id));
-      const likesCount = {};
-      likesData?.forEach(like => {
-        likesCount[like.post_id] = (likesCount[like.post_id] || 0) + 1;
-      });
-      setLikes(likesCount);
-
-      // Fetch comments
-      const { data: commentsData } = await supabase
-        .from('comments')
-        .select('post_id')
-        .in('post_id', tweets.map((t) => t.id));
-      const commentsCount = {};
-      commentsData?.forEach(comment => {
-        commentsCount[comment.post_id] = (commentsCount[comment.post_id] || 0) + 1;
-      });
-      setComments(commentsCount);
-    };
-    fetchLikesAndComments();
-  }, [tweets]);
-
-  // 3. Like handler
-  const handleLike = async (postId) => {
-    await supabase.from('likes').insert({ post_id: postId, user_id: currentUser.id });
-    setLikes((prev) => ({
-      ...prev,
-      [postId]: (prev[postId] || 0) + 1
-    }));
-  };
-
-  // 4. Comment handler
-  const handleComment = async (postId) => {
-    const text = commentInputs[postId];
-    if (!text?.trim()) return;
-    await supabase.from('comments').insert({ post_id: postId, user_id: currentUser.id, text });
-    setComments((prev) => ({
-      ...prev,
-      [postId]: (prev[postId] || 0) + 1
-    }));
-    setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -522,7 +478,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
 
   return (
     <div className="min-h-screen pt-24 md:pt-28">
-      <div className="max-w-3xl mx-auto px-4">
+      <div className="w-full px-0 md:px-4">
         {/* Enlarged image modal */}
         {enlargedImage && (
           <div
@@ -538,7 +494,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
             />
           </div>
         )}
-        <div className="backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 border border-light-border dark:border-dark-border rounded-2xl overflow-hidden">
+  <div className="w-full backdrop-blur-lg bg-light-primary/80 dark:bg-dark-primary/80 border border-light-border dark:border-dark-border rounded-2xl overflow-hidden">
           {/* Profile Header with Tabs */}
           <div className="relative">
             {/* Cover Image */}
@@ -678,13 +634,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
                 </span>
               </div>
               
-              {/* Error banner for auto-refresh */}
-              {(error || autoRefreshError) && (
-                <div className="mt-2 text-xs text-red-600 dark:text-red-400">
-                  {error || autoRefreshError}
-                  {retryCount > 0 && ` (Failed attempts: ${retryCount})`}
-                </div>
-              )}
+             
             </div>
           )}
 
@@ -771,7 +721,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
               </div>
               {/* Posts Section */}
               <div>
-                <div className="px-4 md:px-6 border-b border-light-border dark:border-dark-border">
+                <div className="px-4 md:px-6">
                   <div className="flex items-center justify-between py-3">
                     <h2 className="text-xl font-bold text-light-text dark:text-dark-text">
                       Posts{' '}
@@ -790,153 +740,45 @@ const ProfilePage = ({ currentUser, setUser }) => {
                     )}
                   </div>
                 </div>
-                <div>
-                  {tweets?.length > 0 ? (
-                    <ul className="divide-y divide-light-border dark:divide-dark-border">
-                      {tweets.map((post) => (
-                        <li
-                          key={post.id}
-                          className="flex flex-col gap-2 py-4 px-2 sm:px-4 md:px-6 hover:bg-light-secondary/70 dark:hover:bg-dark-tertiary/70 transition-colors group"
-                        >
-                          <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="flex-shrink-0">
-                              <img
-                                src={profile.avatar_url || DEFAULT_AVATAR}
-                                alt={profile.username}
-                                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-light-border dark:border-dark-border object-cover"
-                              />
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1 w-full">
-                              <span className="font-semibold text-sm sm:text-base text-light-text dark:text-dark-text truncate">
-                                {profile.full_name || profile.username}
-                              </span>
-                              <span className="text-xs text-light-muted dark:text-dark-textSecondary sm:ml-2 truncate">
-                                @{profile.username}
-                              </span>
-                              <span className="sm:ml-auto text-xs text-light-muted dark:text-dark-textSecondary whitespace-nowrap">
-                                {new Date(post.created_at).toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="pl-11 sm:pl-12">
-                            <p className="text-light-text dark:text-dark-text text-sm sm:text-base mb-2 break-words whitespace-pre-line leading-relaxed">
-                              {post.text || 'No content'}
-                            </p>
-                            {post.image_url && (
-                              <>
-                                <img
-                                  src={post.image_url}
-                                  alt="Post"
-                                  className="rounded-xl max-w-full max-h-60 sm:max-h-80 mt-2 border border-light-border dark:border-dark-border shadow cursor-zoom-in"
-                                  onClick={() => {
-                                    setLightboxImg(post.image_url);
-                                    setLightboxOpen(true);
-                                  }}
-                                />
-                                {lightboxOpen && lightboxImg === post.image_url && (
-                                  <Lightbox
-                                    mainSrc={lightboxImg}
-                                    onCloseRequest={() => setLightboxOpen(false)}
-                                  />
-                                )}
-                              </>
-                            )}
-                            {post.images && post.images.length > 0 && (
-                              <div className="grid grid-cols-2 gap-2 mt-2">
-                                {post.images.map((img, idx) => (
-                                  <img
-                                    key={idx}
-                                    src={img}
-                                    alt={`Post image ${idx + 1}`}
-                                    className="rounded-xl max-w-full max-h-60 border border-light-border dark:border-dark-border shadow cursor-zoom-in"
-                                    onClick={() => {
-                                      setLightboxImg(img);
-                                      setLightboxOpen(true);
-                                    }}
-                                  />
-                                ))}
-                                {lightboxOpen && (
-                                  <Lightbox
-                                    mainSrc={lightboxImg}
-                                    onCloseRequest={() => setLightboxOpen(false)}
-                                  />
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <div className="pl-11 sm:pl-12 flex items-center gap-4 mt-2">
-                            <button
-                              onClick={() => handleLike(post.id)}
-                              className="flex items-center gap-1 text-dark-accent hover:underline"
-                              type="button"
-                            >
-                              ❤️ <span>{likes[post.id] || 0}</span>
-                            </button>
-                            <span className="flex items-center gap-1 text-dark-accent">
-                              💬 <span>{comments[post.id] || 0}</span>
-                            </span>
-                          </div>
-                          <div className="pl-11 sm:pl-12 mt-1">
-                            <form
-                              onSubmit={e => {
-                                e.preventDefault();
-                                handleComment(post.id);
-                              }}
-                              className="flex gap-2"
-                            >
-                              <input
-                                type="text"
-                                value={commentInputs[post.id] || ''}
-                                onChange={e =>
-                                  setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
-                                }
-                                placeholder="Add a comment..."
-                                className="flex-1 px-2 py-1 rounded border border-light-border dark:border-dark-border bg-light-secondary dark:bg-dark-tertiary text-light-text dark:text-dark-text text-sm"
-                              />
-                              <button
-                                type="submit"
-                                className="px-2 py-1 rounded bg-dark-accent text-white text-xs"
-                              >
-                                Comment
-                              </button>
-                            </form>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="p-8 text-center flex flex-col items-center">
-                      <div className="w-16 h-16 mb-4 rounded-full bg-light-secondary dark:bg-dark-tertiary flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          className="w-8 h-8 text-light-muted dark:text-dark-textSecondary"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                <div className="md:backdrop-blur-lg md:bg-light-primary/80 md:dark:bg-dark-primary/80 md:rounded-2xl">
+                  <div className="px-4 md:px-6">
+                    <div className="divide-y divide-light-border dark:divide-dark-border">
+                      {tweets?.length > 0 ? (
+                        tweets.map((post) => (
+                          <Tweet
+                            key={post.id}
+                            tweet={{
+                              ...post,
+                              user: post.user || {
+                                id: profile.id,
+                                username: profile.username,
+                                full_name: profile.full_name,
+                                avatar_url: profile.avatar_url || DEFAULT_AVATAR
+                              }
+                            }}
+                            currentUser={currentUser}
+                            onDelete={handleDeletePost}
                           />
-                        </svg>
-                      </div>
-                      <p className="text-light-muted dark:text-dark-textSecondary">
-                        {isOwnProfile
-                          ? "You haven't posted anything yet"
-                          : `${profile.username} hasn't posted anything yet`}
-                      </p>
-                      {isOwnProfile && (
-                        <Link
-                          to="/compose"
-                          className="mt-4 px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
-                        >
-                          Create Your First Post
-                        </Link>
+                        ))
+                      ) : (
+                        <div className="py-6 text-center">
+                          <p className="text-light-muted dark:text-dark-textSecondary">
+                            {isOwnProfile
+                              ? "You haven't posted anything yet"
+                              : `${profile.username} hasn't posted anything yet`}
+                          </p>
+                          {isOwnProfile && (
+                            <Link
+                              to="/compose"
+                              className="mt-4 inline-flex px-4 py-2 rounded-lg bg-dark-accent text-white hover:bg-dark-accent/90 transition-colors text-sm font-medium"
+                            >
+                              Create Your First Post
+                            </Link>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </>
