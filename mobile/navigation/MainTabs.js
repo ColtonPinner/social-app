@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import FeedScreen from '../screens/FeedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import MessagesScreen from '../screens/MessagesScreen';
@@ -25,7 +25,7 @@ const MainTabs = ({ currentUser, profile, onSignOut, onProfileUpdated }) => (
           Messages: 'chatbubble-ellipses',
           Settings: 'settings'
         };
-        return <Ionicons name={iconMap[route.name]} color={color} size={size} />;
+        return <Icon name={iconMap[route.name]} color={color} size={size} />;
       }
     })}
   >
