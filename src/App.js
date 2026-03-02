@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import { HeroUIProvider } from '@heroui/react';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import SignUp from './components/Signup';
@@ -138,12 +137,4 @@ const HomePage = ({ user }) => {
   );
 };
 
-function AppWrapper() {
-  return (
-    <HeroUIProvider>
-      <App />
-    </HeroUIProvider>
-  );
-}
-
-export default AppWrapper;
+export default App;
