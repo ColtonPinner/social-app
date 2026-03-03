@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom';
 import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import { apiClient } from '../lib/apiClient';
+import {
+  useCreateCommentMutation,
+  useLikePostMutation,
+  usePostCommentsQuery,
+  usePostLikesQuery,
+  useUnlikePostMutation,
+} from '../hooks/useBackendPosts';
 
 const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   // 1. ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
@@ -33,6 +39,12 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   const [commentCharRemaining, setCommentCharRemaining] = useState(280);
   const [isZoomed, setIsZoomed] = useState(false);
 
+  const commentsQuery = usePostCommentsQuery(tweet?.id, { enabled: Boolean(tweet?.id) });
+  const likesQuery = usePostLikesQuery(tweet?.id, { enabled: Boolean(tweet?.id) && Boolean(currentUser) });
+  const createCommentMutation = useCreateCommentMutation(tweet?.id);
+  const likePostMutation = useLikePostMutation(tweet?.id);
+  const unlikePostMutation = useUnlikePostMutation(tweet?.id);
+
   // Fetch user profile data for the tweet author
   useEffect(() => {
     setUserProfile(tweet?.user || null);
@@ -44,27 +56,21 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setIsLoadingComments(true);
 
     try {
-      const result = await apiClient.get(`/api/posts/${tweet.id}/comments`);
-      setComments(result.items || []);
+      const result = await commentsQuery.refetch();
+      setComments(result.data?.items || []);
     } catch (err) {
       console.error('Error fetching comments:', err);
       setComments([]);
     } finally {
       setIsLoadingComments(false);
     }
-  }, [showCommentModal, tweet?.id]);
+  }, [showCommentModal, tweet, commentsQuery]);
 
   // Add a new function to fetch just the comment count
   const fetchCommentCount = useCallback(async () => {
     if (!tweet) return;
-
-    try {
-      const result = await apiClient.get(`/api/posts/${tweet.id}/comments`);
-      setCommentCount(result.count || 0);
-    } catch (err) {
-      console.error('Error fetching comment count:', err);
-    }
-  }, [tweet?.id]);
+    setCommentCount(commentsQuery.data?.count || 0);
+  }, [tweet, commentsQuery.data?.count]);
 
   // Add a new useEffect to fetch the comment count when component mounts
   useEffect(() => {
@@ -78,22 +84,18 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     }
   }, [fetchComments, showCommentModal]);
 
+  useEffect(() => {
+    if (commentsQuery.data?.items) {
+      setComments(commentsQuery.data.items);
+    }
+  }, [commentsQuery.data?.items]);
+
   // Check if user has liked the tweet
   useEffect(() => {
-    if (!currentUser || !tweet) return;
-
-    const fetchLikeStatus = async () => {
-      try {
-        const result = await apiClient.get(`/api/posts/${tweet.id}/likes`);
-        setIsLiked(Boolean(result.liked));
-        setLikesCount(result.count || 0);
-      } catch (err) {
-        console.error('Error checking like status:', err);
-      }
-    };
-
-    fetchLikeStatus();
-  }, [currentUser, tweet?.id]);
+    if (!likesQuery.data) return;
+    setIsLiked(Boolean(likesQuery.data.liked));
+    setLikesCount(likesQuery.data.count || 0);
+  }, [likesQuery.data]);
 
   // Add this right before your return statement (for testing only)
   const testImageUrls = [
@@ -269,12 +271,12 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       const contentId = tweet.id;
       
       if (isLiked) {
-        await apiClient.delete(`/api/posts/${contentId}/likes`);
+        await unlikePostMutation.mutateAsync();
 
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
-        await apiClient.post(`/api/posts/${contentId}/likes`, {});
+        await likePostMutation.mutateAsync();
 
         setIsLiked(true);
         setLikesCount(prev => prev + 1);
@@ -312,10 +314,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setSubmittingComment(true);
 
     try {
-      const result = await apiClient.post(`/api/posts/${tweet.id}/comments`, {
+      const newComment = await createCommentMutation.mutateAsync({
         content: trimmedComment,
       });
-      const newComment = result.item;
 
       notifyPostAuthor('comment', {
         comment_id: newComment?.id,
@@ -333,7 +334,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     } finally {
       setSubmittingComment(false);
     }
-  }, [currentUser, comment, submittingComment, tweet?.id, adjustCommentTextareaHeight, notifyPostAuthor]);
+  }, [currentUser, comment, submittingComment, tweet?.id, adjustCommentTextareaHeight, notifyPostAuthor, createCommentMutation]);
 
   const handleComment = async (e) => {
     e.preventDefault();

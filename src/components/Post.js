@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { apiClient } from '../lib/apiClient';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { useCreatePostMutation } from '../hooks/useBackendPosts';
 
 const Post = ({ user, addTweet, onPostCreated }) => {
   const [content, setContent] = useState('');
   const [mediaFiles, setMediaFiles] = useState([]);  // Change to array for multiple files
   const [previews, setPreviews] = useState([]);  // Change to array for multiple previews
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const createPostMutation = useCreatePostMutation();
+  const loading = createPostMutation.isPending;
 
   useEffect(() => {
     if (error) {
@@ -29,7 +30,6 @@ const Post = ({ user, addTweet, onPostCreated }) => {
       return;
     }
 
-    setLoading(true);
     setError('');
 
     try {
@@ -37,11 +37,10 @@ const Post = ({ user, addTweet, onPostCreated }) => {
         throw new Error('Image upload is not available on the backend yet.');
       }
 
-      const result = await apiClient.post('/api/posts', {
+      const enrichedPost = await createPostMutation.mutateAsync({
         text: content.trim(),
         images: [],
       });
-      const enrichedPost = result.item;
 
       if (addTweet) {
         addTweet(enrichedPost);
@@ -59,8 +58,6 @@ const Post = ({ user, addTweet, onPostCreated }) => {
     } catch (err) {
       console.error('Error in handlePost:', err);
       setError(err.message || 'Something went wrong posting.');
-    } finally {
-      setLoading(false);
     }
   };
 
