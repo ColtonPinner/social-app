@@ -1,4 +1,7 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  process.env.REACT_APP_CLOUDFLARE_API_URL ||
+  'http://localhost:4000';
 
 export const authTokenKey = 'auth-token';
 
@@ -42,4 +45,5 @@ async function request(path, options = {}) {
 export const apiClient = {
   get: (path) => request(path),
   post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
+  delete: (path) => request(path, { method: 'DELETE' }),
 };

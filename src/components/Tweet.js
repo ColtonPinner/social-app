@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom';
 import { TrashIcon, HeartIcon, ChatBubbleLeftIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-import { supabase } from '../supabaseClient';
+import { apiClient } from '../lib/apiClient';
 
 const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
   // 1. ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
@@ -35,28 +35,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
   // Fetch user profile data for the tweet author
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!tweet?.user_id) return;
-
-      try {
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url, full_name')
-          .eq('id', tweet.user_id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
-
-        setUserProfile(profileData);
-      } catch (err) {
-        console.error('Error fetching user profile:', err);
-      }
-    };
-
-    fetchUserProfile();
+    setUserProfile(tweet?.user || null);
   }, [tweet?.user_id]);
 
   // Fetch comments - modify this function to load comments even when not logged in
@@ -65,48 +44,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setIsLoadingComments(true);
 
     try {
-      // Use same ID conversion logic as in handleComment
-      let tweetId;
-      
-      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
-        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
-        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
-      } else {
-        tweetId = parseInt(tweet.id);
-      }
-
-      const { data: commentsData, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('tweet_id', tweetId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (commentsData && commentsData.length > 0) {
-        const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
-
-        const { data: usersData } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url')
-          .in('id', userIds);
-
-        const usersMap = {};
-        if (usersData) {
-          usersData.forEach(user => {
-            usersMap[user.id] = user;
-          });
-        }
-
-        const commentsWithUsers = commentsData.map(comment => ({
-          ...comment,
-          user: usersMap[comment.user_id] || null
-        }));
-
-        setComments(commentsWithUsers);
-      } else {
-        setComments([]);
-      }
+      const result = await apiClient.get(`/api/posts/${tweet.id}/comments`);
+      setComments(result.items || []);
     } catch (err) {
       console.error('Error fetching comments:', err);
       setComments([]);
@@ -120,22 +59,8 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     if (!tweet) return;
 
     try {
-      // Convert the tweet ID using the same logic
-      let tweetId;
-      
-      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
-        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
-        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
-      } else {
-        tweetId = parseInt(tweet.id);
-      }
-
-      const { count, error } = await supabase
-        .from('comments')
-        .select('*', { count: 'exact', head: true })
-        .eq('tweet_id', tweetId);
-
-      if (!error) setCommentCount(count || 0);
+      const result = await apiClient.get(`/api/posts/${tweet.id}/comments`);
+      setCommentCount(result.count || 0);
     } catch (err) {
       console.error('Error fetching comment count:', err);
     }
@@ -159,25 +84,9 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
     const fetchLikeStatus = async () => {
       try {
-        const contentId = tweet.id;
-
-        // Changed from 'likes' to 'post_likes'
-        const { data, error } = await supabase
-          .from('post_likes')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .eq('content_id', contentId)
-          .maybeSingle();
-
-        setIsLiked(!!data && !error);
-
-        // Changed from 'likes' to 'post_likes'
-        const { count, error: countError } = await supabase
-          .from('post_likes')
-          .select('id', { count: 'exact', head: true })
-          .eq('content_id', tweet.id);
-
-        if (!countError) setLikesCount(count || 0);
+        const result = await apiClient.get(`/api/posts/${tweet.id}/likes`);
+        setIsLiked(Boolean(result.liked));
+        setLikesCount(result.count || 0);
       } catch (err) {
         console.error('Error checking like status:', err);
       }
@@ -185,15 +94,6 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
 
     fetchLikeStatus();
   }, [currentUser, tweet?.id]);
-
-  // Add this before your return statement to test connection
-  useEffect(() => {
-    const testConnection = async () => {
-      const { data, error } = await supabase.from('comments').select('*').limit(1);
-      console.log('Supabase connection test:', { data, error });
-    };
-    testConnection();
-  }, []);
 
   // Add this right before your return statement (for testing only)
   const testImageUrls = [
@@ -343,13 +243,7 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
         }
       }
 
-      await supabase.from('notifications').insert({
-        user_id: tweet.user_id,
-        sender_id: actorId,
-        type,
-        message,
-        metadata: metadataPayload
-      });
+      return { type, message, metadata: metadataPayload };
     } catch (err) {
       console.error('Failed to send notification:', err);
     }
@@ -375,34 +269,12 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
       const contentId = tweet.id;
       
       if (isLiked) {
-        // DELETE operation - using post_likes
-        const { error } = await supabase
-          .from('post_likes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('content_id', contentId);
-
-        if (error) {
-          console.error('Unlike error:', error);
-          throw error;
-        }
+        await apiClient.delete(`/api/posts/${contentId}/likes`);
 
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
-        // INSERT operation - also using post_likes (was using 'likes' before)
-        const { error } = await supabase
-          .from('post_likes')
-          .insert({
-            user_id: userId,
-            content_id: contentId,
-            created_at: new Date().toISOString()
-          });
-
-        if (error) {
-          console.error('Like error:', error);
-          throw error;
-        }
+        await apiClient.post(`/api/posts/${contentId}/likes`, {});
 
         setIsLiked(true);
         setLikesCount(prev => prev + 1);
@@ -440,46 +312,13 @@ const Tweet = ({ tweet, className = '', onDelete, currentUser = null }) => {
     setSubmittingComment(true);
 
     try {
-      let tweetId;
-      
-      if (typeof tweet.id === 'string' && isNaN(parseInt(tweet.id))) {
-        const numericPart = tweet.id.replace(/-/g, '').slice(-12);
-        tweetId = parseInt(numericPart, 16) % Number.MAX_SAFE_INTEGER;
-      } else {
-        tweetId = parseInt(tweet.id);
-      }
-
-      if (Number.isNaN(tweetId)) {
-        throw new Error('Could not generate a valid numeric ID from tweet identifier');
-      }
-
-      const { data, error } = await supabase
-        .from('comments')
-        .insert({
-          user_id: userId,
-          tweet_id: tweetId,
-          content: trimmedComment,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Comment submission error:', error);
-        throw error;
-      }
-
-      const newComment = {
-        ...data,
-        user: {
-          id: userId,
-          username: currentUser.username,
-          avatar_url: currentUser.avatar_url
-        }
-      };
+      const result = await apiClient.post(`/api/posts/${tweet.id}/comments`, {
+        content: trimmedComment,
+      });
+      const newComment = result.item;
 
       notifyPostAuthor('comment', {
-        comment_id: data?.id,
+        comment_id: newComment?.id,
         comment_preview: trimmedComment.slice(0, 140)
       });
 

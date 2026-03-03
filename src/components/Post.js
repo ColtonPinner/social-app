@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { apiClient } from '../lib/apiClient';
 import { PhotoIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
@@ -17,39 +17,9 @@ const Post = ({ user, addTweet, onPostCreated }) => {
     }
   }, [error]);
 
-  const handleFileUpload = async (files) => {
-    if (!user?.id) throw new Error('User not found');
-    
-    // Array to store public URLs of uploaded images
-    const uploadedUrls = [];
-    
-    // Process each file
-    for (const file of files) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error(`File ${file.name} is not a supported image type (JPEG, PNG, or WEBP)`);
-      }
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('media').getPublicUrl(filePath);
-      uploadedUrls.push(data.publicUrl);
-    }
-    
-    return uploadedUrls;
-  };
-
   const handlePost = async () => {
-    if (!content.trim() && mediaFiles.length === 0) {
-      setError('Content or at least one image is required.');
+    if (!content.trim()) {
+      setError('Content is required.');
       return;
     }
 
@@ -63,65 +33,15 @@ const Post = ({ user, addTweet, onPostCreated }) => {
     setError('');
 
     try {
-      let imageUrls = [];
-
       if (mediaFiles.length > 0) {
-        imageUrls = await handleFileUpload(mediaFiles);
-        if (!imageUrls || imageUrls.length === 0) {
-          throw new Error('Image upload failed.');
-        }
+        throw new Error('Image upload is not available on the backend yet.');
       }
 
-      const {
-        data: { user: authUser },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !authUser) {
-        throw new Error('Not authenticated');
-      }
-
-      const postData = {
-        text: content || null,
-        user_id: authUser.id,
-        image_url: imageUrls.length > 0 ? imageUrls[0] : null, // Only use the first image URL
-      };
-
-      const { data: newPost, error: insertPostError } = await supabase
-        .from('posts')
-        .insert(postData)
-        .select()
-        .single();
-
-      if (insertPostError) {
-        throw insertPostError;
-      }
-
-      let enrichedPost = newPost;
-
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url, full_name')
-          .eq('id', newPost.user_id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile for new post:', profileError);
-        }
-
-        const imagesForPost = imageUrls.length > 0
-          ? imageUrls
-          : (newPost.images ?? (newPost.image_url ? [newPost.image_url] : []));
-
-        enrichedPost = {
-          ...newPost,
-          user: profileData || null,
-          images: imagesForPost
-        };
-      } catch (profileErr) {
-        console.error('Error enriching new post data:', profileErr);
-      }
+      const result = await apiClient.post('/api/posts', {
+        text: content.trim(),
+        images: [],
+      });
+      const enrichedPost = result.item;
 
       if (addTweet) {
         addTweet(enrichedPost);
@@ -154,6 +74,7 @@ const Post = ({ user, addTweet, onPostCreated }) => {
     }
     
     if (files && files.length > 0) {
+      setError('Image upload is not available on the backend yet.');
       // Add new files to existing files
       setMediaFiles(prevFiles => [...prevFiles, ...files]);
       

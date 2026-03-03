@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
@@ -8,73 +8,14 @@ import Feed from './components/Feed';
 import Settings from './components/Settings';
 import Messages from './components/Messages';
 import ProfilePage from './components/ProfilePage';
-import { supabase } from './supabaseClient';
 import { Analytics } from "@vercel/analytics/react"
 import Footer from './components/Footer';
+import { getAuthToken, setAuthToken } from './lib/apiClient';
+import { useCurrentUserQuery } from './hooks/useBackendAuth';
 
 const App = () => {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const storedSession = localStorage.getItem('supabase-session');
-      if (storedSession) {
-        const session = JSON.parse(storedSession);
-        setUser(session.user);
-        await supabase.auth.setSession(session);
-        fetchUserProfile(session.user.id);
-      } else {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setUser(session.user);
-          localStorage.setItem('supabase-session', JSON.stringify(session));
-          fetchUserProfile(session.user.id);
-        }
-      }
-      setLoading(false);
-    };
-
-    getUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser(session.user);
-        localStorage.setItem('supabase-session', JSON.stringify(session));
-        fetchUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-        localStorage.removeItem('supabase-session');
-      }
-    });
-
-    const refreshInterval = setInterval(() => {
-      getUser();
-    }, 60000); // Refresh session every 60 seconds
-
-    return () => {
-      authListener.subscription.unsubscribe();
-      clearInterval(refreshInterval);
-    };
-  }, []);
-
-  const fetchUserProfile = async (userId) => {
-    try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
+  const token = getAuthToken();
+  const { data: user, isLoading: loading } = useCurrentUserQuery();
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -82,27 +23,37 @@ const App = () => {
 
   return (
     <Router>
-      <AppContent user={user} profile={profile} setUser={setUser} />
+      <AppContent
+        user={user || null}
+        profile={user}
+        hasToken={Boolean(token)}
+        setUser={(nextUser) => {
+          if (!nextUser) {
+            setAuthToken(null);
+          }
+        }}
+      />
     </Router>
   );
 };
 
-const AppContent = ({ user, profile, setUser }) => {
+const AppContent = ({ user, profile, hasToken, setUser }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
   const hideFooter = hideNavbar;
+  const isAuthenticated = Boolean(hasToken && user);
 
   return (
     <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
       {!hideNavbar && <Navbar profile={profile} />}
       <div className="container mx-auto px-4 pb-16 text-light-text dark:text-dark-text">
         <Routes>
-          <Route path="/" element={user ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
-          <Route path="/login" element={user ? <Navigate to="/tweets" /> : <Login setUser={setUser} />} />
-          <Route path="/signup" element={user ? <Navigate to="/tweets" /> : <SignUp setUser={setUser} />} />
-          <Route path="/tweets" element={user ? <HomePage user={user} /> : <Navigate to="/login" />} />
-          <Route path="/messages" element={user ? <Messages user={user} /> : <Navigate to="/login" />} />
-          <Route path="/profile/:id" element={user ? <ProfilePage currentUser={user} setUser={setUser} /> : <Navigate to="/login" />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/tweets" /> : <Navigate to="/login" />} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/tweets" /> : <Login />} />
+          <Route path="/signup" element={isAuthenticated ? <Navigate to="/tweets" /> : <SignUp />} />
+          <Route path="/tweets" element={isAuthenticated ? <HomePage user={user} /> : <Navigate to="/login" />} />
+          <Route path="/messages" element={isAuthenticated ? <Messages user={user} /> : <Navigate to="/login" />} />
+          <Route path="/profile/:id" element={isAuthenticated ? <ProfilePage currentUser={user} setUser={setUser} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
       {!hideFooter && (
@@ -114,12 +65,7 @@ const AppContent = ({ user, profile, setUser }) => {
 };
 
 const HomePage = ({ user }) => {
-  const [tweets, setTweets] = useState([]);
   const [feedRefreshTrigger, setFeedRefreshTrigger] = useState(0);
-
-  const addTweet = (tweet) => {
-    setTweets(prevTweets => [tweet, ...prevTweets]);
-  };
 
   const handlePostCreated = () => {
     setFeedRefreshTrigger(prev => prev + 1);
@@ -128,9 +74,9 @@ const HomePage = ({ user }) => {
   return (
     <div className="container mx-auto px-4">
       <div className="main flex flex-col items-center">
-        <Post user={user} addTweet={addTweet} onPostCreated={handlePostCreated} />
+        <Post user={user} onPostCreated={handlePostCreated} />
         <div className="feed-container w-full max-w-5xl">
-          <Feed refreshTrigger={feedRefreshTrigger} />
+          <Feed user={user} refreshTrigger={feedRefreshTrigger} />
         </div>
       </div>
     </div>

@@ -3,12 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { EnvelopeIcon, LockClosedIcon, CalendarIcon, UserIcon, InformationCircleIcon, LinkIcon } from '@heroicons/react/24/outline';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { supabase } from '../supabaseClient';
+import { useRegisterMutation } from '../hooks/useBackendAuth';
 import { ReactComponent as LogoLight } from '../assets/basic-logo-light.svg';
 import { ReactComponent as LogoDark } from '../assets/basic-logo-dark.svg';
 import Footer from './Footer';
 
-const SignUp = ({ setUser }) => {
+const SignUp = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -24,6 +24,7 @@ const SignUp = ({ setUser }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const navigate = useNavigate();
+  const registerMutation = useRegisterMutation();
 
   // Handle standard input changes
   const handleChange = (e) => {
@@ -106,63 +107,13 @@ const SignUp = ({ setUser }) => {
     }
 
     try {
-      // 1. Sign up user with metadata (to use in trigger)
-      const {
-        data: { user },
-        error: signUpError
-      } = await supabase.auth.signUp({
+      await registerMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            full_name: formData.full_name || formData.username,
-            username: formData.username,
-          }
-        }
+        username: formData.username,
+        fullName: formData.full_name || formData.username,
       });
 
-      if (signUpError) throw signUpError;
-      if (!user) throw new Error('Signup failed');
-
-      // 2. Upload profile picture if available
-      let avatarUrl = null;
-      if (profileImage) {
-        const fileExt = profileImage.name.split('.').pop();
-        const fileName = `${user.id}.${fileExt}`;
-        const filePath = fileName;
-
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, profileImage, {
-            upsert: true
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        avatarUrl = data.publicUrl;
-      }
-
-      // 3. Update the profile with additional info
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          username: formData.username,
-          full_name: formData.full_name || formData.username,
-          avatar_url: avatarUrl,
-          website: formData.website || null,
-          // Store extra data in metadata if needed
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      // Success! Set user and navigate
-      setUser(user);
       navigate('/tweets');
       
     } catch (err) {

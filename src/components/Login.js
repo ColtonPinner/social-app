@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { supabase } from '../supabaseClient';
+import { useLoginMutation } from '../hooks/useBackendAuth';
 import { ReactComponent as LogoLight } from '../assets/basic-logo-light.svg';
 import { ReactComponent as LogoDark } from '../assets/basic-logo-dark.svg';
 import Footer from './Footer';
 
-const Login = ({ setUser }) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,6 +14,7 @@ const Login = ({ setUser }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const loginMutation = useLoginMutation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,13 +30,7 @@ const Login = ({ setUser }) => {
     setMessage('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
-      });
-
-      if (error) throw error;
-      setUser(data.user);
+      await loginMutation.mutateAsync({ email, password });
       navigate('/tweets');
     } catch (err) {
       setError(err.message);
@@ -54,39 +49,16 @@ const Login = ({ setUser }) => {
     setLoading(true);
     setError('');
     setMessage('');
-    
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-      setMessage('Password reset link sent to your email.');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setMessage('Password reset is not available on the backend yet.');
+    setLoading(false);
   };
 
   const handleAppleSignIn = async () => {
     setLoading(true);
     setError('');
     setMessage('');
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: `${window.location.origin}/tweets`
-        }
-      });
-
-      if (error) throw error;
-      
-      // Note: With OAuth, the user will be redirected, so we don't set user here
-      // The redirect will handle the authentication state
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
+    setMessage('Apple sign in is not available on the backend yet.');
+    setLoading(false);
   };
 
   return (

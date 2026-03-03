@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const feedRoutes = require('./routes/feed');
+const postsRoutes = require('./routes/posts');
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -16,6 +17,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/posts', postsRoutes);
 
 app.listen(port, () => {
   console.log(`Backend API listening on http://localhost:${port}`);
