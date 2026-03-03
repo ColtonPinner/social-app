@@ -13,6 +13,8 @@
     "backend:start": "yarn --cwd backend start",
     "test": "react-scripts test",
     "build": "CI=false react-scripts build",
+    "deploy": "yarn run build && wrangler deploy",
+    "preview": "yarn run build && wrangler dev",
     "lint": "eslint ."
   },
   "dependencies": {
