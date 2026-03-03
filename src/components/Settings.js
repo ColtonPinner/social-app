@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 import { format } from 'date-fns';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import DatePicker from 'react-datepicker';
@@ -19,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Tweet from './Tweet';
 import { useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
+import { apiClient, setAuthToken } from '../lib/apiClient';
 
 const ProfileSettings = ({ user, setUser }) => {
   const { id } = useParams(); // Get the user ID from the URL
@@ -51,23 +51,16 @@ const ProfileSettings = ({ user, setUser }) => {
     const fetchUserProfile = async () => {
       try {
         if (!user?.id) return;
-        
-        // Fetch profile data
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) throw error;
+        const result = await apiClient.get(`/api/users/${user.id}`);
+        const data = result.user;
         
         if (data) {
           setFormData({
             username: data.username || '',
             full_name: data.full_name || '',
-            phone: data.phone ? parsePhoneNumberFromString(data.phone, 'US')?.formatNational() || data.phone : '',
-            dob: data.dob ? new Date(data.dob) : null,
-            bio: data.bio || '',
+            phone: '',
+            dob: null,
+            bio: '',
           });
           
           // Set image preview if avatar_url exists
@@ -76,18 +69,11 @@ const ProfileSettings = ({ user, setUser }) => {
           }
 
           // Fetch follow counts
-          const { count: followers } = await supabase
-            .from('followers')
-            .select('id', { count: 'exact' })
-            .eq('following_id', user.id);
+          const followersResult = await apiClient.get(`/api/users/${user.id}/followers`);
+          const followingResult = await apiClient.get(`/api/users/${user.id}/following`);
 
-          const { count: following } = await supabase
-            .from('followers')
-            .select('id', { count: 'exact' })
-            .eq('follower_id', user.id);
-
-          setFollowerCount(followers || 0);
-          setFollowingCount(following || 0);
+          setFollowerCount(followersResult.count || 0);
+          setFollowingCount(followingResult.count || 0);
         }
       } catch (error) {
         console.error('Error fetching profile:', error.message);
@@ -103,15 +89,8 @@ const ProfileSettings = ({ user, setUser }) => {
     const fetchProfileData = async () => {
       try {
         console.log("Fetching profile for ID:", id);
-        
-        // Fetch the profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (profileError) throw profileError;
+        const result = await apiClient.get(`/api/users/${id}`);
+        const profileData = result.user;
         
         console.log("Profile data:", profileData);
         setProfile(profileData);
@@ -143,35 +122,8 @@ const ProfileSettings = ({ user, setUser }) => {
 
   const fetchUserPosts = async (profileId) => {
     try {
-      // First get the posts
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('user_id', profileId)
-        .order('created_at', { ascending: false });
-
-      if (postsError) throw postsError;
-      
-      // Get all users for these posts
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url, full_name');
-        
-      if (profilesError) throw profilesError;
-      
-      // Create a lookup table for profiles by ID
-      const profilesById = profilesData.reduce((acc, profile) => {
-        acc[profile.id] = profile;
-        return acc;
-      }, {});
-      
-      // Enrich the posts with user data
-      const enrichedPosts = postsData.map(post => ({
-        ...post,
-        user: profilesById[post.user_id] || null
-      }));
-      
-      setPosts(enrichedPosts);
+      const result = await apiClient.get(`/api/users/${profileId}/posts`);
+      setPosts(result.items || []);
     } catch (error) {
       console.error('Error fetching user posts:', error);
       setError('Error fetching user posts');
@@ -181,20 +133,9 @@ const ProfileSettings = ({ user, setUser }) => {
   const checkIfFollowing = async (profileId) => {
     try {
       if (!user?.id) return false;
-      
-      const { data, error } = await supabase
-        .from('followers')
-        .select('*')
-        .eq('follower_id', user.id)
-        .eq('following_id', profileId)
-        .maybeSingle();
-  
-      if (error) {
-        console.error('Error checking follow status:', error);
-        return false;
-      }
-      
-      setIsFollowing(!!data);
+
+      const result = await apiClient.get(`/api/users/${profileId}/follow-status`);
+      setIsFollowing(Boolean(result.following));
     } catch (error) {
       console.error('Error checking follow status:', error);
       setIsFollowing(false);
@@ -203,31 +144,13 @@ const ProfileSettings = ({ user, setUser }) => {
 
   const fetchFollowCounts = async (profileId) => {
     try {
-      // Get followers count
-      const { count: followers, error: followerError } = await supabase
-        .from('followers')
-        .select('id', { count: 'exact' })
-        .eq('following_id', profileId);
-  
-      if (followerError) {
-        console.error('Error fetching follower count:', followerError);
-        // Don't update state if there's an error
-      } else {
-        setFollowerCount(followers || 0);
-      }
-  
-      // Get following count
-      const { count: following, error: followingError } = await supabase
-        .from('followers')
-        .select('id', { count: 'exact' })
-        .eq('follower_id', profileId);
-  
-      if (followingError) {
-        console.error('Error fetching following count:', followingError);
-        // Don't update state if there's an error
-      } else {
-        setFollowingCount(following || 0);
-      }
+      const [followersResult, followingResult] = await Promise.all([
+        apiClient.get(`/api/users/${profileId}/followers`),
+        apiClient.get(`/api/users/${profileId}/following`),
+      ]);
+
+      setFollowerCount(followersResult.count || 0);
+      setFollowingCount(followingResult.count || 0);
     } catch (error) {
       console.error('Error in fetchFollowCounts:', error);
       // Continue execution, don't throw
@@ -250,30 +173,13 @@ const ProfileSettings = ({ user, setUser }) => {
     try {
       if (isFollowing) {
         // Unfollow
-        const { error } = await supabase
-          .from('followers')
-          .delete()
-          .eq('follower_id', user.id)
-          .eq('following_id', id);
-  
-        if (error) throw error;
-        
-        setIsFollowing(false);
-        setFollowerCount(prevCount => Math.max(0, prevCount - 1));
+        await apiClient.delete(`/api/users/${id}/follow`);
       } else {
         // Follow
-        const { error } = await supabase
-          .from('followers')
-          .insert({
-            follower_id: user.id,
-            following_id: id
-          });
-  
-        if (error) throw error;
-        
-        setIsFollowing(true);
-        setFollowerCount(prevCount => prevCount + 1);
+        await apiClient.post(`/api/users/${id}/follow`, {});
       }
+
+      await Promise.all([checkIfFollowing(id), fetchFollowCounts(id)]);
       
       // Add a short timeout to allow the user to see the button change state
       setTimeout(() => {
@@ -288,12 +194,7 @@ const ProfileSettings = ({ user, setUser }) => {
 
   const handleDeletePost = async (postId) => {
     try {
-      const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId);
-
-      if (error) throw error;
+      await apiClient.delete(`/api/posts/${postId}`);
 
       setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
     } catch (err) {
@@ -353,42 +254,27 @@ const ProfileSettings = ({ user, setUser }) => {
     setError('');
     
     try {
-      // Create a unique file path for the image
-      const fileExt = profileImage.name.split('.').pop();
-      const filePath = `avatars/${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const arrayBuffer = await profileImage.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+
+      for (let index = 0; index < bytes.byteLength; index += 1) {
+        binary += String.fromCharCode(bytes[index]);
+      }
+
+      const result = await apiClient.post('/api/uploads/image', {
+        contentType: profileImage.type,
+        dataBase64: window.btoa(binary),
+        fileName: profileImage.name,
+      });
+
+      const avatarUrl = result.url;
+      return avatarUrl;
       
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase
-        .storage
-        .from('user-content')
-        .upload(filePath, profileImage, {
-          cacheControl: '3600',
-          upsert: true
-        });
-        
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL
-      const { data } = supabase
-        .storage
-        .from('user-content')
-        .getPublicUrl(filePath);
-        
-      const avatarUrl = data.publicUrl;
-      
-      // Update the user profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', user.id);
-        
-      if (updateError) throw updateError;
-      
-      setSuccess('Profile image updated successfully!');
-      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error uploading image:', error.message);
       setError(`Error uploading image: ${error.message}`);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -409,28 +295,25 @@ const ProfileSettings = ({ user, setUser }) => {
     setLoading(true);
     
     try {
-      const updatedData = {
+      let nextAvatarUrl = avatarUrl || imagePreview || null;
+
+      if (profileImage) {
+        const uploadedAvatarUrl = await handleImageUpload();
+        if (uploadedAvatarUrl) {
+          nextAvatarUrl = uploadedAvatarUrl;
+          setAvatarUrl(uploadedAvatarUrl);
+          setImagePreview(uploadedAvatarUrl);
+        }
+      }
+
+      await apiClient.patch('/api/users/me', {
         username: formData.username,
-        full_name: formData.full_name,
-        phone: formData.phone,
-        dob: formData.dob ? formData.dob.toISOString() : null,
-        bio: formData.bio,
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updatedData)
-        .eq('id', user.id);
-        
-      if (error) throw error;
-      
+        fullName: formData.full_name,
+        avatarUrl: nextAvatarUrl,
+      });
+
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
-      
-      // If there's a profile image waiting to be uploaded, do it now
-      if (profileImage) {
-        await handleImageUpload();
-      }
     } catch (error) {
       console.error('Error updating profile:', error.message);
       setError(`Error updating profile: ${error.message}`);
@@ -442,8 +325,7 @@ const ProfileSettings = ({ user, setUser }) => {
   const handleSignOut = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      setAuthToken(null);
       setUser(null);
       navigate('/login');
     } catch (error) {

@@ -6,10 +6,10 @@ import {
   MagnifyingGlass,
   X
 } from '@phosphor-icons/react';
-import { supabase } from '../supabaseClient';
 import { Transition } from '@headlessui/react';
 import useNotifications from '../hooks/useNotifications';
 import { useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
+import { useBackendUsersQuery } from '../hooks/useBackendUsers';
 
 const Navbar = ({ profile }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,6 +18,7 @@ const Navbar = ({ profile }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const location = useLocation();
+  const trimmedSearchQuery = searchQuery.trim();
   const searchInputRef = useRef(null);
   const notificationRef = useRef(null);
   const searchResultsRef = useRef(null);
@@ -33,6 +34,11 @@ const Navbar = ({ profile }) => {
     markAllAsRead
   } = useNotifications(profile?.id, {
     enabled: notificationsEnabled
+  });
+
+  const { data: searchedUsers = [] } = useBackendUsersQuery(trimmedSearchQuery, {
+    enabled: Boolean(trimmedSearchQuery),
+    limit: 5,
   });
 
   useEffect(() => {
@@ -74,6 +80,23 @@ const Navbar = ({ profile }) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
+  useEffect(() => {
+    if (!trimmedSearchQuery) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    const mappedResults = searchedUsers.map((user) => ({
+      id: user.id,
+      username: user.username,
+      avatar_url: user.avatar_url,
+    }));
+
+    setSearchResults(mappedResults);
+    setShowSearchResults(true);
+  }, [searchedUsers, trimmedSearchQuery]);
+
   const handleToggleNotifications = () => {
     setShowNotifications(!showNotifications);
     setShowSearchResults(false);
@@ -82,27 +105,6 @@ const Navbar = ({ profile }) => {
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
-    if (event.target.value.trim() === '') {
-      setShowSearchResults(false);
-      setSearchResults([]);
-    } else {
-      fetchSearchResults(event.target.value);
-    }
-  };
-
-  const fetchSearchResults = async (query) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, username, avatar_url')
-      .ilike('username', `%${query}%`)
-      .limit(5);
-
-    if (error) {
-      console.error('Error fetching search results:', error);
-    } else {
-      setSearchResults(data);
-      setShowSearchResults(true);
-    }
   };
 
   const toggleMobileSearch = () => {

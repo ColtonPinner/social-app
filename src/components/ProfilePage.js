@@ -6,13 +6,23 @@ import {
   Spinner,
   Camera
 } from '@phosphor-icons/react';
-import { supabase } from '../supabaseClient';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import Tweet from './Tweet';
 import { XMarkIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useAutoRefresh, useGlobalAutoRefreshSettings } from '../hooks/useAutoRefresh';
+import {
+  useBackendFollowStatusQuery,
+  useBackendUserByIdQuery,
+  useBackendUserFollowersQuery,
+  useBackendUserFollowingQuery,
+  useBackendUserPostsQuery,
+  useFollowUserMutation,
+  useUnfollowUserMutation,
+  useUpdateBackendProfileMutation,
+} from '../hooks/useBackendUsers';
+import { apiClient } from '../lib/apiClient';
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80';
 const DEFAULT_COVER = 'https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1600&q=80';
@@ -53,111 +63,110 @@ const ProfilePage = ({ currentUser, setUser }) => {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [followModalType, setFollowModalType] = useState('followers');
+  const { refetch: refetchBackendUser } = useBackendUserByIdQuery(id, {
+    enabled: Boolean(id),
+  });
+  const { refetch: refetchBackendUserPosts } = useBackendUserPostsQuery(id, {
+    enabled: false,
+  });
+  const { refetch: refetchBackendFollowers } = useBackendUserFollowersQuery(id, {
+    enabled: false,
+  });
+  const { refetch: refetchBackendFollowing } = useBackendUserFollowingQuery(id, {
+    enabled: false,
+  });
+  const { refetch: refetchBackendFollowStatus } = useBackendFollowStatusQuery(id, {
+    enabled: false,
+  });
+  const updateBackendProfile = useUpdateBackendProfileMutation();
+  const followUserMutation = useFollowUserMutation();
+  const unfollowUserMutation = useUnfollowUserMutation();
+
+  const uploadImageToBackend = useCallback(async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+
+    for (let index = 0; index < bytes.byteLength; index += 1) {
+      binary += String.fromCharCode(bytes[index]);
+    }
+
+    const dataBase64 = window.btoa(binary);
+
+    const result = await apiClient.post('/api/uploads/image', {
+      contentType: file.type,
+      dataBase64,
+      fileName: file.name,
+    });
+
+    return result.url;
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     if (!id) return;
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
+      const result = await refetchBackendUser();
+      if (result.error) {
+        throw result.error;
+      }
+      const data = result.data;
+      if (!data) {
+        throw new Error('Profile not found');
+      }
 
       setProfile(data);
       setFormData((prev) => ({
         ...prev,
         username: data.username || '',
         full_name: data.full_name || '',
-        website: data.website || '',
-        phone: data.phone || '',
-        bio: data.bio || '',
+        website: '',
+        phone: '',
+        bio: '',
         avatar_url: data.avatar_url || '',
-        dob: data.dob ? new Date(data.dob) : null
+        dob: null
       }));
       setImagePreview(data.avatar_url || null);
-      setCoverImagePreview(data.cover_image_url || null);
+      setCoverImagePreview(null);
       setError('');
     } catch (err) {
       console.error('Error fetching profile:', err);
       setError('Failed to load profile');
       throw err;
     }
-  }, [id]);
+  }, [id, refetchBackendUser]);
 
   // Fetch posts
   const fetchPosts = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('user_id', id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setTweets(data || []);
+      const result = await refetchBackendUserPosts();
+      if (result.error) throw result.error;
+      setTweets(result.data || []);
     } catch (error) {
       setTweets([]);
       throw error;
     }
-  }, [id]);
+  }, [refetchBackendUserPosts]);
 
   // Fetch follow data
   const fetchFollowData = useCallback(async () => {
     if (!id) return;
-    console.log('Fetching follow data for user ID:', id); // Debug log
-    
+
     try {
-      const [{ data: followersData, error: followersError }, { data: followingData, error: followingError }] = await Promise.all([
-        supabase
-          .from('follows')
-          .select(`
-            follower_id,
-            profiles:follower_id(
-              id,
-              username,
-              full_name,
-              avatar_url,
-              bio
-            )
-          `)
-          .eq('following_id', id),
-        supabase
-          .from('follows')
-          .select(`
-            following_id,
-            profiles:following_id(
-              id,
-              username,
-              full_name,
-              avatar_url,
-              bio
-            )
-          `)
-          .eq('follower_id', id)
+      const [followersResult, followingResult] = await Promise.all([
+        refetchBackendFollowers(),
+        refetchBackendFollowing(),
       ]);
 
-      // Debug logs
-      console.log('Followers data:', followersData);
-      console.log('Followers error:', followersError);
-      console.log('Following data:', followingData);
-      console.log('Following error:', followingError);
+      if (followersResult.error) throw followersResult.error;
+      if (followingResult.error) throw followingResult.error;
 
-      if (followersError) throw followersError;
-      if (followingError) throw followingError;
-
-      // Extract the profile data from the nested structure
-      const followersProfiles = followersData?.map(f => f.profiles).filter(Boolean) || [];
-      const followingProfiles = followingData?.map(f => f.profiles).filter(Boolean) || [];
-      
-      console.log('Processed followers:', followersProfiles);
-      console.log('Processed following:', followingProfiles);
+      const followersProfiles = followersResult.data?.items || [];
+      const followingProfiles = followingResult.data?.items || [];
 
       setFollowers(followersProfiles);
       setFollowing(followingProfiles);
-      setFollowerCount(followersData?.length || 0);
-      setFollowingCount(followingData?.length || 0);
-      
+      setFollowerCount(followersResult.data?.count || 0);
+      setFollowingCount(followingResult.data?.count || 0);
     } catch (error) {
       console.error('Error fetching follow data:', error);
       setFollowers([]);
@@ -166,7 +175,7 @@ const ProfilePage = ({ currentUser, setUser }) => {
       setFollowingCount(0);
       throw error;
     }
-  }, [id]);
+  }, [id, refetchBackendFollowers, refetchBackendFollowing]);
 
   // Combined refresh function for auto-refresh
   const refreshProfileData = useCallback(async () => {
@@ -204,17 +213,13 @@ const ProfilePage = ({ currentUser, setUser }) => {
   const checkIfFollowing = useCallback(async () => {
     if (!currentUser || !id || currentUser.id === id) return;
     try {
-      const { data } = await supabase
-        .from('follows')
-        .select('id')
-        .eq('follower_id', currentUser.id)
-        .eq('following_id', id)
-        .maybeSingle();
-      setIsFollowing(!!data);
+      const result = await refetchBackendFollowStatus();
+      if (result.error) throw result.error;
+      setIsFollowing(Boolean(result.data));
     } catch {
       setIsFollowing(false);
     }
-  }, [currentUser, id]);
+  }, [currentUser, id, refetchBackendFollowStatus]);
 
   // Load initial data
   useEffect(() => {
@@ -296,57 +301,17 @@ const ProfilePage = ({ currentUser, setUser }) => {
       let avatar_url = formData.avatar_url;
       let cover_image_url = profile.cover_image_url || null;
       if (profileImage) {
-        const fileExt = profileImage.name.split('.').pop();
-        const filePath = `avatars/${id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, profileImage, { cacheControl: '3600', upsert: true });
-        if (uploadError) throw uploadError;
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        avatar_url = data.publicUrl;
+        avatar_url = await uploadImageToBackend(profileImage);
       }
       if (coverImage) {
-        try {
-          const fileExt = coverImage.name.split('.').pop();
-          const filePath = `${currentUser.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('covers')
-            .upload(filePath, coverImage, { cacheControl: '3600', upsert: true });
-          if (uploadError) throw uploadError;
-          const { data: urlData } = supabase.storage.from('covers').getPublicUrl(filePath);
-          cover_image_url = urlData.publicUrl;
-        } catch (err) {
-          setError(`Cover image upload failed: ${err.message}`);
-          setSaving(false);
-          return;
-        }
+        cover_image_url = await uploadImageToBackend(coverImage);
       }
-      const basicProfileData = {
+      await updateBackendProfile.mutateAsync({
         username: formData.username,
-        full_name: formData.full_name,
-        phone: formData.phone,
-        dob: formData.dob ? formData.dob.toISOString() : null,
-        bio: formData.bio,
-        website: formData.website,
-        avatar_url,
-        updated_at: new Date().toISOString()
-      };
-      const { error } = await supabase.from('profiles').update(basicProfileData).eq('id', id);
-      if (error) throw error;
-      if (cover_image_url) {
-        try {
-          const { error: coverError } = await supabase
-            .from('profiles')
-            .update({ cover_image_url })
-            .eq('id', id);
-          if (coverError) {
-            await supabase.from('cover_pictures').insert({
-              user_id: id,
-              picture_url: cover_image_url
-            });
-          }
-        } catch {}
-      }
+        fullName: formData.full_name,
+        avatarUrl: avatar_url,
+        coverImageUrl: cover_image_url,
+      });
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
       await fetchProfile();
@@ -365,35 +330,11 @@ const ProfilePage = ({ currentUser, setUser }) => {
     setIsFollowLoading(true);
     try {
       if (isFollowing) {
-        const { error } = await supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', currentUser.id)
-          .eq('following_id', id);
-        if (error) throw error;
-        setIsFollowing(false);
-        setFollowerCount((prev) => Math.max(0, prev - 1));
+        await unfollowUserMutation.mutateAsync({ userId: id });
       } else {
-        const { error } = await supabase
-          .from('follows')
-          .insert({ follower_id: currentUser.id, following_id: id });
-        if (error) throw error;
-        setIsFollowing(true);
-        setFollowerCount((prev) => prev + 1);
-        if (id !== currentUser.id) {
-          const followerName = currentUser.username || currentUser.full_name || 'Someone';
-          await supabase.from('notifications').insert({
-            user_id: id,
-            sender_id: currentUser.id,
-            type: 'follow',
-            message: `${followerName} started following you`,
-            content: `${followerName} started following you`,
-            metadata: {
-              follower_id: currentUser.id
-            }
-          });
-        }
+        await followUserMutation.mutateAsync({ userId: id });
       }
+      await Promise.all([fetchFollowData(), checkIfFollowing()]);
     } catch {
       setError('Failed to update follow status');
     } finally {
@@ -402,23 +343,13 @@ const ProfilePage = ({ currentUser, setUser }) => {
   };
 
   const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      navigate('/login');
-    } catch (error) {
-      setError(error.message);
-    }
+    setUser(null);
+    navigate('/login');
   };
 
   const handleDeletePost = async (postId) => {
     try {
-      const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId);
-      if (error) throw error;
+      await apiClient.delete(`/api/posts/${postId}`);
       setTweets((prev) => prev.filter((tweet) => tweet.id !== postId));
     } catch (err) {
       console.error('Error deleting post:', err);
@@ -963,17 +894,11 @@ const ProfilePage = ({ currentUser, setUser }) => {
                   e.preventDefault();
                   if (!formData.newPostText?.trim()) return;
                   try {
-                    const { error, data } = await supabase
-                      .from('posts')
-                      .insert({
-                        user_id: currentUser.id,
-                        text: formData.newPostText,
-                        created_at: new Date().toISOString()
-                      })
-                      .select()
-                      .single();
-                    if (error) throw error;
-                    setTweets((prev) => [data, ...prev]);
+                    const result = await apiClient.post('/api/posts', {
+                      text: formData.newPostText,
+                      images: [],
+                    });
+                    setTweets((prev) => [result.item, ...prev]);
                     setFormData((prev) => ({ ...prev, newPostText: '' }));
                     setShowPostModal(false);
                   } catch {

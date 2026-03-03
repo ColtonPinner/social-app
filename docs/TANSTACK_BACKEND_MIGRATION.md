@@ -10,6 +10,7 @@ This project now includes:
 
 - Client Query provider in `src/index.js`
 - API client and auth/feed hooks:
+  - `src/hooks/useBackendUsers.js`
   - `src/lib/apiClient.js`
   - `src/hooks/useBackendAuth.js`
   - `src/hooks/useBackendFeed.js`

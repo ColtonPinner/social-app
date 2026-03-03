@@ -1,16 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useBackendUsersQuery } from '../hooks/useBackendUsers';
 
 const UserList = () => {
-  const users = [
-    { id: '1', username: 'User1' },
-    { id: '2', username: 'User2' },
-    // Add more users as needed
-  ];
+  const { data: users = [], isLoading, error } = useBackendUsersQuery('', {
+    enabled: true,
+    limit: 50,
+  });
 
   return (
     <div>
       <h1>User List</h1>
+      {isLoading && <p>Loading users...</p>}
+      {error && <p>Failed to load users.</p>}
       <ul>
         {users.map(user => (
           <li key={user.id}>
