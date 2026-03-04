@@ -65,6 +65,12 @@ router.post('/login', async (req, res) => {
 
     return res.json({ user: safeUser, token });
   } catch (error) {
+    if (error?.code === 'ECONNREFUSED') {
+      return res.status(503).json({ error: 'Database is unavailable. Check DATABASE_URL and database status.' });
+    }
+    if (error?.code === '42P01') {
+      return res.status(503).json({ error: 'Database schema is missing. Run backend/sql/schema.sql first.' });
+    }
     return res.status(500).json({ error: 'Failed to login' });
   }
 });
