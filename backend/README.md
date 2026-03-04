@@ -2,6 +2,63 @@
 
 This is the Phase 1 backend replacing Supabase for MVP auth + feed.
 
+## D1 mode (Cloudflare Worker)
+
+If you are using Cloudflare D1, use the Worker API at `backend/src/worker.js`.
+
+Implemented in D1 mode now:
+- `GET /health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/users`
+- `GET /api/users/:userId`
+- `PATCH /api/users/me`
+- `GET /api/feed`
+- `POST /api/posts`
+- `DELETE /api/posts/:postId`
+- `GET /api/posts/:postId/comments`
+- `POST /api/posts/:postId/comments`
+- `GET /api/posts/:postId/likes`
+- `POST /api/posts/:postId/likes`
+- `DELETE /api/posts/:postId/likes`
+- `GET /api/users/:userId/posts`
+- `GET /api/users/:userId/followers`
+- `GET /api/users/:userId/following`
+- `GET /api/users/:userId/follow-status`
+- `POST /api/users/:userId/follow`
+- `DELETE /api/users/:userId/follow`
+- `POST /api/uploads/image`
+
+Setup:
+
+1. Put your D1 database ID in `wrangler.jsonc` (`d1_databases[0].database_id`).
+2. Set `JWT_SECRET` in `wrangler.jsonc` `vars` or via Wrangler secrets.
+3. Set `CF_IMAGES_ACCOUNT_ID` in `wrangler.jsonc` `vars`.
+4. Set `CF_IMAGES_API_TOKEN` as a Wrangler secret:
+
+```bash
+wrangler secret put CF_IMAGES_API_TOKEN
+```
+
+5. Apply D1 schema:
+
+```bash
+yarn api:d1:schema:local
+```
+
+6. Run worker API locally:
+
+```bash
+yarn api:d1:dev
+```
+
+7. Point frontend API to Worker URL:
+
+```bash
+REACT_APP_API_URL=http://127.0.0.1:8787
+```
+
 ## Endpoints
 
 - `GET /health`

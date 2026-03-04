@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "social-app",
+  "main": "backend/src/worker.js",
   "compatibility_date": "2025-09-27",
   "build": {
     "command": "yarn run build"
@@ -13,5 +14,16 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "social-app",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+  "vars": {
+    "JWT_SECRET": "replace-me-with-a-long-random-secret",
+    "CF_IMAGES_ACCOUNT_ID": "replace-with-cloudflare-account-id"
+  }
 }
