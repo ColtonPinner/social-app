@@ -1,0 +1,20 @@
+node_modules
+build
+.git
+.expo
+.wrangler
+
+# Local environment and logs
+.env
+.env.*
+*.log
+
+# OS/editor artifacts
+.DS_Store
+.vscode
+.idea
+
+# Keep Docker context lean
+mobile
+backend/node_modules
+backend/.env
