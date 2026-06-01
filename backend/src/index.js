@@ -6,6 +6,7 @@ const feedRoutes = require('./routes/feed');
 const postsRoutes = require('./routes/posts');
 const usersRoutes = require('./routes/users');
 const uploadsRoutes = require('./routes/uploads');
+const back4AppRoutes = require('./routes/back4app');
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -22,6 +23,7 @@ app.use('/api/feed', feedRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/uploads', uploadsRoutes);
+app.use('/api/back4app', back4AppRoutes);
 
 app.listen(port, () => {
   console.log(`Backend API listening on http://localhost:${port}`);

@@ -2,6 +2,71 @@
 
 This is the Phase 1 backend replacing Supabase for MVP auth + feed.
 
+## Local backend stack (Postgres + Redis + Adminer)
+
+From the repository root, run:
+
+```bash
+yarn backend:stack:up
+```
+
+This starts:
+- API: `http://localhost:4000`
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+- Adminer UI: `http://localhost:8080`
+
+Adminer login defaults:
+- System: `PostgreSQL`
+- Server: `db`
+- Username: `postgres`
+- Password: `postgres`
+- Database: `social_app`
+
+To stop everything:
+
+```bash
+yarn backend:stack:down
+```
+
+Notes:
+- The API container applies `backend/sql/schema.sql` automatically on startup.
+- Use `REDIS_URL` for cache or queue integrations as you add them.
+
+## Back4App mode
+
+You can keep this Express API and proxy Back4App Parse REST through it.
+
+Set these env vars in `backend/.env`:
+
+```bash
+BACK4APP_SERVER_URL=https://parseapi.back4app.com
+BACK4APP_APP_ID=your-back4app-app-id
+BACK4APP_REST_API_KEY=your-back4app-rest-api-key
+# optional
+BACK4APP_MASTER_KEY=
+BACK4APP_JAVASCRIPT_KEY=
+BACK4APP_TIMEOUT_MS=15000
+```
+
+Available endpoints:
+- `GET /api/back4app/health`
+- `ALL /api/back4app/*` -> proxies to Back4App Parse REST path (`/*`)
+
+Examples:
+
+```bash
+# create Parse user
+curl -X POST http://localhost:4000/api/back4app/users \
+	-H "Content-Type: application/json" \
+	-d '{"username":"demo","password":"demo123","email":"demo@example.com"}'
+
+# query class "Post"
+curl "http://localhost:4000/api/back4app/classes/Post?limit=20"
+```
+
+If you pass `Authorization: Bearer <sessionToken>`, it is forwarded as `X-Parse-Session-Token`.
+
 ## D1 mode (Cloudflare Worker)
 
 If you are using Cloudflare D1, use the Worker API at `backend/src/worker.js`.

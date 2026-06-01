@@ -11,6 +11,8 @@
     "web": "react-scripts start",
     "backend": "yarn --cwd backend dev",
     "backend:start": "yarn --cwd backend start",
+    "backend:stack:up": "docker compose -f docker-compose.backend.yml up --build",
+    "backend:stack:down": "docker compose -f docker-compose.backend.yml down",
     "test": "react-scripts test",
     "build": "CI=false react-scripts build",
     "deploy": "yarn run build && wrangler deploy",
